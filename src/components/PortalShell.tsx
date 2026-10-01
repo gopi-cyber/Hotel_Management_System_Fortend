@@ -7,7 +7,6 @@ import { RootState, AppDispatch } from '@/lib/store';
 import { logout, restoreSession, User as SessionUser } from '@/lib/features/userSlice';
 import {
   setCurrency,
-  toggleNightAudit,
   CurrencyCode,
   CURRENCY_MAP,
 } from '@/lib/features/settingsSlice';
@@ -30,8 +29,6 @@ import {
   Bell,
   Settings,
   ShieldCheck,
-  Moon,
-  Sun,
   Globe,
 } from 'lucide-react';
 
@@ -301,48 +298,14 @@ export function PortalShell({
           <span className="font-display text-xl font-bold tracking-tight text-white">LuxeStay</span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          {/* Quick Currency Selector */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-slate-800/90 rounded-lg border border-slate-700 text-xs text-slate-200">
-            <Globe size={11} className="text-amber-400 shrink-0" />
-            <select
-              value={currency}
-              onChange={(e) => dispatch(setCurrency(e.target.value as CurrencyCode))}
-              className="bg-transparent font-bold text-[11px] text-white cursor-pointer focus:outline-none"
-              aria-label="Currency"
-            >
-              {Object.values(CURRENCY_MAP).map((c) => (
-                <option key={c.code} value={c.code} className="bg-slate-900 text-white">
-                  {c.code}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Quick Night Audit Toggle */}
-          <button
-            type="button"
-            onClick={() => dispatch(toggleNightAudit())}
-            title={nightAudit ? 'Day Shift Mode' : 'Night Audit Mode'}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              nightAudit
-                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-                : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white'
-            }`}
-            aria-label="Toggle Night Audit"
-          >
-            {nightAudit ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
-            aria-label="Toggle navigation"
-          >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          aria-label="Toggle navigation"
+        >
+          {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </header>
 
       {/* Mobile Drawer */}
@@ -391,6 +354,27 @@ export function PortalShell({
                 );
               })}
             </nav>
+
+            {/* Currency Switcher for Mobile Drawer */}
+            <div className="pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between px-3 py-2 bg-slate-900/80 rounded-xl border border-slate-800 text-xs text-slate-300">
+                <span className="flex items-center gap-1.5 font-medium text-slate-400">
+                  <Globe size={13} className="text-amber-500" /> Currency
+                </span>
+                <select
+                  value={currency}
+                  onChange={(e) => dispatch(setCurrency(e.target.value as CurrencyCode))}
+                  className="bg-transparent font-bold text-xs text-amber-400 cursor-pointer focus:outline-none"
+                  aria-label="Currency"
+                >
+                  {Object.values(CURRENCY_MAP).map((c) => (
+                    <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
               <button
@@ -457,70 +441,7 @@ export function PortalShell({
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Currency Selector Pill */}
-              <div
-                className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold ${
-                  nightAudit
-                    ? 'bg-slate-800 border-slate-700 text-slate-200'
-                    : 'bg-slate-50 border-slate-200 text-slate-700'
-                }`}
-              >
-                <Globe size={13} className="text-amber-500 shrink-0" />
-                <select
-                  value={currency}
-                  onChange={(e) => dispatch(setCurrency(e.target.value as CurrencyCode))}
-                  className={`bg-transparent font-bold text-xs cursor-pointer focus:outline-none ${
-                    nightAudit ? 'text-white' : 'text-slate-800'
-                  }`}
-                  aria-label="Currency"
-                >
-                  {Object.values(CURRENCY_MAP).map((c) => (
-                    <option key={c.code} value={c.code} className="bg-slate-900 text-white">
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Night Audit Toggle */}
-              <button
-                type="button"
-                onClick={() => dispatch(toggleNightAudit())}
-                title={nightAudit ? 'Switch to Day Shift Mode' : 'Switch to Night Audit Mode'}
-                className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  nightAudit
-                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
-                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                {nightAudit ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-500" />}
-                <span>{nightAudit ? 'Day Shift' : 'Night Audit'}</span>
-              </button>
-
-              {/* Profile Photo Button */}
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen(true)}
-                title={`Open ${profileModalTitle}`}
-                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  nightAudit
-                    ? 'bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700'
-                    : 'bg-amber-50/80 border-amber-200 text-amber-900 hover:bg-amber-100'
-                }`}
-              >
-                <div className="relative w-6 h-6 rounded-full overflow-hidden border border-amber-500/40 shrink-0 bg-slate-900">
-                  <img
-                    src={userAvatar}
-                    alt={userDisplayName || 'User'}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className="hidden md:inline font-semibold">{userDisplayName}</span>
-              </button>
-
-              {actions}
-            </div>
+            {actions && <div className="flex items-center gap-3 flex-wrap">{actions}</div>}
           </div>
         </div>
 

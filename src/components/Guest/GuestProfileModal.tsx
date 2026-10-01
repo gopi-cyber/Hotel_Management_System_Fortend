@@ -20,6 +20,7 @@ import {
   Mail,
   Phone,
   Compass,
+  Upload,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -110,6 +111,23 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
     setTimeout(() => {
       setSavedSuccess(false);
     }, 4000);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit. Please select a smaller image.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setFormData((prev) => ({ ...prev, avatarUrl: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -285,16 +303,19 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Custom Photo URL</label>
-                <div className="relative">
-                  <Camera size={14} className="absolute left-3 top-3 text-slate-400" />
-                  <input
-                    type="url"
-                    value={formData.avatarUrl}
-                    onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
-                    placeholder="https://example.com/photo.jpg"
-                    className="w-full pl-9 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
-                  />
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Upload Guest Photo from Device</label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold cursor-pointer transition-colors shadow-xs">
+                    <Upload size={14} className="text-amber-600" />
+                    <span>Choose Photo File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-500">Pick from computer/phone • Instant local load</span>
                 </div>
               </div>
             </div>
