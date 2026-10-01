@@ -4,262 +4,186 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '@/lib/features/userSlice';
 import { AppDispatch, RootState } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { Hotel, User, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Hotel, User, Lock, ArrowRight, ShieldCheck, AlertCircle, KeyRound, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { motion, useMotionValue, Variants } from 'framer-motion';
-import { ParticleBackground } from '@/components/ParticleBackground';
-
-const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1,
-            delayChildren: 0.3
-        }
-    }
-};
-
-interface ParticleData {
-    id: number;
-    size: number;
-    isAmber: boolean;
-    left: string;
-    top: string;
-    baseOpacity: number;
-    yArray: number[];
-    xArray: number[];
-    duration: number;
-    delay: number;
-}
+import Image from 'next/image';
 
 export default function LoginPage() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const dispatch = useDispatch<AppDispatch>();
-    const router = useRouter();
-    const [role, setRole] = useState<'admin' | 'receptionist' | 'guest' | null>(null);
-    const { error } = useSelector((state: RootState) => state.user || { error: null });
-    const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const rotateX = useMotionValue(0);
-    const rotateY = useMotionValue(0);
-    
-    const [particles, setParticles] = useState<ParticleData[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const { error } = useSelector((state: RootState) => state.user || { error: null });
 
-    useEffect(() => {
-        router.prefetch('/admin');
-        router.prefetch('/receptionist');
-        router.prefetch('/dashboard');
-        
-        const tm = setTimeout(() => {
-            setParticles(Array.from({ length: 30 }).map((_, i) => ({
-                id: i,
-                size: Math.random() * 8 + 2,
-                isAmber: Math.random() > 0.5,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                baseOpacity: Math.random() * 0.6,
-                yArray: [0, -Math.random() * 300 - 100],
-                xArray: [0, (Math.random() * 200) - 100],
-                duration: Math.random() * 8 + 4,
-                delay: Math.random() * 5
-            })));
-        }, 0);
-        return () => clearTimeout(tm);
-    }, [router]);
+  useEffect(() => {
+    router.prefetch('/admin');
+    router.prefetch('/receptionist');
+    router.prefetch('/dashboard');
+  }, [router]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsAuthenticating(true);
-        const result = await dispatch(loginUser({ username, password }));
-        if (loginUser.fulfilled.match(result)) {
-            const loggedInUser = result.payload;
-            if (loggedInUser.role === 'admin') {
-                router.push('/admin');
-            } else if (loggedInUser.role === 'receptionist' || loggedInUser.role === 'staff') {
-                router.push('/receptionist');
-            } else {
-                router.push('/dashboard');
-            }
-        } else {
-            setIsAuthenticating(false);
-        }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!identifier.trim() || !password) return;
+    setIsSubmitting(true);
 
-    const quickAccess = (r: 'admin' | 'receptionist' | 'guest') => {
-        setRole(r);
-        if (r === 'admin') {
-            setUsername('admin');
-            setPassword('123');
-        } else if (r === 'receptionist') {
-            setUsername('staff');
-            setPassword('123');
-        } else if (r === 'guest') {
-            setUsername('new_guest');
-            setPassword('123');
-        }
-    };
+    const result = await dispatch(loginUser({ username: identifier.trim(), password }));
+    if (loginUser.fulfilled.match(result)) {
+      const loggedIn = result.payload;
+      const role = loggedIn.role?.toLowerCase();
+      
+      // Automatic role-based routing
+      if (role === 'admin') {
+        router.push('/admin');
+      } else if (role === 'receptionist' || role === 'staff') {
+        router.push('/receptionist');
+      } else {
+        router.push('/dashboard');
+      }
+    } else {
+      setIsSubmitting(false);
+    }
+  };
 
-    return (
-        <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden p-6 font-sans bg-slate-50">
-            <ParticleBackground />
-            
-            {particles.map((p) => (
-                <motion.div
-                    key={p.id}
-                    className={`absolute rounded-full pointer-events-none ${p.isAmber ? 'bg-amber-500' : 'bg-indigo-500'}`}
-                    style={{
-                        width: p.size,
-                        height: p.size,
-                        left: p.left,
-                        top: p.top,
-                        opacity: p.baseOpacity
-                    }}
-                    animate={{
-                        y: p.yArray,
-                        x: p.xArray,
-                        opacity: [p.baseOpacity, 0],
-                        scale: [0, 1.5, 0],
-                        rotate: [0, 360]
-                    }}
-                    transition={{
-                        duration: p.duration,
-                        repeat: Infinity,
-                        repeatType: "loop",
-                        ease: "linear",
-                        delay: p.delay
-                    }}
-                />
-            ))}
+  return (
+    <div className="min-h-screen min-h-[100dvh] bg-[#faf8f5] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
+        {/* Left Editorial Visual */}
+        <div className="hidden lg:flex lg:col-span-5 relative flex-col justify-between p-8 text-white">
+          <Image
+            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1000&q=85"
+            alt="LuxeStay Resort"
+            fill
+            sizes="40vw"
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 photo-scrim" />
 
-            <div className="absolute inset-0 z-[-10] pointer-events-none overflow-hidden">
-                <div className="vortex-container opacity-50" />
-                <div className="honeycomb-mesh opacity-30" />
+          {/* Brand header */}
+          <div className="relative z-10">
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center">
+                <Hotel className="text-slate-950" size={20} />
+              </div>
+              <span className="font-display text-2xl font-bold tracking-tight text-white">
+                LuxeStay
+              </span>
+            </Link>
+          </div>
+
+          {/* Luxury quote */}
+          <div className="relative z-10 space-y-2">
+            <p className="font-display text-xl italic font-normal text-amber-200 leading-snug">
+              &ldquo;An extraordinary benchmark in bespoke hospitality and seamless digital comfort.&rdquo;
+            </p>
+            <p className="text-xs uppercase tracking-widest font-semibold text-slate-300">
+              Forbes Luxury Hotel Guide 2026
+            </p>
+          </div>
+        </div>
+
+        {/* Right Form Card */}
+        <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
+          <div>
+            {/* Top Back & Header */}
+            <div className="flex items-center justify-between mb-6">
+              <Link href="/" className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-amber-700 transition-colors inline-flex items-center gap-1">
+                ← Return to Home
+              </Link>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200/80">
+                <ShieldCheck size={14} className="text-amber-700" />
+                <span>Role-Guarded Access</span>
+              </div>
             </div>
 
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="bg-white/90 backdrop-blur-3xl z-[100] w-full max-w-lg p-12 py-16 border-2 border-white/60 rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.4)] relative"
-            >
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 relative flex justify-center mb-10 h-0">
-                    <motion.div 
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute top-2 flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.6)]"
-                    >
-                        <Hotel className="text-white drop-shadow-md" size={36} />
-                    </motion.div>
+            <div className="mb-6">
+              <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight">
+                Sign In to LuxeStay
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                Enter your registered credentials. Your authorized portal will load automatically.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Username or Email Address
+                </label>
+                <div className="relative rounded-xl border border-slate-300 bg-white focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <User size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    required
+                    autoComplete="username"
+                    placeholder="e.g. admin or staff or guest"
+                    className="w-full pl-10 pr-4 py-3 text-slate-900 bg-transparent rounded-xl outline-none font-medium text-sm"
+                  />
                 </div>
+              </div>
 
-                <div className="pt-20">
-                    <motion.div variants={containerVariants} initial="hidden" animate="show">
-                        <div className="mb-10 text-center flex flex-col items-center">
-                            <h1 className="text-5xl font-bold tracking-tight text-slate-900 leading-tight uppercase">
-                                Welcome Back
-                            </h1>
-                            <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-600 bg-slate-100 px-4 py-2 rounded-full inline-flex gap-2 items-center">
-                                Login to Your Account
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3 mb-10">
-                            {['admin', 'receptionist', 'guest'].map((r) => {
-                                const isActive = role === r;
-                                return (
-                                    <button 
-                                        key={r}
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            quickAccess(r as 'admin' | 'receptionist' | 'guest');
-                                        }} 
-                                        className={`py-4 px-2 rounded-xl border-2 transition-all uppercase tracking-widest text-center shadow-md relative z-[110] cursor-pointer text-[10px] font-black ${
-                                            isActive 
-                                            ? 'bg-amber-500 text-white border-amber-600' 
-                                            : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-amber-300'
-                                        }`}
-                                    >
-                                        {r === 'receptionist' ? 'Staff' : r}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="relative group">
-                                <div className="relative overflow-hidden rounded-2xl shadow-inner bg-slate-50 border border-slate-200">
-                                    <div className="absolute inset-y-0 left-0 w-16 flex items-center justify-center z-10">
-                                        <User className="text-slate-500 group-focus-within:text-amber-500 transition-all duration-300" size={20} />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        className="relative w-full h-16 bg-transparent pl-16 pr-6 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all"
-                                        placeholder="Username"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="relative group">
-                                <div className="relative overflow-hidden rounded-2xl shadow-inner bg-slate-50 border border-slate-200">
-                                    <div className="absolute inset-y-0 left-0 w-16 flex items-center justify-center z-10">
-                                        <Lock className="text-slate-500 group-focus-within:text-amber-500 transition-all duration-300" size={20} />
-                                    </div>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="relative w-full h-16 bg-transparent pl-16 pr-6 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all"
-                                        placeholder="Password"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="p-4 bg-red-500/10 text-[10px] font-black text-red-500 rounded-2xl border-2 border-red-500/30 text-center uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-                                    {error}
-                                </div>
-                            )}
-
-                            <div className="pt-4">
-                                <button
-                                    type="submit"
-                                    disabled={isAuthenticating}
-                                    className={`relative w-full h-[70px] rounded-2xl bg-amber-500 text-xs font-black uppercase tracking-[0.3em] text-white overflow-hidden shadow-[0_20px_50px_rgba(245,158,11,0.5)] transition-all flex items-center justify-center gap-4 group ${isAuthenticating ? 'opacity-70 cursor-wait' : ''}`}
-                                >
-                                    <div className="relative z-10 flex items-center gap-4">
-                                        {isAuthenticating ? (
-                                            <span className="h-6 w-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : (
-                                            <>Login <ArrowRight size={20} className="drop-shadow-lg" /></>
-                                        )}
-                                    </div>
-                                </button>
-                            </div>
-
-                            <div className="pt-6 text-center">
-                                <Link href="/register" className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-600 group flex items-center justify-center gap-3">
-                                    <span>New user?</span>
-                                    <span className="text-amber-500 underline underline-offset-4 decoration-amber-500/30 group-hover:decoration-amber-500 transition-all font-black">
-                                        Register Now
-                                    </span>
-                                </Link>
-                            </div>
-                        </form>
-
-                        <div className="mt-12 flex items-center justify-center gap-3 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
-                            <ShieldCheck size={14} className="text-amber-500" />
-                            <span className="opacity-70">Secure Login</span>
-                        </div>
-                    </motion.div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Password
+                  </label>
+                  <span className="text-[11px] text-slate-400 font-medium">Default: 123</span>
                 </div>
-            </motion.div>
-        </main>
-    );
+                <div className="relative rounded-xl border border-slate-300 bg-white focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    placeholder="Enter your account password"
+                    className="w-full pl-10 pr-4 py-3 text-slate-900 bg-transparent rounded-xl outline-none font-medium text-sm"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5">
+                  <AlertCircle size={17} className="shrink-0 text-rose-600" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full btn-gold py-3.5 text-sm font-bold justify-center mt-2 cursor-pointer shadow-sm"
+              >
+                {isSubmitting ? (
+                  <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Sign In to Portal <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Footer Note */}
+          <div className="pt-5 border-t border-slate-100 mt-6 flex items-center justify-between text-xs text-slate-500">
+            <span>New to LuxeStay?</span>
+            <Link href="/register" className="font-bold text-amber-700 hover:text-amber-800">
+              Create Account →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

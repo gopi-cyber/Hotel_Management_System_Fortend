@@ -1,358 +1,896 @@
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchRooms } from '@/lib/features/roomSlice';
-import { fetchStaff } from '@/lib/features/staffSlice';
-import { fetchBookings } from '@/lib/features/bookingSlice';
+import Image from 'next/image';
+import { fetchRooms, addRoom, updateRoom, deleteRoom, Room } from '@/lib/features/roomSlice';
+import { fetchStaff, addStaff, updateStaff, deleteStaff, Staff } from '@/lib/features/staffSlice';
+import { fetchBookings, updateBooking, Booking } from '@/lib/features/bookingSlice';
 import { RootState, AppDispatch } from '@/lib/store';
-import AdminRoomTable from '@/components/Admin/RoomTable';
-import AdminStaffTable from '@/components/Admin/StaffTable';
-import AdminReservationTable from '@/components/Admin/ReservationTable';
-import ReportDetailModal from '@/components/Admin/ReportDetailModal';
-import { 
-    Users, 
-    Hotel, 
-    CalendarCheck2, 
-    ChevronRight, 
-    BellRing, 
-    AlertCircle, 
-    CheckCircle2, 
-    MonitorDot, 
-    LayoutDashboard, 
-    Database, 
-    CreditCard, 
-    UserPlus, 
-    Plus, 
-    ArrowUpRight,
-    Home,
-    Activity,
-    BarChart3,
-    PieChart,
-    TrendingUp,
-    Calendar,
-    LogOut
+import {
+  BedDouble,
+  Users,
+  CalendarCheck,
+  BarChart3,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  CreditCard,
+  PieChart,
+  DollarSign,
+  TrendingUp,
+  FileText,
+  ShieldCheck,
+  UserCheck,
+  UserCog,
+  KeyRound,
 } from 'lucide-react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ParticleBackground } from '@/components/ParticleBackground';
-import { TiltCard } from '@/components/TiltCard';
-import { useRouter } from 'next/navigation';
-import { logout, restoreSession, User as SessionUser } from '@/lib/features/userSlice';
+import PortalShell from '@/components/PortalShell';
+import StatCard from '@/components/ui/StatCard';
+import StatusBadge from '@/components/ui/StatusBadge';
+import RoomModal from '@/components/Admin/RoomModal';
+import StaffModal from '@/components/Admin/StaffModal';
+import ReportModal from '@/components/Admin/ReportModal';
+import InvoiceModal from '@/components/ui/InvoiceModal';
+import { fetchAllUsers, updateUserRole, deleteUserAccount, User as UserAccount } from '@/lib/features/userSlice';
 
-export default function AdminDashboard() {
-    type TabType = 'inventory' | 'staff' | 'reservations' | 'reports';
-    const [activeTab, setActiveTab] = useState<TabType>('inventory');
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-    const [reportType, setReportType] = useState<'financial' | 'growth'>('financial');
-    const dispatch = useDispatch<AppDispatch>();
-    const router = useRouter();
-    const user = useSelector((state: RootState) => state.user.user);
-    const rooms = useSelector((state: RootState) => state.rooms);
-    const staff = useSelector((state: RootState) => state.staff);
-    const bookings = useSelector((state: RootState) => state.bookings);
+export default function AdminPage() {
+  type TabType = 'inventory' | 'staff' | 'reservations' | 'users' | 'reports';
+  const [activeTab, setActiveTab] = useState<TabType>('inventory');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMsg, setToastMsg] = useState('');
 
-    useEffect(() => {
-        if (!user) {
-            const saved = sessionStorage.getItem('vortex_user');
-            if (saved) {
-                try {
-                    dispatch(restoreSession(JSON.parse(saved) as SessionUser));
-                    return;
-                } catch {
-                    sessionStorage.removeItem('vortex_user');
-                }
-            }
-            router.replace('/login');
-            return;
-        }
-        if (user.role !== 'admin') {
-            router.replace(user.role === 'guest' ? '/dashboard' : '/receptionist');
-            return;
-        }
-        dispatch(fetchRooms());
-        dispatch(fetchStaff());
-        dispatch(fetchBookings());
-        document.title = 'LuxeStay | Administration';
-    }, [dispatch, router, user]);
+  // Modals state
+  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
 
-    const stats = [
-        { label: 'Occupancy Rate', value: '82%', icon: PieChart, color: 'text-amber-500', progress: 82, onClick: () => setActiveTab('reports') },
-        { label: 'Total Rooms', value: rooms.items.length.toString(), icon: LayoutDashboard, color: 'text-blue-500', progress: 100, onClick: () => setActiveTab('inventory') },
-        { label: 'Today\'s Revenue', value: '₹14,290', icon: CreditCard, color: 'text-amber-500', progress: 91, onClick: () => setActiveTab('reports') },
-        { label: 'Daily Staff', value: '12/15', icon: Users, color: 'text-indigo-500', progress: 80, onClick: () => setActiveTab('staff') },
-    ];
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
 
-    const tabs = [
-        { id: 'inventory', label: 'Room List', icon: LayoutDashboard },
-        { id: 'staff', label: 'Staff Directory', icon: Users },
-        { id: 'reservations', label: 'Guest Records', icon: Calendar },
-        { id: 'reports', label: 'Business Insights', icon: BarChart3 },
-    ];
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<'financial' | 'growth'>('financial');
 
-    return (
-        <main className="flex min-h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans relative">
-            <ParticleBackground />
-            
-            {/* Inline 3D Styles */}
-            <style jsx>{`
-                .glass-surface {
-                    background: rgba(255, 255, 255, 0.7);
-                    backdrop-filter: blur(40px);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 
-                        0 40px 100px rgba(0, 0, 0, 0.05),
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
-                }
-                .glass-sidebar {
-                    background: #ffffff;
-                    border-right: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 20px 0 50px rgba(0,0,0,0.02);
-                }
-                .nav-active {
-                    background: #f8fafc;
-                    color: #0f172a;
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.02);
-                }
-            `}</style>
+  const dispatch = useDispatch<AppDispatch>();
+  const user = useSelector((state: RootState) => state.user.user);
+  const allUsers = useSelector((state: RootState) => state.user.allUsers || []);
+  const rooms = useSelector((state: RootState) => state.rooms.items);
+  const staff = useSelector((state: RootState) => state.staff.items);
+  const bookings = useSelector((state: RootState) => state.bookings.items);
 
-            {/* Mesh Background */}
-            <div className="absolute top-[-20%] left-[-10%] h-[800px] w-[800px] rounded-full bg-amber-500/5 blur-[130px] pointer-events-none animate-pulse" />
-            <div className="absolute bottom-[-20%] right-[-10%] h-[800px] w-[800px] rounded-full bg-indigo-500/5 blur-[130px] pointer-events-none animate-pulse delay-700" />
+  useEffect(() => {
+    dispatch(fetchRooms());
+    dispatch(fetchStaff());
+    dispatch(fetchBookings());
+    dispatch(fetchAllUsers());
+  }, [dispatch]);
 
-            {/* Sidebar */}
-            <aside className="z-20 w-80 glass-sidebar flex flex-col p-10 space-y-12 bg-white/10 backdrop-blur-3xl border-r border-slate-100">
-                <Link href="/" className="flex items-center gap-4 px-2 group">
-                    <div className="h-12 w-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.2)] group-hover:rotate-12 group-hover:scale-110 transition-all duration-700">
-                        <Activity className="text-white" size={24} />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-2xl font-bold tracking-tight text-slate-900 leading-none">LuxeStay</span>
-                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-1">Management Hub</span>
-                    </div>
-                </Link>
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
 
-                <nav className="flex-1 space-y-3">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            type="button"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab(tab.id as TabType);
-                            }}
-                            className={`w-full flex items-center gap-5 px-6 py-5 rounded-[2rem] text-[11px] font-bold uppercase tracking-widest transition-all group cursor-pointer ${
-                                activeTab === tab.id 
-                                    ? 'nav-active text-amber-600' 
-                                    : 'text-white hover:text-white hover:bg-white/10 border-2 border-transparent'
-                            }`}
-                        >
-                            <tab.icon size={22} className={activeTab === tab.id ? 'text-amber-500' : 'text-white/70 group-hover:text-white'} />
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
+  // Room handlers
+  const handleSaveRoom = async (roomData: Partial<Room>) => {
+    if (selectedRoom) {
+      await dispatch(updateRoom({ ...selectedRoom, ...roomData } as Room));
+      showToast('Suite updated successfully.');
+    } else {
+      await dispatch(
+        addRoom({
+          number: roomData.number || '100',
+          type: roomData.type || 'Deluxe',
+          price: roomData.price || 20000,
+          status: roomData.status || 'available',
+          capacity: roomData.capacity || 2,
+          amenities: roomData.amenities || ['Terrace'],
+          description: roomData.description,
+        })
+      );
+      showToast('New suite registered successfully.');
+    }
+  };
 
-                <div className="pt-10 border-t border-slate-100">
-                    <Link href="/" onClick={() => dispatch(logout())} className="w-full flex items-center gap-5 px-6 py-5 rounded-[2rem] text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all">
-                        <LogOut size={22} />
-                        Logout Session
-                    </Link>
-                </div>
-            </aside>
+  const handleDeleteRoom = async (id: string) => {
+    if (confirm('Are you sure you want to remove this suite from inventory?')) {
+      await dispatch(deleteRoom(id));
+      showToast('Suite removed from inventory.');
+    }
+  };
 
-            {/* Content Area */}
-            <section className="flex-1 flex flex-col h-screen overflow-y-auto z-10 p-12 bg-[#fcfdfe]">
-                <header className="flex items-center justify-between mb-12">
-                    <div className="space-y-2">
-                        <h1 className="text-5xl font-bold tracking-tight text-slate-900 leading-none uppercase">
-                            {activeTab} Management
-                        </h1>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                            Property Oversight & Operational Command
-                        </p>
-                    </div>
+  // Staff handlers
+  const handleSaveStaff = async (staffData: Partial<Staff>) => {
+    if (selectedStaff) {
+      await dispatch(updateStaff({ ...selectedStaff, ...staffData } as Staff));
+      showToast('Staff credentials updated.');
+    } else {
+      await dispatch(
+        addStaff({
+          name: staffData.name || '',
+          email: staffData.email || '',
+          role: staffData.role || 'Receptionist',
+          shift: staffData.shift || 'Morning',
+          status: staffData.status || 'Active',
+        })
+      );
+      showToast('New staff member on-boarded.');
+    }
+  };
 
-                    <div className="flex items-center gap-8 relative">
-                        <button 
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className="flex items-center gap-4 bg-white px-8 py-4 rounded-[1.5rem] shadow-sm border border-slate-100 hover:border-amber-500/30 active:scale-95 transition-all text-left group"
-                        >
-                            <BellRing size={20} className="text-amber-500 group-hover:animate-bounce" />
-                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Alerts</span>
-                            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                        </button>
+  const handleDeleteStaff = async (id: string) => {
+    if (confirm('Are you sure you want to off-board this staff member?')) {
+      await dispatch(deleteStaff(id));
+      showToast('Staff member record archived.');
+    }
+  };
 
-                        {showNotifications && (
-                            <div className="absolute top-20 right-0 w-96 bg-white rounded-[2.5rem] p-8 z-50 animate-in fade-in slide-in-from-top-4 duration-500 shadow-xl border border-slate-100">
-                                <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-6 px-4">Recent Notifications</h4>
-                                <div className="space-y-4">
-                                    {[
-                                        { title: 'Booking Updated', time: '2m ago', icon: CheckCircle2, color: 'text-amber-500', tab: 'reservations' },
-                                        { title: 'Low Inventory', time: '15m ago', icon: AlertCircle, color: 'text-red-500', tab: 'inventory' },
-                                        { title: 'Staff Shift Start', time: '1h ago', icon: Users, color: 'text-blue-500', tab: 'staff' }
-                                    ].map((note, i) => (
-                                        <div 
-                                            key={i} 
-                                            onClick={() => {
-                                                setActiveTab(note.tab as TabType);
-                                                setShowNotifications(false);
-                                            }}
-                                            className="flex gap-4 p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all cursor-pointer group border border-transparent hover:border-slate-100"
-                                        >
-                                            <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-all">
-                                                <note.icon size={18} className={note.color} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-slate-900 uppercase group-hover:text-amber-600 transition-colors">{note.title}</p>
-                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">{note.time}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button className="w-full mt-8 py-4 rounded-[1.2rem] bg-slate-50 border border-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-slate-900 hover:bg-slate-100 transition-all">
-                                    Clear All
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </header>
+  // KPIs
+  const occupiedCount = useMemo(() => rooms.filter((r) => r.status === 'occupied').length, [rooms]);
+  const occupancyPercent = Math.round((occupiedCount / Math.max(1, rooms.length)) * 100);
+  const activeStaffCount = useMemo(() => staff.filter((s) => s.status === 'Active').length, [staff]);
+  const totalRevenue = useMemo(
+    () =>
+      bookings
+        .filter((b) => ['confirmed', 'checked_in', 'checked_out'].includes(b.status))
+        .reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0),
+    [bookings]
+  );
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-                    {stats.map((stat, idx) => (
-                        <TiltCard key={stat.label}>
-                            <motion.button 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                                type="button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    stat.onClick();
-                                }}
-                                className="bg-white border-2 border-slate-100 rounded-[2.5rem] p-8 transition-all active:scale-95 text-left group w-full hover:shadow-xl shadow-sm h-full cursor-pointer"
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className={`h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-sm group-hover:border-amber-500 transition-all duration-500`}>
-                                        <stat.icon size={24} className={stat.color} />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">{stat.label}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-4xl font-bold text-slate-900 tracking-tight leading-none">{stat.value}</span>
-                                    <div className="mt-5 h-1.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                                        <div className={`h-full ${stat.color === 'text-amber-500' ? 'bg-amber-500' : 'bg-blue-500'} rounded-full transition-all duration-[2000ms]`} style={{ width: `${stat.progress}%` }} />
-                                    </div>
-                                </div>
-                            </motion.button>
-                        </TiltCard>
-                    ))}
-                </div>
-
-                <AnimatePresence mode="wait">
-                    <motion.div 
-                        key={activeTab}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex-1 bg-white rounded-[3rem] p-12 flex flex-col min-h-[700px] mb-12 border-2 border-slate-100 shadow-sm relative overflow-hidden"
-                    >
-                        <div className="mb-10 flex items-center justify-between relative z-10">
-                            <div className="space-y-1">
-                                 <h2 className="text-3xl font-bold text-slate-900 tracking-tight uppercase leading-none">{tabs.find(t => t.id === activeTab)?.label} Manager</h2>
-                                 <div className="h-1.5 w-16 bg-amber-500 rounded-full" />
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar">
-                            {activeTab === 'inventory' && <AdminRoomTable rooms={rooms.items} />}
-                            {activeTab === 'staff' && <AdminStaffTable staff={staff.items} />}
-                            {activeTab === 'reservations' && <AdminReservationTable bookings={bookings.items} />}
-                            {activeTab === 'reports' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 py-6">
-                                    <button 
-                                        onClick={() => { setReportType('financial'); setIsReportModalOpen(true); }}
-                                        className="p-12 rounded-[3.5rem] bg-white border-2 border-slate-100 flex flex-col space-y-10 shadow-sm hover:shadow-xl hover:border-blue-500/20 transition-all text-left group overflow-hidden relative"
-                                    >
-                                        <div className="flex items-center justify-between w-full relative z-10">
-                                            <div className="flex items-center gap-6">
-                                                <div className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center text-blue-500 group-hover:scale-110 transition-all duration-500">
-                                                    <BarChart3 size={28} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight group-hover:text-blue-500 transition-colors uppercase">Financial Report</h3>
-                                                    <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mt-1">Monthly Earnings & Budget Overview</p>
-                                                </div>
-                                            </div>
-                                            <ChevronRight size={24} className="text-slate-200 group-hover:text-blue-500 group-hover:translate-x-2 transition-all duration-500" />
-                                        </div>
-                                        <div className="space-y-6 w-full relative z-10">
-                                            {[
-                                                { label: 'Total Sales', value: '₹84.2k', progress: 75, color: 'bg-blue-500' },
-                                                { label: 'Expenses', value: '₹12.8k', progress: 22, color: 'bg-red-500' },
-                                                { label: 'Net Profit', value: '₹71.4k', progress: 88, color: 'bg-green-500' }
-                                            ].map(item => (
-                                                <div key={item.label} className="space-y-3">
-                                                    <div className="flex justify-between items-end">
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.label}</span>
-                                                        <span className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{item.value}</span>
-                                                    </div>
-                                                    <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                                                        <div className={`h-full ${item.color} rounded-full transition-all duration-[1500ms] shadow-sm`} style={{ width: `${item.progress}%` }} />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </button>
-
-                                    <button 
-                                        onClick={() => { setReportType('growth'); setIsReportModalOpen(true); }}
-                                        className="p-12 rounded-[3.5rem] bg-white border-2 border-slate-100 flex flex-col space-y-10 shadow-sm hover:shadow-xl hover:border-indigo-500/20 transition-all text-left group overflow-hidden relative"
-                                    >
-                                        <div className="flex items-center justify-between w-full relative z-10">
-                                            <div className="flex items-center gap-6">
-                                                <div className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-all duration-500">
-                                                    <TrendingUp size={28} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-2xl font-bold text-slate-900 tracking-tight group-hover:text-indigo-500 transition-colors uppercase">Growth Insights</h3>
-                                                    <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mt-1">Predictive Occupancy & Marketing</p>
-                                                </div>
-                                            </div>
-                                            <ChevronRight size={24} className="text-slate-200 group-hover:text-indigo-500 group-hover:translate-x-2 transition-all duration-500" />
-                                        </div>
-                                        <div className="flex-1 grid grid-cols-2 gap-6 w-full relative z-10">
-                                            {[
-                                                { label: 'Fill Rate', value: '92%', detail: '+14% vs Last Year', color: 'text-blue-500' },
-                                                { label: 'Customer Rating', value: '4.8', detail: 'Market Avg 3.2', color: 'text-indigo-500' },
-                                                { label: 'Return Guests', value: '78%', detail: 'Strong Loyalty', color: 'text-green-500' },
-                                                { label: 'Next Month Est.', value: '₹140k', detail: 'Projected Growth', color: 'text-blue-500' }
-                                            ].map(item => (
-                                                <div key={item.label} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-between transition-all hover:bg-white shadow-sm hover:shadow-md">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{item.label}</span>
-                                                    <div className="mt-4">
-                                                        <p className={`text-3xl font-bold ${item.color} tracking-tight leading-none`}>{item.value}</p>
-                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">{item.detail}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                </AnimatePresence>
-            </section>
-
-            <ReportDetailModal 
-                isOpen={isReportModalOpen} 
-                onClose={() => setIsReportModalOpen(false)} 
-                type={reportType} 
-            />
-        </main>
+  // Filters
+  const filteredRooms = useMemo(() => {
+    return rooms.filter(
+      (r) =>
+        r.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.type?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-}
+  }, [rooms, searchQuery]);
 
+  const filteredStaff = useMemo(() => {
+    return staff.filter(
+      (s) =>
+        s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.role?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [staff, searchQuery]);
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(
+      (b) =>
+        b.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(b.id).includes(searchQuery) ||
+        b.roomNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [bookings, searchQuery]);
+
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.role?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [allUsers, searchQuery]);
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    await dispatch(updateUserRole({ id: userId, role: newRole }));
+    showToast(`Role updated to ${newRole.toUpperCase()}. User will automatically route to their authorized portal.`);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm('Are you sure you want to delete this user account?')) {
+      await dispatch(deleteUserAccount(userId));
+      showToast('User account removed.');
+    }
+  };
+
+  const navItems = [
+    {
+      id: 'inventory',
+      label: 'Suites & Rooms',
+      icon: BedDouble,
+      badge: rooms.length,
+      isActive: activeTab === 'inventory',
+      onClick: () => setActiveTab('inventory'),
+    },
+    {
+      id: 'staff',
+      label: 'Staff Roster',
+      icon: Users,
+      badge: staff.length,
+      isActive: activeTab === 'staff',
+      onClick: () => setActiveTab('staff'),
+    },
+    {
+      id: 'reservations',
+      label: 'Guest Records',
+      icon: CalendarCheck,
+      badge: bookings.length,
+      isActive: activeTab === 'reservations',
+      onClick: () => setActiveTab('reservations'),
+    },
+    {
+      id: 'users',
+      label: 'Access & Roles',
+      icon: ShieldCheck,
+      badge: allUsers.length,
+      isActive: activeTab === 'users',
+      onClick: () => setActiveTab('users'),
+    },
+    {
+      id: 'reports',
+      label: 'Executive Insights',
+      icon: BarChart3,
+      isActive: activeTab === 'reports',
+      onClick: () => {
+        setReportType('financial');
+        setIsReportModalOpen(true);
+      },
+    },
+  ];
+
+  return (
+    <PortalShell
+      requiredRole="admin"
+      title="Executive Administration"
+      subtitle="Hotel management console: inventory control, staff directory, guest reservations, and yield analytics."
+      navItems={navItems}
+      activeNavId={activeTab}
+      actions={
+        activeTab === 'inventory' ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedRoom(null);
+              setIsRoomModalOpen(true);
+            }}
+            className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
+          >
+            <Plus size={15} /> Add New Suite
+          </button>
+        ) : activeTab === 'staff' ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedStaff(null);
+              setIsStaffModalOpen(true);
+            }}
+            className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
+          >
+            <Plus size={15} /> Add Staff Member
+          </button>
+        ) : activeTab === 'users' ? (
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs">
+            <ShieldCheck size={16} className="text-amber-600" />
+            <span>{allUsers.length} Registered Accounts</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setReportType('financial');
+              setIsReportModalOpen(true);
+            }}
+            className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
+          >
+            <BarChart3 size={15} /> Generate Report
+          </button>
+        )
+      }
+    >
+      {/* Toast Alert */}
+      {toastMsg && (
+        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-3">
+          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* KPI Cards: fluidly fits small laptops up to large screens */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <StatCard
+          label="Occupancy Rate"
+          value={`${occupancyPercent}%`}
+          icon={PieChart}
+          change={`${occupiedCount} / ${rooms.length} Suites`}
+          changeType="positive"
+          onClick={() => {
+            setReportType('growth');
+            setIsReportModalOpen(true);
+          }}
+        />
+        <StatCard
+          label="Total Inventory"
+          value={rooms.length}
+          icon={BedDouble}
+          change="Live Keys"
+          changeType="neutral"
+          onClick={() => setActiveTab('inventory')}
+        />
+        <StatCard
+          label="Gross Lodging Folio"
+          value={`₹${totalRevenue.toLocaleString()}`}
+          icon={CreditCard}
+          change="Audited YTD"
+          changeType="positive"
+          onClick={() => {
+            setReportType('financial');
+            setIsReportModalOpen(true);
+          }}
+        />
+        <StatCard
+          label="Active Staff on Shift"
+          value={`${activeStaffCount} / ${staff.length}`}
+          icon={Users}
+          change="Roster 100%"
+          changeType="positive"
+          onClick={() => setActiveTab('staff')}
+        />
+      </div>
+
+      {/* ────────────────── TAB 1: SUITES INVENTORY ────────────────── */}
+      {activeTab === 'inventory' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+                Suites & Room Inventory
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                Manage room keys, pricing per night, guest capacity, and maintenance status.
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search room or type..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-5 font-bold">Suite Preview</th>
+                    <th className="py-3.5 px-5 font-bold">Suite No.</th>
+                    <th className="py-3.5 px-5 font-bold">Category</th>
+                    <th className="py-3.5 px-5 font-bold">Rate / Night</th>
+                    <th className="py-3.5 px-5 font-bold">Capacity</th>
+                    <th className="py-3.5 px-5 font-bold">Status</th>
+                    <th className="py-3.5 px-5 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredRooms.map((room) => (
+                    <tr key={room.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-5">
+                        <div
+                          onClick={() => {
+                            setSelectedRoom(room);
+                            setIsRoomModalOpen(true);
+                          }}
+                          className="w-16 h-12 rounded-xl overflow-hidden bg-slate-100 relative shrink-0 shadow-xs border border-slate-200 group cursor-pointer"
+                          title="Click to preview or change suite image"
+                        >
+                          <Image
+                            src={room.imageUrl || room.image || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80'}
+                            alt={room.name || room.type || 'Suite'}
+                            fill
+                            sizes="64px"
+                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-colors flex items-center justify-center">
+                            <Edit2 size={13} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5 font-bold text-slate-900">#{room.number || room.roomNumber || room.id}</td>
+                      <td className="py-3.5 px-5 font-semibold text-slate-800">{room.type}</td>
+                      <td className="py-3.5 px-5 text-slate-900 font-bold">
+                        ₹{(room.price || 0).toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-5 text-slate-600">{room.capacity || 2} Guests</td>
+                      <td className="py-3.5 px-5">
+                        <StatusBadge status={room.status} />
+                      </td>
+                      <td className="py-3.5 px-5 text-right space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedRoom(room);
+                            setIsRoomModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-600 hover:text-amber-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Suite"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRoom(room.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Suite"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card Stack */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredRooms.map((room) => (
+                <div key={room.id} className="p-4 space-y-3">
+                  <div
+                    onClick={() => {
+                      setSelectedRoom(room);
+                      setIsRoomModalOpen(true);
+                    }}
+                    className="relative h-36 w-full rounded-xl overflow-hidden bg-slate-100 shadow-inner cursor-pointer group"
+                  >
+                    <Image
+                      src={room.imageUrl || room.image || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80'}
+                      alt={room.name || room.type || 'Suite'}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 300px"
+                      className="object-cover"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <StatusBadge status={room.status} />
+                    </div>
+                    <div className="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                      Tap to change photo
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900">Suite #{room.number || room.roomNumber || room.id}</span>
+                      <span className="text-xs text-slate-500 block">{room.type}</span>
+                    </div>
+                    <span className="font-bold text-slate-900 font-display text-base">
+                      ₹{(room.price || 0).toLocaleString()} <span className="text-xs font-normal text-slate-500">/ night</span>
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Capacity: {room.capacity || 2} Guests</span>
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRoom(room);
+                        setIsRoomModalOpen(true);
+                      }}
+                      className="px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
+                    >
+                      Edit Suite & Photo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRoom(room.id)}
+                      className="px-3.5 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 rounded-lg hover:bg-rose-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── TAB 2: STAFF ROSTER ────────────────── */}
+      {activeTab === 'staff' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+                Hospitality Staff Directory
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                Manage Front Desk, Management, and Housekeeping shift assignments.
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search staff name or role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-5 font-bold">Staff Member</th>
+                    <th className="py-3.5 px-5 font-bold">Role / Department</th>
+                    <th className="py-3.5 px-5 font-bold">Shift Schedule</th>
+                    <th className="py-3.5 px-5 font-bold">Status</th>
+                    <th className="py-3.5 px-5 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredStaff.map((member) => (
+                    <tr key={member.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5">
+                        <strong className="block text-slate-900">{member.name}</strong>
+                        <span className="text-xs text-slate-500">{member.email}</span>
+                      </td>
+                      <td className="py-3.5 px-5 text-slate-800 font-semibold">{member.role}</td>
+                      <td className="py-3.5 px-5 text-slate-600">{member.shift} Shift</td>
+                      <td className="py-3.5 px-5">
+                        <StatusBadge status={member.status} />
+                      </td>
+                      <td className="py-3.5 px-5 text-right space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedStaff(member);
+                            setIsStaffModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-600 hover:text-amber-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Staff"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStaff(member.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Staff"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Stack */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredStaff.map((member) => (
+                <div key={member.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <strong className="text-slate-900 block">{member.name}</strong>
+                      <span className="text-xs text-slate-500">{member.role} · {member.shift} Shift</span>
+                    </div>
+                    <StatusBadge status={member.status} />
+                  </div>
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedStaff(member);
+                        setIsStaffModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 rounded-lg"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteStaff(member.id)}
+                      className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 rounded-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── TAB 3: RESERVATIONS ────────────────── */}
+      {activeTab === 'reservations' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+                Master Guest Reservations
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                Comprehensive folio log of all confirmed, in-house, and completed bookings.
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search guest or suite..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-5 font-bold">Booking ID</th>
+                    <th className="py-3.5 px-5 font-bold">Guest Name</th>
+                    <th className="py-3.5 px-5 font-bold">Assigned Suite</th>
+                    <th className="py-3.5 px-5 font-bold">Stay Schedule</th>
+                    <th className="py-3.5 px-5 font-bold">Total Folio</th>
+                    <th className="py-3.5 px-5 font-bold">Status</th>
+                    <th className="py-3.5 px-5 font-bold text-right">Folio Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredBookings.map((b) => (
+                    <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-5 font-bold text-slate-900">#{b.id}</td>
+                      <td className="py-3.5 px-5 font-semibold text-slate-800">{b.guestName}</td>
+                      <td className="py-3.5 px-5 text-slate-700">Suite #{b.roomNumber || b.roomId}</td>
+                      <td className="py-3.5 px-5 text-slate-600">
+                        {b.checkInDate} → {b.checkOutDate} ({b.nights || 1}N)
+                      </td>
+                      <td className="py-3.5 px-5 font-bold text-slate-900 font-display text-base">
+                        ₹{(Number(b.totalPrice) || 0).toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <StatusBadge status={b.status} />
+                      </td>
+                      <td className="py-3.5 px-5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFolioBooking(b)}
+                          className="px-2.5 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg inline-flex items-center gap-1 border border-amber-200 cursor-pointer"
+                        >
+                          <FileText size={12} /> Folio
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Stack */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredBookings.map((b) => (
+                <div key={b.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900 block">{b.guestName}</span>
+                      <span className="text-xs text-slate-500">Suite #{b.roomNumber || b.roomId}</span>
+                    </div>
+                    <StatusBadge status={b.status} />
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>{b.checkInDate} → {b.checkOutDate}</span>
+                    <strong className="text-slate-900">₹{(Number(b.totalPrice) || 0).toLocaleString()}</strong>
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFolioBooking(b)}
+                      className="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg inline-flex items-center gap-1.5 border border-amber-200 cursor-pointer"
+                    >
+                      <FileText size={12} /> Inspect Invoice Folio
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── TAB 4: USER ACCESS & ROLE PERMISSIONS ────────────────── */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+                User Access & Role Permissions
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                Set and modify account privileges. When a user logs in, the system automatically redirects them based on their assigned role.
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search username, email, role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-5 font-bold">User</th>
+                    <th className="py-3.5 px-5 font-bold">Username / Login</th>
+                    <th className="py-3.5 px-5 font-bold">Contact Email</th>
+                    <th className="py-3.5 px-5 font-bold">Assigned Role</th>
+                    <th className="py-3.5 px-5 font-bold">Authorize Role</th>
+                    <th className="py-3.5 px-5 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredUsers.map((u) => {
+                    const isRootAdmin = String(u.id) === '1' || u.username === 'admin';
+                    const role = u.role?.toLowerCase() || 'guest';
+                    return (
+                      <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-5 font-bold text-slate-900 flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs">
+                            {(u.name || u.username || 'U')[0].toUpperCase()}
+                          </div>
+                          <span>{u.name || u.username}</span>
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-700 font-mono text-xs">
+                          {u.username}
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-600">
+                          {u.email || '—'}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                              role === 'admin'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                : role === 'receptionist' || role === 'staff'
+                                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                : 'bg-sky-100 text-sky-900 border border-sky-300'
+                            }`}
+                          >
+                            {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Front Desk' : 'Guest'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <select
+                            disabled={isRootAdmin}
+                            value={role}
+                            onChange={(e) => handleRoleChange(String(u.id), e.target.value)}
+                            className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 disabled:opacity-50 disabled:bg-slate-100 cursor-pointer"
+                          >
+                            <option value="admin">Admin (Executive)</option>
+                            <option value="receptionist">Receptionist (Front Desk)</option>
+                            <option value="guest">Guest (Residence)</option>
+                          </select>
+                        </td>
+                        <td className="py-3.5 px-5 text-right">
+                          {!isRootAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(String(u.id))}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                              title="Delete User"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Stack */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredUsers.map((u) => {
+                const isRootAdmin = String(u.id) === '1' || u.username === 'admin';
+                const role = u.role?.toLowerCase() || 'guest';
+                return (
+                  <div key={u.id} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs">
+                          {(u.name || u.username || 'U')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <strong className="text-slate-900 block text-sm">{u.name || u.username}</strong>
+                          <span className="text-xs text-slate-500 font-mono">{u.username}</span>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          role === 'admin'
+                            ? 'bg-amber-100 text-amber-900'
+                            : role === 'receptionist' || role === 'staff'
+                            ? 'bg-emerald-100 text-emerald-900'
+                            : 'bg-sky-100 text-sky-900'
+                        }`}
+                      >
+                        {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Front Desk' : 'Guest'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                      <span className="text-xs text-slate-500 font-medium">Assign Role:</span>
+                      <select
+                        disabled={isRootAdmin}
+                        value={role}
+                        onChange={(e) => handleRoleChange(String(u.id), e.target.value)}
+                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="receptionist">Receptionist</option>
+                        <option value="guest">Guest</option>
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── MODALS ────────────────── */}
+      <RoomModal
+        isOpen={isRoomModalOpen}
+        onClose={() => setIsRoomModalOpen(false)}
+        onSave={handleSaveRoom}
+        room={selectedRoom}
+      />
+
+      <StaffModal
+        isOpen={isStaffModalOpen}
+        onClose={() => setIsStaffModalOpen(false)}
+        onSave={handleSaveStaff}
+        staff={selectedStaff}
+      />
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        type={reportType}
+        totalRevenue={totalRevenue}
+        totalRooms={rooms.length}
+        occupiedRooms={occupiedCount}
+        totalBookings={bookings.length}
+      />
+
+      <InvoiceModal
+        isOpen={!!selectedFolioBooking}
+        onClose={() => setSelectedFolioBooking(null)}
+        booking={selectedFolioBooking}
+      />
+    </PortalShell>
+  );
+}

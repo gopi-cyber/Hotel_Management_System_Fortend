@@ -1,0 +1,68 @@
+[
+  {
+    "screen": "Landing Page",
+    "status": "pass",
+    "notes": "Hero section, serif typography, gold accents, navigation header, and CTA buttons loaded cleanly",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\01_landing_hero.png"
+  },
+  {
+    "screen": "Login Page",
+    "status": "pass",
+    "notes": "Centred luxury card, username/password inputs, role auto-redirect, no hardcoded credentials leaked",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\02_login_screen.png"
+  },
+  {
+    "screen": "Guest Dashboard",
+    "status": "pass",
+    "notes": "Welcome banner, Smart Mobile Suite Key widget, quick stats, active bookings table, and 3 tab navigation bar visible",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\03_guest_dashboard.png"
+  },
+  {
+    "screen": "Digital Keycard Modal",
+    "status": "pass",
+    "notes": "NFC badge, room numberLX-402, RFID chip simulation, interactive unlock action",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\04_guest_digital_key.png"
+  },
+  {
+    "screen": "Explore Suites & Filters",
+    "status": "pass",
+    "notes": "Filter chips, price slider, sort dropdown, suite cards with HD images and status badges",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\05_guest_explore_suites.png"
+  },
+  {
+    "screen": "Suite Gallery Lightbox",
+    "status": "pass",
+    "notes": "High-res image carousel, active angle thumbnail strip, suite specs and reserve CTA",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\06_guest_suite_gallery.png"
+  },
+  {
+    "screen": "Receptionist Desk",
+    "status": "pass",
+    "notes": "Metric cards (Occupancy, Check-ins, Revenue), Front Desk Walk-In action, Shift controls",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\07_receptionist_overview.png"
+  },
+  {
+    "screen": "Walk-In Booking Modal",
+    "status": "pass",
+    "notes": "Guest name, ID doc verification, room selection dropdown, nights calculation, instant check-in",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\08_receptionist_walkin_modal.png"
+  },
+  {
+    "screen": "Night Audit Theme",
+    "status": "pass",
+    "notes": "Dark charcoal slate background, glowing gold accents, low-glare night desk theme",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\09_receptionist_night_audit.png"
+  },
+  {
+    "screen": "Admin Dashboard",
+    "status": "pass",
+    "notes": "KPI overview cards, Room Management grid with maintenance controls, Staff access management, Financial Report CTA",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\10_admin_portal.png"
+  },
+  {
+    "screen": "SVG Financial Analytics Chart",
+    "status": "pass",
+    "notes": "RevPAR metric, ADR calculation, SVG gradient revenue graph, occupancy bar chart, and printable folio",
+    "screenshotPath": "D:\\Hermes_Project\\clg_project\\screenshots\\inspection\\11_admin_financial_chart.png"
+  }
+]

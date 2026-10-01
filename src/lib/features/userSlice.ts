@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { ENDPOINTS } from '../apiConfig';
 
 export interface User {
     id: string;
@@ -8,25 +9,24 @@ export interface User {
     password?: string;
     role: string;
     name?: string;
+    phone?: string;
 }
 
 interface UserState {
     user: User | null;
+    allUsers: User[];
     isAuthenticated: boolean;
     error: string | null;
+    status: 'idle' | 'loading' | 'succeeded' | 'failed';
 }
-
-import { ENDPOINTS } from '../apiConfig';
 
 const API_URL = ENDPOINTS.USERS;
 
 export const registerUser = createAsyncThunk('user/registerUser', async (userData: Omit<User, 'id'>) => {
-    // Check for duplicate username first
     const checkResponse = await axios.get(`${API_URL}?username=${userData.username}`);
     if (checkResponse.data.length > 0) {
         throw new Error('This username is already taken. Please choose another one.');
     }
-    
     const response = await axios.post(API_URL, userData);
     return response.data;
 });
@@ -41,18 +41,35 @@ export const loginUser = createAsyncThunk('user/loginUser', async (credentials: 
         return authenticatedUser;
     } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
-            throw new Error(err.response?.data?.message || err.message || 'Login service currently unavailable');
+            throw new Error(err.response?.data?.error || err.response?.data?.message || err.message || 'Login service currently unavailable');
         }
         throw new Error(err instanceof Error ? err.message : 'Login service currently unavailable');
     }
+});
+
+export const fetchAllUsers = createAsyncThunk('user/fetchAllUsers', async () => {
+    const response = await axios.get(API_URL);
+    return response.data;
+});
+
+export const updateUserRole = createAsyncThunk('user/updateUserRole', async ({ id, role }: { id: string, role: string }) => {
+    const response = await axios.patch(API_URL, { id, role });
+    return response.data;
+});
+
+export const deleteUserAccount = createAsyncThunk('user/deleteUserAccount', async (id: string) => {
+    await axios.delete(`${API_URL}?id=${id}`);
+    return id;
 });
 
 const userSlice = createSlice({
     name: 'user',
     initialState: {
         user: null,
+        allUsers: [],
         isAuthenticated: false,
         error: null,
+        status: 'idle',
     } as UserState,
     reducers: {
         restoreSession: (state, action: { payload: User }) => {
@@ -69,22 +86,40 @@ const userSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(registerUser.fulfilled, (state) => {
-                // We don't necessarily log them in immediately if the user wants redirect to login first
                 state.error = null;
             })
             .addCase(registerUser.rejected, (state, action) => {
                 state.error = action.error.message || 'Registration failed. Check if server is running.';
+            })
+            .addCase(loginUser.pending, (state) => {
+                state.error = null;
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.user = action.payload;
                 state.isAuthenticated = true;
                 state.error = null;
             })
-            .addCase(loginUser.pending, (state) => {
-                state.error = null;
-            })
             .addCase(loginUser.rejected, (state, action) => {
                 state.error = action.error.message || 'Login failed';
+            })
+            .addCase(fetchAllUsers.fulfilled, (state, action) => {
+                state.allUsers = action.payload;
+            })
+            .addCase(updateUserRole.fulfilled, (state, action) => {
+                const index = state.allUsers.findIndex((u) => String(u.id) === String(action.payload.id));
+                if (index !== -1) {
+                    state.allUsers[index] = action.payload;
+                }
+                // If the updated user is currently logged in, update their session too
+                if (state.user && String(state.user.id) === String(action.payload.id)) {
+                    state.user.role = action.payload.role.toLowerCase();
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('vortex_user', JSON.stringify(state.user));
+                    }
+                }
+            })
+            .addCase(deleteUserAccount.fulfilled, (state, action) => {
+                state.allUsers = state.allUsers.filter((u) => String(u.id) !== String(action.payload));
             });
     },
 });

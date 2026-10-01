@@ -3,12 +3,15 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 export interface Room {
     id: string;
     number: string;
+    roomNumber?: string;
+    name?: string;
     type: string;
     price: number;
     status: 'available' | 'occupied' | 'maintenance';
     amenities: string[];
     capacity: number;
     image?: string;
+    imageUrl?: string;
     description?: string;
     createdAt?: string;
 }
@@ -26,6 +29,8 @@ const API_URL = ENDPOINTS.ROOMS;
 const normalizeRoom = (room: Record<string, unknown>): Room => ({
     id: String(room.id ?? ''),
     number: String(room.number ?? room.roomNumber ?? ''),
+    roomNumber: String(room.number ?? room.roomNumber ?? ''),
+    name: String(room.name ?? room.type ?? 'Luxury Suite'),
     type: String(room.type ?? room.name ?? 'Standard'),
     price: Number(room.price ?? room.pricePerNight ?? 0),
     status: String(room.status ?? 'available').toLowerCase() as Room['status'],
@@ -34,6 +39,7 @@ const normalizeRoom = (room: Record<string, unknown>): Room => ({
         : String(room.amenities ?? '').split(',').map((item) => item.trim()).filter(Boolean),
     capacity: Number(room.capacity ?? 1),
     image: String(room.image ?? room.imageUrl ?? ''),
+    imageUrl: String(room.image ?? room.imageUrl ?? ''),
     description: String(room.description ?? ''),
     createdAt: room.createdAt ? String(room.createdAt) : undefined,
 });

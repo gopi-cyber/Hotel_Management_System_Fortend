@@ -1,253 +1,400 @@
 'use client';
-import { useState } from 'react';
-import { X, ArrowRight, ChevronDown, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-
 import { Room } from '@/lib/features/roomSlice';
+import Modal from '@/components/ui/Modal';
+import { Image as ImageIcon, Sparkles, Check } from 'lucide-react';
 
-export default function AdminRoomModal({ 
-    isOpen, 
-    onClose, 
-    onSave, 
-    room 
-}: { 
-    isOpen: boolean; 
-    onClose: () => void; 
-    onSave: (room: Room) => void; 
-    room?: Room | null 
-}) {
-    const [formData, setFormData] = useState<Room>({
-        id: room?.id || '',
-        number: room?.number || '',
-        type: room?.type || '',
-        price: room?.price || 0,
-        status: (room?.status || 'available') as 'available' | 'occupied' | 'maintenance',
-        amenities: room?.amenities || [],
-        capacity: room?.capacity || 1,
-        description: room?.description || '',
-        image: room?.image || ''
-    });
-
-    const [newAmenity, setNewAmenity] = useState('');
-
-    const addAmenity = () => {
-        if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-            setFormData({
-                ...formData,
-                amenities: [...formData.amenities, newAmenity.trim()]
-            });
-            setNewAmenity('');
-        }
-    };
-
-    const removeAmenity = (index: number) => {
-        setFormData({
-            ...formData,
-            amenities: formData.amenities.filter((_, i) => i !== index)
-        });
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-500">
-            {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl transition-opacity"
-                onClick={onClose}
-            />
-
-            {/* Inline Styles */}
-            <style jsx>{`
-                .glass-modal {
-                    background: #ffffff;
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 50px 100px rgba(0,0,0,0.1);
-                }
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 8px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.05);
-                    border-radius: 20px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.1);
-                }
-            `}</style>
-
-            <div className="glass-modal grid grid-rows-[auto_1fr_auto] w-full max-w-2xl rounded-[4rem] p-12 max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-500 relative bg-white">
-                {/* Header */}
-                <div className="pb-10">
-                    <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                            <h3 className="text-4xl font-bold tracking-tight text-slate-900 uppercase leading-none">
-                                {room ? 'Room Details' : 'New Room'} <span className="text-amber-500">_</span>
-                            </h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-2 italic">Room Categorization System</p>
-                        </div>
-                        <button onClick={onClose} className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all active:scale-95 shadow-sm group">
-                            <X size={28} className="group-hover:rotate-90 transition-transform" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Content Area */}
-                <div className="overflow-y-auto pr-4 space-y-10 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Room Type Name</label>
-                            <input 
-                                type="text" 
-                                value={formData.type}
-                                onChange={(e) => setFormData({...formData, type: e.target.value})}
-                                className="w-full h-16 rounded-[1.5rem] border-2 border-slate-50 bg-slate-50/50 px-8 text-sm font-bold text-slate-900 outline-none focus:border-amber-500/30 focus:bg-white transition-all capitalize italic tracking-wider placeholder:text-slate-200"
-                                placeholder="Royal Suite"
-                            />
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Room Number</label>
-                            <input 
-                                type="text" 
-                                value={formData.number}
-                                onChange={(e) => setFormData({...formData, number: e.target.value})}
-                                className="w-full h-16 rounded-[1.5rem] border-2 border-slate-50 bg-slate-50/50 px-8 text-sm font-bold text-slate-900 outline-none focus:border-amber-500/30 focus:bg-white transition-all italic tracking-[0.2em] placeholder:text-slate-200"
-                                placeholder="101"
-                            />
-                        </div>
-                    </div>
-
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Nightly Rate (₹)</label>
-                            <input 
-                                type="number" 
-                                value={formData.price}
-                                onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
-                                className="w-full h-16 rounded-[1.5rem] border-2 border-slate-50 bg-slate-50/50 px-8 text-sm font-bold text-amber-500 outline-none focus:border-amber-500/30 focus:bg-white transition-all"
-                            />
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Guest Capacity</label>
-                            <input 
-                                type="number" 
-                                value={formData.capacity}
-                                onChange={(e) => setFormData({...formData, capacity: Number(e.target.value)})}
-                                className="w-full h-16 rounded-[1.5rem] border-2 border-slate-50 bg-slate-50/50 px-8 text-sm font-bold text-slate-900 outline-none focus:border-amber-500/30 focus:bg-white transition-all"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Room Status</label>
-                        <div className="relative group">
-                            <select 
-                                value={formData.status}
-                                onChange={(e) => setFormData({...formData, status: e.target.value as 'available' | 'occupied' | 'maintenance'})}
-                                className="w-full h-16 rounded-[1.5rem] border-2 border-slate-50 bg-slate-50/50 px-8 text-sm font-bold text-slate-900 outline-none focus:border-amber-500/30 focus:bg-white transition-all appearance-none cursor-pointer italic tracking-widest uppercase"
-                            >
-                                <option value="available" className="bg-white text-slate-900">AVAILABLE</option>
-                                <option value="occupied" className="bg-white text-slate-900">OCCUPIED / SOLD OUT</option>
-                                <option value="maintenance" className="bg-white text-slate-900">UNDER MAINTENANCE</option>
-                            </select>
-                            <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-focus-within:text-amber-500 transition-colors" size={20} />
-                        </div>
-                    </div>
-
-                    {/* Amenities Management */}
-                    <div className="space-y-6">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Room Amenities</label>
-                        <div className="flex gap-4">
-                            <input 
-                                type="text" 
-                                value={newAmenity}
-                                onChange={(e) => setNewAmenity(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && addAmenity()}
-                                className="flex-1 h-14 rounded-2xl border-2 border-slate-50 bg-slate-50/50 px-8 text-xs font-bold text-slate-900 outline-none focus:border-amber-500/30 transition-all italic tracking-wider placeholder:text-slate-200"
-                                placeholder="Add Amenity (e.g. Free Wi-Fi)"
-                            />
-                            <button 
-                                onClick={addAmenity}
-                                className="h-14 w-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white hover:bg-amber-500 transition-all active:scale-95 shadow-lg"
-                            >
-                                <Plus size={24} />
-                            </button>
-                        </div>
-                        <div className="flex flex-wrap gap-3 min-h-[50px] p-6 rounded-[2rem] bg-slate-50/50 border-2 border-slate-100 border-dashed">
-                            {formData.amenities.map((amenity, index) => (
-                                <div 
-                                    key={index}
-                                    className="flex items-center gap-3 bg-white border border-slate-100 px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase text-slate-400 italic tracking-widest shadow-sm animate-in fade-in zoom-in duration-300 group hover:border-amber-500/30 transition-all hover:text-slate-900"
-                                >
-                                    {amenity}
-                                    <button 
-                                        onClick={() => removeAmenity(index)}
-                                        className="text-slate-200 hover:text-red-500 transition-colors"
-                                    >
-                                        <X size={14} strokeWidth={3} />
-                                    </button>
-                                </div>
-                            ))}
-                            {formData.amenities.length === 0 && (
-                                <p className="text-[10px] text-slate-200 italic font-bold uppercase tracking-widest py-2">No amenities listed yet.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Room Description</label>
-                        <textarea 
-                            value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
-                            className="w-full h-40 rounded-[2.5rem] border-2 border-slate-50 bg-slate-50/50 p-8 text-sm font-bold text-slate-900 outline-none focus:border-amber-500/30 focus:bg-white transition-all resize-none italic leading-relaxed tracking-wider placeholder:text-slate-200"
-                            placeholder="Describe the room features and guest experience..."
-                        />
-                    </div>
-
-                    <div className="space-y-6">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4 font-bold">Room Image URL</label>
-                        {formData.image && (
-                            <div className="h-56 w-full rounded-[2.5rem] overflow-hidden border-4 border-slate-50 shadow-lg mb-4 relative group bg-slate-100">
-                                <Image 
-                                    src={formData.image} 
-                                    alt="Preview" 
-                                    fill
-                                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent opacity-60" />
-                            </div>
-                        )}
-                        <input 
-                            type="url" 
-                            value={formData.image || ''}
-                            onChange={(e) => setFormData({...formData, image: e.target.value})}
-                            className="w-full h-16 rounded-[1.5rem] border-2 border-slate-50 bg-slate-50/50 px-8 text-sm font-bold text-slate-900 outline-none focus:border-amber-500/30 focus:bg-white transition-all italic tracking-wider placeholder:text-slate-200"
-                            placeholder="https://images.unsplash.com/..."
-                        />
-                        <p className="text-[10px] font-bold text-slate-200 uppercase tracking-[0.2em] ml-4 italic">Paste a direct image URL for the room preview.</p>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="pt-12 flex gap-6">
-                    <button 
-                        onClick={onClose}
-                        className="flex-1 h-18 rounded-[2rem] bg-slate-50 border border-slate-100 text-[10px] font-bold uppercase tracking-[0.4em] text-slate-300 hover:text-slate-900 transition-all shadow-sm active:scale-95"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={() => onSave(formData)}
-                        className="flex-1 h-20 rounded-[2.5rem] bg-amber-500 text-[11px] font-bold uppercase tracking-[0.4em] text-white shadow-[0_20px_50px_rgba(245,158,11,0.2)] hover:bg-amber-400 active:scale-95 transition-all flex items-center justify-center gap-4"
-                    >
-                        Save Changes <ArrowRight size={20} />
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+interface RoomModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (room: Partial<Room>) => Promise<void>;
+  room?: Room | null;
 }
+
+const sampleImages = [
+  {
+    name: 'Ocean Grand Deluxe',
+    url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    name: 'Garden Sanctuary Villa',
+    url: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    name: 'Presidential Penthouse',
+    url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    name: 'Executive King Suite',
+    url: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1000&q=80',
+  },
+];
+
+export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
+  const [number, setNumber] = useState('');
+  const [type, setType] = useState('Deluxe Suite');
+  const [price, setPrice] = useState('22000');
+  const [capacity, setCapacity] = useState('2');
+  const [status, setStatus] = useState<'available' | 'occupied' | 'maintenance'>('available');
+  const [description, setDescription] = useState('');
+  const [image, setImage] = useState(sampleImages[0].url);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (room) {
+      setNumber(room.number || room.roomNumber || '');
+      setType(room.type || 'Deluxe Suite');
+      setPrice(String(room.price || '22000'));
+      setCapacity(String(room.capacity || '2'));
+      setStatus(room.status || 'available');
+      setDescription(room.description || '');
+      setImage(room.image || room.imageUrl || sampleImages[0].url);
+    } else {
+      setNumber('');
+      setType('Deluxe Suite');
+      setPrice('22000');
+      setCapacity('2');
+      setStatus('available');
+      setDescription('');
+      setImage(sampleImages[0].url);
+    }
+  }, [room, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        ...(room ? { id: room.id } : {}),
+        number,
+        roomNumber: number,
+        type,
+        name: type,
+        price: Number(price),
+        capacity: Number(capacity),
+        status,
+        description,
+        image,
+        imageUrl: image,
+        amenities: ['Terrace', 'Ocean View', 'Butler'],
+      });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const [imageSourceMode, setImageSourceMode] = useState<'upload' | 'preset' | 'url'>('upload');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, WebP)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      if (uploadEvent.target?.result) {
+        setImage(uploadEvent.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={room ? `Edit Suite #${room.number || room.id}` : 'Add New Luxury Suite'}
+      subtitle="Configure suite specifications, rates, photography, and operational status."
+      maxWidth="xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Live Image Preview & Selector */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Suite Photography
+            </label>
+            <div className="flex bg-slate-100 p-0.5 rounded-lg text-[11px] font-bold">
+              <button
+                type="button"
+                onClick={() => setImageSourceMode('upload')}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  imageSourceMode === 'upload' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                }`}
+              >
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageSourceMode('preset')}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  imageSourceMode === 'preset' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                }`}
+              >
+                Presets
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageSourceMode('url')}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  imageSourceMode === 'url' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                }`}
+              >
+                Web URL
+              </button>
+            </div>
+          </div>
+          
+          {/* Dropzone & Preview Container */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => {
+              if (imageSourceMode === 'upload' && fileInputRef.current) {
+                fileInputRef.current.click();
+              }
+            }}
+            className={`relative h-48 w-full rounded-2xl overflow-hidden border-2 transition-all group ${
+              isDragging
+                ? 'border-amber-500 bg-amber-50/50 scale-[1.01]'
+                : 'border-slate-200 bg-slate-100'
+            } ${imageSourceMode === 'upload' ? 'cursor-pointer hover:border-amber-400' : ''}`}
+          >
+            {image ? (
+              <>
+                <Image
+                  src={image}
+                  alt="Suite Preview"
+                  fill
+                  unoptimized={image.startsWith('data:')}
+                  sizes="(max-width: 768px) 100vw, 550px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-400/30 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 z-10">
+                  <Sparkles size={12} /> Live Preview
+                </div>
+                {imageSourceMode === 'upload' && (
+                  <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-4 text-center">
+                    <p className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-full shadow-md">
+                      Click or Drag New Image to Replace
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="h-full w-full flex flex-col items-center justify-center text-slate-500 p-4 text-center">
+                <ImageIcon size={36} className="text-slate-400 mb-2" />
+                <span className="text-xs font-bold text-slate-800">
+                  Click to Browse Photo or Drag & Drop Here
+                </span>
+                <span className="text-[11px] text-slate-400 mt-1">Supports PNG, JPG, WebP up to 10MB</span>
+              </div>
+            )}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                handleFileUpload(e.target.files[0]);
+              }
+            }}
+          />
+
+          {/* Conditional Controls by Tab */}
+          {imageSourceMode === 'upload' && (
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl cursor-pointer transition-colors"
+              >
+                Choose Photo from Computer / Phone
+              </button>
+              {image && (
+                <button
+                  type="button"
+                  onClick={() => setImage('')}
+                  className="text-xs text-rose-600 hover:text-rose-700 font-medium cursor-pointer"
+                >
+                  Clear Photo
+                </button>
+              )}
+            </div>
+          )}
+
+          {imageSourceMode === 'preset' && (
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                Select Luxury Preset:
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {sampleImages.map((s) => {
+                  const isSelected = image === s.url;
+                  return (
+                    <button
+                      key={s.name}
+                      type="button"
+                      onClick={() => setImage(s.url)}
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-left truncate border transition-all cursor-pointer flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="truncate">{s.name}</span>
+                      {isSelected && <Check size={12} className="shrink-0 ml-1" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {imageSourceMode === 'url' && (
+            <div className="pt-1">
+              <input
+                type="url"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="Paste direct image URL (https://...)"
+                className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 bg-slate-50 text-slate-900 outline-none focus:border-amber-600"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Basic Suite Info */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Suite Number
+            </label>
+            <input
+              type="text"
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+              required
+              placeholder="e.g. 501"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Category
+            </label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+            >
+              <option value="Deluxe Suite">Deluxe Suite</option>
+              <option value="Garden Villa">Garden Villa</option>
+              <option value="Ocean Grand Deluxe">Ocean Grand Deluxe</option>
+              <option value="Presidential Penthouse">Presidential Penthouse</option>
+              <option value="Executive">Executive</option>
+              <option value="Standard">Standard</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Rate per Night (₹)
+            </label>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Max Guests
+            </label>
+            <input
+              type="number"
+              value={capacity}
+              min="1"
+              max="10"
+              onChange={(e) => setCapacity(e.target.value)}
+              required
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Status
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as 'available' | 'occupied' | 'maintenance')}
+            className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 capitalize"
+          >
+            <option value="available">Available</option>
+            <option value="occupied">Occupied</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Description
+          </label>
+          <textarea
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Key architectural highlights and view..."
+            className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 text-slate-900 font-medium"
+          />
+        </div>
+
+        <div className="pt-3 border-t border-slate-200 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-gold py-2 px-5 text-xs inline-flex items-center gap-2 cursor-pointer"
+          >
+            {isSubmitting ? 'Saving...' : room ? 'Update Suite' : 'Create Suite'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+export default RoomModal;

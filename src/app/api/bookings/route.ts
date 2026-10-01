@@ -66,11 +66,11 @@ export async function POST(request: NextRequest) {
     roomType: room.type,
     checkInDate: body.checkInDate || new Date().toISOString().split('T')[0],
     checkOutDate: body.checkOutDate || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-    nights: Number(body.nights) || 2,
+    nights: Number(body.nights) || 1,
     guestsCount: Number(body.guestsCount) || 1,
-    totalAmount: (Number(body.nights) || 2) * room.pricePerNight,
-    status: 'CONFIRMED',
-    paymentStatus: 'PAID',
+    totalAmount: Number(body.totalPrice) || Number(body.totalAmount) || ((Number(body.nights) || 1) * room.pricePerNight),
+    status: body.status ? String(body.status).toUpperCase() : 'CONFIRMED',
+    paymentStatus: body.paymentStatus || 'PAID',
     specialRequests: body.specialRequests || ''
   };
   fallbackData.bookings.push(newBooking);

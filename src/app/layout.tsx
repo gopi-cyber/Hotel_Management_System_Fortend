@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import "./faith.css";
 import StoreProvider from "@/lib/StoreProvider";
 
 const bodyFont = DM_Sans({
@@ -14,15 +13,27 @@ const displayFont = Cormorant_Garamond({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0f172a",
+};
+
 export const metadata: Metadata = {
-  title: "LuxeStay | Hotels & Residences",
-  description: "Thoughtful stays, beautiful spaces and personal hospitality at LuxeStay Hotels & Residences.",
-  keywords: ["hotel", "luxury stay", "rooms", "hospitality", "reservations"],
+  title: "LuxeStay | Luxury Hotels & Residences",
+  description: "Exquisite stays, Michelin-inspired dining, and bespoke hospitality at LuxeStay Hotels & Residences.",
+  keywords: ["hotel", "luxury resort", "suites", "hospitality", "reservations", "hotel management"],
   authors: [{ name: "LuxeStay Hospitality" }],
-  openGraph: {
-    title: "LuxeStay | Hotels & Residences",
-    description: "Thoughtful stays, beautiful spaces and personal hospitality.",
-    type: "website",
+  applicationName: "LuxeStay",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LuxeStay",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
@@ -36,13 +47,10 @@ export default function RootLayout({
       lang="en"
       className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#faf8f5] text-[#0f172a] selection:bg-[#c59b27] selection:text-white">
         <StoreProvider>
-          <div className="cinematic-bg-container" />
-          <div className="cinematic-overlay" />
           {children}
         </StoreProvider>
-
       </body>
     </html>
   );

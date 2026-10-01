@@ -1,78 +1,113 @@
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchRooms, Room } from '@/lib/features/roomSlice';
+import { fetchRooms, Room, updateRoom } from '@/lib/features/roomSlice';
 import { fetchUserBookings, Booking } from '@/lib/features/bookingSlice';
 import { RootState, AppDispatch } from '@/lib/store';
-import { Calendar, Search, Bookmark, Clock, User, Hotel, Download, AlertCircle, CheckCircle2, Home, Compass, MapPin, Star, CreditCard, LogOut } from 'lucide-react';
+import { formatPrice } from '@/lib/features/settingsSlice';
+import {
+  Calendar,
+  Search,
+  CheckCircle2,
+  AlertCircle,
+  Compass,
+  MapPin,
+  Star,
+  CreditCard,
+  BedDouble,
+  Users,
+  ArrowRight,
+  Clock,
+  Sparkles,
+  BellRing,
+  FileText,
+  ShieldCheck,
+  Check,
+  KeyRound,
+  Image as ImageIcon,
+  SlidersHorizontal,
+  ArrowUpDown,
+} from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ParticleBackground } from '@/components/ParticleBackground';
-import { TiltCard } from '@/components/TiltCard';
-import { logout, restoreSession, User as SessionUser } from '@/lib/features/userSlice';
+import PortalShell from '@/components/PortalShell';
+import Modal from '@/components/ui/Modal';
+import StatusBadge from '@/components/ui/StatusBadge';
+import InvoiceModal from '@/components/ui/InvoiceModal';
+import DigitalKeyModal from '@/components/Guest/DigitalKeyModal';
+import RoomGalleryModal from '@/components/Guest/RoomGalleryModal';
 
-export default function Dashboard() {
+export default function GuestDashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
-  
+  const user = useSelector((state: RootState) => state.user.user);
+  const currency = useSelector((state: RootState) => state.settings.currency);
   const { items: rooms, status: roomsStatus } = useSelector((state: RootState) => state.rooms);
   const { items: myBookings, status: bookingsStatus } = useSelector((state: RootState) => state.bookings);
-  const user = useSelector((state: RootState) => state.user.user);
 
-  const [activeTab, setActiveTab] = useState('All');
-  const [activeView, setActiveView] = useState<'home' | 'discover' | 'stays' | 'ledger'>('home');
+  const [activeTab, setActiveTab] = useState<'stays' | 'discover'>('stays');
+  const [roomFilter, setRoomFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [checkInDate, setCheckInDate] = useState('');
-  const [checkOutDate, setCheckOutDate] = useState('');
-  const [guests, setGuests] = useState(1);
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Advanced Filter & Sort states
+  const [maxPrice, setMaxPrice] = useState(60000);
+  const [sortBy, setSortBy] = useState<'recommended' | 'price-asc' | 'price-desc' | 'capacity'>('recommended');
+  const [selectedAmenity, setSelectedAmenity] = useState<string>('all');
+
+  // Modals
+  const [selectedKeyBooking, setSelectedKeyBooking] = useState<Booking | null>(null);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [selectedGalleryRoom, setSelectedGalleryRoom] = useState<Room | null>(null);
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  
+  // Booking dates
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const tomorrowStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }, []);
+
+  const [checkInDate, setCheckInDate] = useState(todayStr);
+  const [checkOutDate, setCheckOutDate] = useState(tomorrowStr);
+  const [guestsCount, setGuestsCount] = useState(2);
+
+  // Booking Modal & Payment
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'arrival'>('upi');
+  const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
+  const [bookingSuccess, setBookingSuccess] = useState('');
+  const [bookingError, setBookingError] = useState('');
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      const saved = sessionStorage.getItem('vortex_user');
-      if (saved) {
-        try {
-          dispatch(restoreSession(JSON.parse(saved) as SessionUser));
-          return;
-        } catch {
-          sessionStorage.removeItem('vortex_user');
-        }
-      }
-      router.replace('/login');
-      return;
+    if (user?.id) {
+      dispatch(fetchRooms());
+      dispatch(fetchUserBookings(user.id));
     }
-    if (user.role !== 'guest') {
-      router.replace(user.role === 'admin' ? '/admin' : '/receptionist');
-      return;
-    }
-    dispatch(fetchRooms());
-    dispatch(fetchUserBookings(user.id));
-  }, [dispatch, user, router]);
+  }, [dispatch, user]);
 
-  const handleRoomAction = (room: Room) => {
+  const handleStartBooking = (room: Room) => {
+    setBookingError('');
     if (!checkInDate || !checkOutDate) {
-      setError('Please select check-in and check-out dates first');
+      setBookingError('Please specify check-in and check-out dates.');
       return;
     }
     if (new Date(checkOutDate) <= new Date(checkInDate)) {
-      setError('Check-out must be after check-in');
+      setBookingError('Check-out date must be strictly after check-in date.');
       return;
     }
     setSelectedRoom(room);
-    setIsModalOpen(true);
+    setIsBookingModalOpen(true);
   };
 
-  const handleBookConfirm = async () => {
+  const handleConfirmReservation = async () => {
     if (!selectedRoom || !user) return;
+    setIsConfirming(true);
 
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
-    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
     const totalPrice = nights * selectedRoom.price;
 
     try {
@@ -87,616 +122,666 @@ export default function Dashboard() {
           checkOutDate,
           totalPrice,
           nights,
+          paymentMethod: paymentMethod === 'upi' ? 'Instant UPI / GPay' : paymentMethod === 'card' ? 'Encrypted Luxury Card' : 'Pay at Front Desk Check-in',
           status: 'confirmed',
         }),
       });
 
       if (response.ok) {
-        setSuccess('Booking confirmed successfully!');
-        setIsModalOpen(false);
+        setBookingSuccess(`Your reservation for ${selectedRoom.name || selectedRoom.type} has been confirmed!`);
+        setIsBookingModalOpen(false);
         await dispatch(fetchUserBookings(user.id));
-        
-        // Update room status
-        await fetch('/api/rooms', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...selectedRoom,
-            status: 'occupied',
-          }),
-        });
-        await dispatch(fetchRooms());
-
-        setTimeout(() => {
-          setSuccess('');
-          setCheckInDate('');
-          setCheckOutDate('');
-        }, 2000);
+        // Update room status to occupied in state
+        await dispatch(updateRoom({ ...selectedRoom, status: 'occupied' }));
+        setActiveTab('stays');
+        setTimeout(() => setBookingSuccess(''), 5000);
       } else {
-        setError('Failed to create booking');
+        setBookingError('Unable to complete reservation. Please try again.');
       }
     } catch {
-      setError('An error occurred while booking');
+      setBookingError('Service temporarily offline. Please try again.');
+    } finally {
+      setIsConfirming(false);
     }
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    try {
-      const response = await fetch('/api/bookings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: bookingId,
-          status: 'cancelled',
-        }),
-      });
+  // Advanced Filtered & Sorted rooms
+  const filteredRooms = useMemo(() => {
+    const list = rooms.filter((r) => {
+      const matchesSearch =
+        (r.name || r.type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.roomNumber && r.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      if (response.ok) {
-        setSuccess('Booking cancelled successfully');
-        await dispatch(fetchUserBookings(user!.id));
-        setTimeout(() => setSuccess(''), 2000);
+      const matchesType = roomFilter === 'All' || r.type.toLowerCase() === roomFilter.toLowerCase();
+      const matchesPrice = (r.price || 0) <= maxPrice;
+
+      // Amenity chips filter
+      let matchesAmenity = true;
+      if (selectedAmenity === 'ocean') {
+        matchesAmenity = (r.name + ' ' + (r.description || '')).toLowerCase().includes('ocean') ||
+          (r.name + ' ' + (r.description || '')).toLowerCase().includes('terrace');
+      } else if (selectedAmenity === 'pool') {
+        matchesAmenity = (r.name + ' ' + (r.description || '')).toLowerCase().includes('pool') ||
+          (r.name + ' ' + (r.description || '')).toLowerCase().includes('villa');
+      } else if (selectedAmenity === 'presidential') {
+        matchesAmenity = (r.name + ' ' + (r.description || '')).toLowerCase().includes('presidential') ||
+          (r.name + ' ' + (r.description || '')).toLowerCase().includes('penthouse') ||
+          r.type.toLowerCase() === 'presidential';
       }
-    } catch {
-      setError('Failed to cancel booking');
-    }
-  };
 
-  const downloadInvoice = (booking: Booking) => {
-    const invoiceContent = `
-    ====================================
-    HOTEL INVOICE
-    ====================================
-    Booking ID: ${booking.id}
-    Guest: ${booking.guestName}
-    Room: ${booking.roomNumber || booking.roomId || 'N/A'}
-    ====================================
-    Check-in: ${booking.checkInDate}
-    Check-out: ${booking.checkOutDate}
-    Nights: ${booking.nights}
-    Rate: ₹${booking.nights > 0 ? (booking.totalPrice / booking.nights).toFixed(2) : '0.00'} per night
-    ====================================
-    TOTAL: ₹${booking.totalPrice}
-    ====================================
-    Status: ${booking.status}
-    ====================================
-    `;
-    
-    const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(invoiceContent));
-    element.setAttribute('download', `invoice_${booking.id}.txt`);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
+      return matchesSearch && matchesType && matchesPrice && matchesAmenity;
+    });
 
-  const allTypes = ['All', ...Array.from(new Set(rooms.map((r: Room) => r.type)))];
+    // Sorting
+    return list.sort((a, b) => {
+      if (sortBy === 'price-asc') return (a.price || 0) - (b.price || 0);
+      if (sortBy === 'price-desc') return (b.price || 0) - (a.price || 0);
+      if (sortBy === 'capacity') return (b.capacity || 2) - (a.capacity || 2);
+      // 'recommended': available rooms first, then by price
+      if (a.status === 'available' && b.status !== 'available') return -1;
+      if (a.status !== 'available' && b.status === 'available') return 1;
+      return 0;
+    });
+  }, [rooms, searchQuery, roomFilter, maxPrice, selectedAmenity, sortBy]);
 
-  const filteredRooms = rooms.filter((r: Room) => {
-    const matchesTab = activeTab === 'All' || r.type === activeTab;
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = r.type.toLowerCase().includes(query) ||
-      r.amenities.some((amenity) => amenity.toLowerCase().includes(query));
-    return matchesTab && matchesSearch;
-  });
+  const navItems = [
+    {
+      id: 'stays',
+      label: 'My Reservations',
+      icon: Calendar,
+      badge: myBookings.length,
+      isActive: activeTab === 'stays',
+      onClick: () => setActiveTab('stays'),
+    },
+    {
+      id: 'discover',
+      label: 'Explore Suites',
+      icon: Compass,
+      isActive: activeTab === 'discover',
+      onClick: () => setActiveTab('discover'),
+    },
+    {
+      id: 'concierge',
+      label: 'In-Room Concierge',
+      icon: BellRing,
+      onClick: () => (window.location.href = '/profile'),
+    },
+  ];
 
   return (
-    <main className="flex min-h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans relative">
-      <ParticleBackground />
-      
-      {/* Mesh Decor */}
-      <div className="absolute top-[-15%] right-[-10%] h-[700px] w-[700px] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-[-15%] left-[-10%] h-[700px] w-[700px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none z-0" />
-
-      {/* Glass Sidebar */}
-      <aside className="z-20 w-80 glass-sidebar flex flex-col p-10 space-y-12 h-screen overflow-y-auto bg-slate-950/80 backdrop-blur-3xl border-r-2 border-white/5">
-        <style jsx>{`
-            .glass-sidebar {
-                border-right: 2px solid rgba(255, 255, 255, 0.05);
-            }
-        `}</style>
-        <Link href="/" className="flex items-center gap-4 px-2 group">
-          <div className="h-12 w-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-700">
-            <Hotel className="text-white" size={24} />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold tracking-tight text-white leading-none">LuxeStay</span>
-            <p className="text-[10px] text-amber-500 uppercase tracking-widest font-bold mt-1">Guest Portal</p>
-          </div>
-        </Link>
-
-        <nav className="flex-1 space-y-2">
-          {[
-            { id: 'home', label: 'My Dashboard', icon: Home },
-            { id: 'discover', label: 'Explore Rooms', icon: Compass },
-            { id: 'stays', label: 'My Stays', icon: Bookmark },
-            { id: 'ledger', label: 'Billing History', icon: Clock }
-          ].map((item) => (
-            <button 
-              key={item.id}
-              onClick={() => setActiveView(item.id as 'home' | 'discover' | 'stays' | 'ledger')}
-              className={`w-full flex items-center gap-5 px-6 py-5 rounded-[2rem] text-[11px] font-bold uppercase tracking-widest transition-all group ${
-                activeView === item.id 
-                  ? 'bg-white/10 text-amber-500 border border-white/10 shadow-lg' 
-                  : 'text-white hover:text-white hover:bg-white/10 border border-transparent'
-              }`}
-            >
-              <item.icon size={22} className={activeView === item.id ? 'text-amber-500' : 'text-white/70 group-hover:text-white'} /> {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <Link href="/" onClick={() => dispatch(logout())} className="block">
-          <button type="button" className="w-full flex items-center gap-5 px-6 py-5 rounded-[2rem] bg-slate-900 text-white font-bold text-[11px] uppercase tracking-widest hover:text-red-300 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20 active:scale-95">
-            <LogOut size={22} /> Log out
-          </button>
-        </Link>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 relative z-10 overflow-y-auto bg-slate-50">
-        <div className="p-8">
-            <AnimatePresence mode="wait">
-                {error && (
-                <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="mb-8 p-5 bg-red-50 border border-red-100 rounded-[1.5rem] flex items-center gap-4 text-red-500 text-[11px] font-bold uppercase tracking-widest shadow-sm"
-                >
-                    <AlertCircle size={20} />
-                    {error}
-                </motion.div>
-                )}
-                {success && (
-                <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="mb-8 p-5 bg-green-50 border border-green-100 rounded-[1.5rem] flex items-center gap-4 text-green-600 text-[11px] font-bold uppercase tracking-widest shadow-sm"
-                >
-                    <CheckCircle2 size={20} />
-                    {success}
-                </motion.div>
-                )}
-            </AnimatePresence>
+    <PortalShell
+      requiredRole="guest"
+      title={`Welcome, ${user?.name || user?.username || 'Honored Guest'}`}
+      subtitle="Manage your personal itinerary, explore private residences, and order on-demand room amenities."
+      navItems={navItems}
+      activeNavId={activeTab}
+      actions={
+        <div className="flex items-center gap-2">
+          <Link href="/profile" className="btn-gold text-xs py-2 px-4 inline-flex items-center gap-2">
+            <BellRing size={14} /> Request Concierge
+          </Link>
         </div>
+      }
+    >
+      {/* Toast Notification */}
+      {bookingSuccess && (
+        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-3 shadow-xs">
+          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
+          <span>{bookingSuccess}</span>
+        </div>
+      )}
 
+      {/* ────────────────── VIEW 1: MY RESERVATIONS ────────────────── */}
+      {activeTab === 'stays' && (
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+                Current & Upcoming Stays
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                {myBookings.length > 0
+                  ? `You have ${myBookings.length} confirmed itinerary record(s).`
+                  : 'You do not have any active bookings at LuxeStay.'}
+              </p>
+            </div>
+            {myBookings.length === 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('discover')}
+                className="btn-gold py-2.5 px-5 text-xs self-start sm:self-auto cursor-pointer"
+              >
+                Browse Available Suites <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
 
-            <AnimatePresence mode="wait">
-                {activeView === 'home' && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="px-10 space-y-12"
-                    >
-                        <div className="space-y-2">
-                        <h1 className="text-6xl font-bold text-slate-900 tracking-tight leading-none uppercase">MY <span className="text-amber-500">DASHBOARD</span></h1>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Welcome back, {user?.name || user?.username}. Here is your current stay overview.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            { icon: Bookmark, value: myBookings.length, label: 'Active Bookings', color: 'text-amber-500' },
-                            { icon: Hotel, value: rooms.filter((r: Room) => r.status === 'available').length, label: 'Available Rooms', color: 'text-blue-500' },
-                            { icon: CreditCard, value: `₹${myBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0)}`, label: 'Total Spending', color: 'text-amber-500' }
-                        ].map((stat, idx) => (
-                            <motion.div 
-                                key={idx} 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="bg-white p-8 rounded-[2.5rem] border border-slate-100 hover:border-amber-500/30 transition-all group shadow-sm hover:shadow-xl"
-                            >
-                            <stat.icon className={`mb-6 group-hover:scale-110 transition-transform ${stat.color}`} size={32} />
-                            <div className="text-4xl font-bold text-slate-900 tracking-tight">{stat.value}</div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 mt-2">{stat.label}</p>
-                            </motion.div>
-                        ))}
-                        </div>
-
-                        <div className="bg-white p-12 rounded-[3.5rem] border-2 border-slate-50 space-y-10 shadow-sm relative overflow-hidden">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-3xl font-bold text-slate-900 tracking-tight uppercase">Quick Booking</h2>
-                                <div className="h-1.5 w-32 bg-slate-50 rounded-full overflow-hidden">
-                                    <div className="h-full bg-amber-500 w-1/3 rounded-full animate-pulse" />
-                                </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                <div className="space-y-3">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Check-in</label>
-                                <input
-                                    type="date"
-                                    value={checkInDate}
-                                    onChange={(e) => setCheckInDate(e.target.value)}
-                                    className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:outline-none focus:border-amber-500/30 transition-all text-sm font-bold text-slate-900 shadow-sm"
-                                />
-                                </div>
-                                <div className="space-y-3">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Check-out</label>
-                                <input
-                                    type="date"
-                                    value={checkOutDate}
-                                    onChange={(e) => setCheckOutDate(e.target.value)}
-                                    min={checkInDate || undefined}
-                                    className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:outline-none focus:border-amber-500/30 transition-all text-sm font-bold text-slate-900 shadow-sm"
-                                />
-                                </div>
-                                <div className="space-y-3">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Guests</label>
-                                <input
-                                    type="number"
-                                    value={guests || ''}
-                                    onChange={(e) => setGuests(parseInt(e.target.value) || 0)}
-                                    className="w-full px-8 py-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 focus:outline-none focus:border-amber-500/30 transition-all text-sm font-bold text-slate-900 shadow-sm"
-                                    min="1"
-                                    placeholder="1"
-                                />
-                                </div>
-                                <div className="flex items-end">
-                                <button
-                                    onClick={() => {
-                                    if (checkInDate && checkOutDate && new Date(checkOutDate) <= new Date(checkInDate)) {
-                                        setError('Check-out must be after check-in');
-                                        return;
-                                    }
-                                    setError('');
-                                    setActiveView('discover');
-                                    }}
-                                    className="w-full h-16 rounded-[1.5rem] bg-amber-500 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-amber-400 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3"
-                                >
-                                    <Search size={20} /> Find Rooms
-                                </button>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-                {activeView === 'discover' && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="px-10 space-y-10"
-                    >
-                        <div className="space-y-2">
-                        <h1 className="text-4xl font-bold text-slate-900 tracking-tight uppercase">Explore <span className="text-amber-500">Rooms</span></h1>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Finding the perfect space for your stay: {checkInDate || 'TBD'} — {checkOutDate || 'TBD'}</p>
-                        </div>
-
-                        {/* Room Type Filter */}
-                        <div className="flex gap-4 flex-wrap">
-                        {allTypes.map((type) => (
-                            <button
-                            key={type}
-                            onClick={() => setActiveTab(type)}
-                            className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-bold uppercase tracking-widest transition-all border ${
-                                activeTab === type
-                                ? 'bg-amber-500 text-white border-amber-500 shadow-lg'
-                                : 'bg-white text-slate-600 border-slate-100 hover:text-slate-900 hover:border-amber-500/30'
-                            }`}
-                            >
-                            {type}
-                            </button>
-                        ))}
-                        </div>
-
-                        {/* Search */}
-                        <div className="relative group">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-amber-500 transition-colors" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search by room type or amenities..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-16 pr-6 py-6 rounded-[2rem] bg-white border-2 border-slate-50 focus:outline-none focus:border-amber-500/30 transition-all text-sm font-bold text-slate-900 shadow-sm"
-                        />
-                        </div>
-
-                        {/* Rooms Grid */}
-                        {roomsStatus === 'loading' ? (
-                        <div className="text-center py-20 text-slate-200 font-bold uppercase tracking-widest animate-pulse italic">Connecting to room inventory...</div>
-                        ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pb-20">
-                            {filteredRooms.length > 0 ? (
-                                filteredRooms.map((room: Room, idx: number) => (
-                                    <TiltCard key={room.id} className="h-full">
-                                        <motion.div 
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: idx * 0.05 }}
-                                            className="bg-white rounded-[3.5rem] overflow-hidden border-2 border-slate-50 hover:border-amber-500/30 hover:shadow-2xl transition-all group relative h-full flex flex-col"
-                                        >
-                                            <div className="h-64 relative overflow-hidden bg-slate-100">
-                                                <img 
-                                                    src={room.image || "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80"} 
-                                                    alt={room.type}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-60" />
-                                                <div className="absolute top-6 right-6">
-                                                    <span className={`px-6 py-2 rounded-xl backdrop-blur-md text-[10px] font-bold uppercase tracking-widest border shadow-lg ${
-                                                        room.status === 'available' 
-                                                        ? 'bg-white/90 text-green-600 border-green-100' 
-                                                        : 'bg-slate-900/80 text-slate-400 border-slate-700'
-                                                    }`}>
-                                                        {room.status === 'available' ? 'Available' : 'Sold Out'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="p-10 space-y-8 flex-1 flex flex-col justify-between">
-                                                <div className="space-y-6">
-                                                    <div className="flex items-center justify-between">
-                                                        <h3 className="text-3xl font-bold text-slate-900 tracking-tight group-hover:text-amber-600 transition-colors uppercase leading-none">{room.type}</h3>
-                                                        <div className="text-right">
-                                                            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Rate</p>
-                                                            <p className="text-2xl font-bold text-amber-500 tracking-tight leading-none">₹{room.price}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex flex-wrap gap-2">
-                                                    {room.amenities.map((amenity: string, idx: number) => (
-                                                        <span key={idx} className="text-[9px] font-bold uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-xl text-slate-400 border border-slate-100 shadow-sm">
-                                                        {amenity}
-                                                        </span>
-                                                    ))}
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                onClick={() => room.status === 'available' && handleRoomAction(room)}
-                                                disabled={room.status !== 'available'}
-                                                className={`w-full h-16 rounded-2xl font-bold text-[11px] uppercase tracking-widest transition-all shadow-xl active:scale-95 ${
-                                                    room.status === 'available' 
-                                                    ? 'bg-slate-900 text-white hover:bg-amber-500' 
-                                                    : 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none'
-                                                }`}
-                                                >
-                                                {room.status === 'available' ? 'Book This Room' : 'Unavailable'}
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    </TiltCard>
-                                ))
-                            ) : (
-                                <div className="col-span-full text-center py-24 bg-white rounded-[4rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center">
-                                    <AlertCircle className="text-slate-100 mb-8" size={80} />
-                                    <p className="text-slate-300 font-bold uppercase tracking-widest italic text-xl">No Rooms Found</p>
-                                    <p className="text-sm text-slate-200 font-semibold mt-4 italic max-w-sm">Try adjusting your filters or search query to find available accommodations.</p>
-                                </div>
-                            )}
-                        </div>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-                {activeView === 'stays' && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="px-10 space-y-10"
-                    >
-                        <h1 className="text-4xl font-bold text-slate-900 tracking-tight uppercase">My <span className="text-amber-500">Stays</span></h1>
-
-                        {bookingsStatus === 'loading' ? (
-                        <div className="text-center py-20 text-slate-200 font-bold uppercase tracking-widest animate-pulse italic">Loading your reservation history...</div>
-                        ) : myBookings.length > 0 ? (
-                        <div className="space-y-8 pb-20">
-                            {myBookings.map((booking: Booking, idx: number) => (
-                            <motion.div 
-                                key={booking.id} 
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="bg-white p-10 rounded-[3rem] border-2 border-slate-50 space-y-8 hover:border-amber-500/20 transition-all group shadow-sm hover:shadow-xl"
-                            >
-                                <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-2xl font-bold text-slate-900 uppercase tracking-tight group-hover:text-amber-500 transition-colors">Booking Ref: {booking.id.slice(-6).toUpperCase()}</h3>
-                                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-2">{booking.guestName}</p>
-                                </div>
-                                <span className={`px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm ${
-                                    booking.status === 'confirmed' ? 'bg-amber-500 text-white' :
-                                    booking.status === 'checked_in' ? 'bg-blue-600 text-white' :
-                                    booking.status === 'checked_out' ? 'bg-slate-100 text-slate-400' :
-                                    'bg-red-50 text-red-500 border border-red-100'
-                                }`}>
-                                    {booking.status.replace('_', ' ').toUpperCase()}
-                                </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                                {[
-                                    { label: 'Check-in', value: booking.checkInDate },
-                                    { label: 'Check-out', value: booking.checkOutDate },
-                                    { label: 'Total Nights', value: booking.nights },
-                                    { label: 'Total Price', value: `₹${booking.totalPrice}`, highlight: true }
-                                ].map((item, idx) => (
-                                    <div key={idx} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{item.label}</p>
-                                    <p className={`text-xl font-bold mt-1 ${item.highlight ? 'text-amber-500' : 'text-slate-900'}`}>{item.value}</p>
-                                    </div>
-                                ))}
-                                </div>
-
-                                <div className="flex gap-4 pt-6 border-t border-slate-50">
-                                <button
-                                    onClick={() => downloadInvoice(booking)}
-                                    className="h-14 px-8 flex items-center gap-3 bg-white text-slate-400 border border-slate-100 rounded-2xl hover:bg-slate-900 hover:text-white transition-all text-[11px] font-bold uppercase tracking-widest shadow-sm active:scale-95"
-                                >
-                                    <Download size={18} /> Download Invoice
-                                </button>
-                                {booking.status === 'confirmed' && (
-                                    <button
-                                    onClick={() => handleCancelBooking(booking.id)}
-                                    className="h-14 px-8 flex items-center gap-3 bg-red-50 text-red-500 border border-red-100 rounded-2xl hover:bg-red-500 hover:text-white transition-all text-[11px] font-bold uppercase tracking-widest shadow-sm active:scale-95"
-                                    >
-                                    <AlertCircle size={18} /> Cancel Booking
-                                    </button>
-                                )}
-                                </div>
-                            </motion.div>
-                            ))}
-                        </div>
-                        ) : (
-                        <div className="text-center py-24 bg-white rounded-[4rem] border-4 border-dashed border-slate-50">
-                            <Compass className="text-slate-100 mb-8 mx-auto" size={80} />
-                            <p className="text-slate-300 font-bold uppercase tracking-widest italic text-xl">No Stay History Found</p>
-                            <p className="text-sm text-slate-200 font-semibold mt-4 italic px-10 max-w-lg mx-auto leading-relaxed">Head over to the Explore Rooms tab to start your first booking with us.</p>
-                            <button 
-                            onClick={() => setActiveView('discover')}
-                            className="mt-12 px-12 h-16 bg-amber-500 text-white rounded-[1.5rem] text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg active:scale-95 hover:bg-amber-400"
-                            >
-                            Find Your Room
-                            </button>
-                        </div>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-                {activeView === 'ledger' && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="px-10 space-y-10"
-                    >
-                        <h1 className="text-4xl font-bold text-slate-900 tracking-tight uppercase">Billing <span className="text-amber-500">History</span></h1>
-
-                        <div className="bg-white p-12 rounded-[3.5rem] border-2 border-slate-50 space-y-12 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                            {[
-                            { icon: Bookmark, label: 'Total Bookings', value: myBookings.length, color: 'text-amber-500' },
-                            { icon: Clock, label: 'Current Stays', value: myBookings.filter((b: Booking) => b.status === 'checked_in').length, color: 'text-blue-500' },
-                            { icon: CreditCard, label: 'Total Spending', value: `₹${myBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0)}`, color: 'text-amber-500' }
-                            ].map((item, idx) => (
-                            <div key={idx} className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
-                                    <item.icon className={item.color} size={18} />
-                                </div>
-                                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{item.label}</p>
-                                </div>
-                                <p className="text-5xl font-bold text-slate-900 tracking-tight leading-none">{item.value}</p>
-                            </div>
-                            ))}
-                        </div>
-
-                        <div className="overflow-x-auto pt-10 border-t border-slate-50">
-                            <table className="w-full text-[11px] font-bold text-slate-600">
-                            <thead>
-                                <tr className="bg-slate-50">
-                                <th className="px-8 py-5 text-left uppercase tracking-widest text-slate-500 border-b border-slate-100">Booking ID</th>
-                                <th className="px-8 py-5 text-left uppercase tracking-widest text-slate-500 border-b border-slate-100">Date Range</th>
-                                <th className="px-8 py-5 text-left uppercase tracking-widest text-slate-500 border-b border-slate-100">Nights</th>
-                                <th className="px-8 py-5 text-left uppercase tracking-widest text-slate-500 border-b border-slate-100">Total Amount</th>
-                                <th className="px-8 py-5 text-left uppercase tracking-widest text-slate-500 border-b border-slate-100">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {myBookings.map((booking: Booking) => (
-                                <motion.tr 
-                                    key={booking.id} 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="hover:bg-slate-50 group transition-all"
-                                >
-                                    <td className="px-8 py-6 font-mono text-[10px] text-slate-500 group-hover:text-amber-500">{booking.id.toUpperCase()}</td>
-                                    <td className="px-8 py-6 text-slate-600">{booking.checkInDate} — {booking.checkOutDate}</td>
-                                    <td className="px-8 py-6 text-slate-600">{booking.nights}</td>
-                                    <td className="px-8 py-6 font-bold text-amber-500 text-lg">₹{booking.totalPrice}</td>
-                                    <td className="px-8 py-6">
-                                    <span className={`px-5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest shadow-sm ${
-                                        booking.status === 'confirmed' ? 'bg-amber-500 text-white' :
-                                        booking.status === 'checked_in' ? 'bg-blue-600 text-white' :
-                                        'bg-slate-200 text-slate-700'
-                                    }`}>
-                                        {booking.status.toUpperCase()}
-                                    </span>
-                                    </td>
-                                </motion.tr>
-                                ))}
-                            </tbody>
-                            </table>
-                        </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-        {/* Booking Confirmation Modal */}
-      <AnimatePresence>
-        {isModalOpen && selectedRoom && (
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-6 backdrop-blur-xl"
-            >
-            <motion.div 
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-white rounded-[4rem] p-12 max-w-xl w-full space-y-12 border-4 border-slate-50 shadow-2xl relative overflow-hidden"
-            >
-                <div className="absolute top-[-10%] left-[-10%] h-64 w-64 bg-amber-500/5 blur-[80px] rounded-full pointer-events-none" />
-                
-                <div className="text-center space-y-2 relative">
-                <h2 className="text-4xl font-bold text-slate-900 tracking-tight uppercase leading-none">Confirm <span className="text-amber-500">Booking</span></h2>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-300">Please review your reservation details</p>
+          {myBookings.length > 0 && (
+            <div className="p-5 rounded-3xl bg-linear-to-r from-slate-950 via-[#1e1b4b] to-slate-900 text-white border border-amber-500/30 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                  <KeyRound size={24} />
                 </div>
-                
-                <div className="space-y-6 bg-slate-50 p-10 rounded-[3rem] border border-slate-100 shadow-sm relative">
-                {[
-                    { label: 'Room Type', value: `${selectedRoom.type} (Room ${selectedRoom.number})`, highlight: true },
-                    { label: 'Check-in Date', value: checkInDate },
-                    { label: 'Check-out Date', value: checkOutDate },
-                    { label: 'Price Per Night', value: `₹${selectedRoom.price}` }
-                ].map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                    <span className="text-slate-300">{item.label}</span>
-                    <span className={`italic ${item.highlight ? 'text-amber-500' : 'text-slate-900'}`}>{item.value}</span>
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">Contactless RFID / NFC</span>
+                  <h3 className="text-lg font-bold font-display text-white">Smart Mobile Suite Key</h3>
+                  <p className="text-xs text-slate-300 mt-0.5">Instant tap-to-unlock access for your assigned room without stopping at reception.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedKeyBooking(myBookings[0] || null);
+                  setIsKeyModalOpen(true);
+                }}
+                className="btn-gold py-2.5 px-5 text-xs font-bold shrink-0 inline-flex items-center gap-2 justify-center"
+              >
+                <KeyRound size={14} /> Open Digital Key
+              </button>
+            </div>
+          )}
+
+          {myBookings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {myBookings.map((b: Booking) => (
+                <div
+                  key={b.id}
+                  className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-amber-400 transition-colors"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Stay Reference #{b.id}
+                      </span>
+                      <StatusBadge status={b.status} />
                     </div>
-                ))}
-                
-                <div className="border-t border-slate-100 pt-8 flex justify-between items-end">
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Total Amount:</span>
-                    <span className="text-5xl text-amber-500 font-bold tracking-tight leading-none">
-                    ₹{Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)) * selectedRoom.price}
-                    </span>
-                </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-6 relative">
-                <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="h-16 rounded-3xl bg-slate-100 text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-red-500 transition-all active:scale-95"
-                >
-                    Cancel
-                </button>
-                <button
-                    onClick={handleBookConfirm}
-                    className="h-16 rounded-3xl bg-amber-500 text-white font-bold text-[11px] uppercase tracking-widest hover:bg-amber-400 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-4"
-                >
-                    Confirm & Book <Clock size={20} className="animate-spin-slow" />
-                </button>
+                    <div>
+                      <h3 className="text-xl font-bold font-display text-slate-900">
+                        {b.roomNumber ? `Suite ${b.roomNumber}` : 'LuxeStay Residence'}
+                      </h3>
+                      <p className="text-xs font-medium text-slate-500">
+                        Registered Guest: <strong className="text-slate-800">{b.guestName}</strong>
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-3.5 space-y-2 border border-slate-100 text-xs">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Check-In</span>
+                        <strong className="text-slate-900">{b.checkInDate}</strong>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Check-Out</span>
+                        <strong className="text-slate-900">{b.checkOutDate}</strong>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600 pt-1 border-t border-slate-200">
+                        <span>Duration</span>
+                        <strong className="text-slate-900">{b.nights || 1} Night(s)</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-600 block">
+                        Total Folio
+                      </span>
+                      <span className="text-lg font-bold text-slate-900 font-display">
+                        {formatPrice(Number(b.totalPrice) || 0, currency)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedKeyBooking(b);
+                          setIsKeyModalOpen(true);
+                        }}
+                        className="px-2.5 py-1.5 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        title="Open Digital NFC Keycard"
+                      >
+                        <KeyRound size={13} className="text-amber-700" /> Key
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFolioBooking(b)}
+                        className="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        title="View & Print Official Hotel Folio"
+                      >
+                        <FileText size={13} className="text-amber-700" /> Folio
+                      </button>
+                      <Link
+                        href="/profile"
+                        className="px-2.5 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors inline-flex items-center gap-1"
+                      >
+                        <BellRing size={13} />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-            </motion.div>
-            </motion.div>
-        )}
-      </AnimatePresence>
-      </div>
-    </main>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto mb-4">
+                <BedDouble size={28} />
+              </div>
+              <h3 className="text-lg font-bold font-display text-slate-900 mb-1">
+                No Active Reservations
+              </h3>
+              <p className="text-xs text-slate-500 mb-6">
+                Your journey of luxury begins here. Explore our signature ocean suites and villas.
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveTab('discover')}
+                className="btn-gold py-2.5 px-6 text-xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                Discover Suites <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ────────────────── VIEW 2: EXPLORE & BOOK SUITES ────────────────── */}
+      {activeTab === 'discover' && (
+        <div className="space-y-6">
+          {/* Date Picker Strip for Booking */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Check-In Date
+              </label>
+              <input
+                type="date"
+                value={checkInDate}
+                min={todayStr}
+                onChange={(e) => setCheckInDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-semibold rounded-xl border border-slate-300 text-slate-900 bg-slate-50/50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Check-Out Date
+              </label>
+              <input
+                type="date"
+                value={checkOutDate}
+                min={checkInDate || todayStr}
+                onChange={(e) => setCheckOutDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-semibold rounded-xl border border-slate-300 text-slate-900 bg-slate-50/50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Suite Category
+              </label>
+              <select
+                value={roomFilter}
+                onChange={(e) => setRoomFilter(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-semibold rounded-xl border border-slate-300 text-slate-900 bg-slate-50/50"
+              >
+                <option value="All">All Categories</option>
+                <option value="Deluxe">Deluxe</option>
+                <option value="Suite">Suite</option>
+                <option value="Executive">Executive</option>
+                <option value="Penthouse">Penthouse</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Search Suites
+              </label>
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm font-medium rounded-xl border border-slate-300 text-slate-900 bg-slate-50/50"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Filter & Sorter Bar */}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Amenity Filter Chips */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              {[
+                { id: 'all', label: 'All Suites' },
+                { id: 'ocean', label: 'Ocean View & Terrace' },
+                { id: 'pool', label: 'Private Pool / Villa' },
+                { id: 'presidential', label: 'Presidential & Penthouse' },
+              ].map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() => setSelectedAmenity(chip.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    selectedAmenity === chip.id
+                      ? 'bg-slate-900 text-amber-400 shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Slider & Sorter Controls */}
+            <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap justify-between md:justify-end">
+              {/* Price Range Slider */}
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 min-w-[200px]">
+                <SlidersHorizontal size={14} className="text-amber-600 shrink-0" />
+                <span className="shrink-0 text-[11px] font-bold">Max: {formatPrice(maxPrice, currency)}</span>
+                <input
+                  type="range"
+                  min="15000"
+                  max="60000"
+                  step="2500"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+                />
+              </div>
+
+              {/* Sorter Dropdown */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold">
+                <ArrowUpDown size={13} className="text-slate-500 shrink-0" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-transparent font-bold text-xs text-slate-800 cursor-pointer focus:outline-none"
+                  aria-label="Sort suites"
+                >
+                  <option value="recommended">Sort: Recommended</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="capacity">Capacity: Largest First</option>
+                </select>
+              </div>
+
+              <span className="text-xs text-slate-500 font-medium">
+                {filteredRooms.length} suite(s)
+              </span>
+            </div>
+          </div>
+
+          {bookingError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{bookingError}</span>
+            </div>
+          )}
+
+          {/* Rooms Grid: fully fluid across laptop, desktop, mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRooms.map((room) => {
+              const isUnavailable = room.status !== 'available';
+              return (
+                <div
+                  key={room.id}
+                  className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm flex flex-col justify-between hover:border-amber-400 transition-all duration-200"
+                >
+                  <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-100">
+                    {room.imageUrl ? (
+                      <Image
+                        src={room.imageUrl}
+                        alt={room.name || room.type || 'LuxeStay Suite'}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 350px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <BedDouble size={36} />
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <StatusBadge status={room.status} />
+                    </div>
+                    <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-xs font-bold">
+                      {room.roomNumber ? `No. ${room.roomNumber}` : room.type}
+                    </div>
+                  </div>
+
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                        <span>{room.type}</span>
+                        <span>Up to {room.capacity} Guests</span>
+                      </div>
+                      <h3 className="text-xl font-bold font-display text-slate-900 leading-snug">
+                        {room.name || room.type}
+                      </h3>
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                        {room.description || 'Spacious sanctuary with marble bathroom, panoramic terrace, and bespoke guest amenities.'}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-slate-600 block">
+                          Per Night
+                        </span>
+                        <span className="text-lg font-bold text-slate-900 font-display">
+                          {formatPrice(Number(room.price) || 0, currency)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedGalleryRoom(room);
+                            setIsGalleryModalOpen(true);
+                          }}
+                          className="p-2.5 rounded-xl border border-slate-200 text-slate-700 hover:text-amber-700 hover:border-amber-400 bg-slate-50 transition-colors cursor-pointer"
+                          title="View Fullscreen Photo Gallery"
+                        >
+                          <ImageIcon size={15} />
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isUnavailable}
+                          onClick={() => handleStartBooking(room)}
+                          className={`text-xs px-4 py-2.5 rounded-xl font-bold transition-all cursor-pointer ${
+                            isUnavailable
+                              ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
+                              : 'btn-gold'
+                          }`}
+                        >
+                          {room.status === 'occupied'
+                            ? 'Occupied'
+                            : room.status === 'maintenance'
+                            ? 'Under Maintenance'
+                            : room.status === 'cleaning'
+                            ? 'Being Serviced'
+                            : 'Reserve Suite'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────── RESERVATION CONFIRMATION MODAL ────────────────── */}
+      {selectedRoom && (
+        <Modal
+          isOpen={isBookingModalOpen}
+          onClose={() => setIsBookingModalOpen(false)}
+          title="Confirm Suite Reservation"
+          subtitle={`Review details for ${selectedRoom.name || selectedRoom.type}`}
+        >
+          <div className="space-y-4">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-2.5 text-xs">
+              <div className="flex justify-between text-slate-600">
+                <span>Guest Name:</span>
+                <strong className="text-slate-900">{user?.name || user?.username}</strong>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Suite Category:</span>
+                <strong className="text-slate-900">{selectedRoom.name || selectedRoom.type} ({selectedRoom.type})</strong>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Check-in Date:</span>
+                <strong className="text-slate-900">{checkInDate}</strong>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Check-out Date:</span>
+                <strong className="text-slate-900">{checkOutDate}</strong>
+              </div>
+            </div>
+
+            {/* Price breakdown */}
+            {(() => {
+              const checkIn = new Date(checkInDate);
+              const checkOut = new Date(checkOutDate);
+              const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
+              const subtotal = nights * selectedRoom.price;
+              const tax = Math.round(subtotal * 0.12);
+              const total = subtotal + tax;
+
+              return (
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Nightly Rate (₹{selectedRoom.price.toLocaleString()} × {nights} nights):</span>
+                    <span>₹{subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>Luxury Hospitality GST (12%):</span>
+                    <span>₹{tax.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
+                    <span>Total Reservation Folio:</span>
+                    <span className="text-lg font-display text-amber-800">₹{total.toLocaleString()}</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Payment Method Selector */}
+            <div className="space-y-2 pt-2 border-t border-slate-200">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Payment & Settlement Method
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('upi')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    paymentMethod === 'upi'
+                      ? 'bg-amber-50/80 border-amber-600 ring-1 ring-amber-600/30'
+                      : 'bg-white border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-slate-900">Instant UPI</span>
+                    {paymentMethod === 'upi' && <Check size={14} className="text-amber-700" />}
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-medium">GPay, PhonePe, Paytm QR</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('card')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    paymentMethod === 'card'
+                      ? 'bg-amber-50/80 border-amber-600 ring-1 ring-amber-600/30'
+                      : 'bg-white border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-slate-900">Credit / Debit Card</span>
+                    {paymentMethod === 'card' && <Check size={14} className="text-amber-700" />}
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-medium">Visa, Mastercard, Amex</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('arrival')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    paymentMethod === 'arrival'
+                      ? 'bg-amber-50/80 border-amber-600 ring-1 ring-amber-600/30'
+                      : 'bg-white border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-slate-900">Pay on Arrival</span>
+                    {paymentMethod === 'arrival' && <Check size={14} className="text-amber-700" />}
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-medium">Front Desk Settlement</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-1">
+                <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
+                <span>256-Bit SSL Encrypted 5-Star Hospitality Guarantee</span>
+              </div>
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setIsBookingModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isConfirming}
+                onClick={handleConfirmReservation}
+                className="btn-gold py-2.5 px-6 text-xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                {isConfirming ? (
+                  <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Confirm & Reserve <ArrowRight size={14} />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ────────────────── OFFICIAL GUEST TAX FOLIO / INVOICE ────────────────── */}
+      <InvoiceModal
+        isOpen={!!selectedFolioBooking}
+        onClose={() => setSelectedFolioBooking(null)}
+        booking={selectedFolioBooking}
+      />
+
+      {/* ────────────────── DIGITAL MOBILE NFC KEYCARD MODAL ────────────────── */}
+      <DigitalKeyModal
+        isOpen={isKeyModalOpen}
+        onClose={() => setIsKeyModalOpen(false)}
+        booking={selectedKeyBooking}
+      />
+
+      {/* ────────────────── SUITE FULLSCREEN PHOTO GALLERY MODAL ────────────────── */}
+      <RoomGalleryModal
+        isOpen={isGalleryModalOpen}
+        onClose={() => setIsGalleryModalOpen(false)}
+        room={selectedGalleryRoom}
+        onSelectBooking={(r) => handleStartBooking(r)}
+      />
+    </PortalShell>
   );
 }

@@ -4,6 +4,7 @@ import bookingReducer from './features/bookingSlice';
 import userReducer from './features/userSlice';
 import staffReducer from './features/staffSlice';
 import serviceReducer from './features/serviceSlice';
+import settingsReducer from './features/settingsSlice';
 
 export const makeStore = () => {
     return configureStore({
@@ -13,6 +14,7 @@ export const makeStore = () => {
             user: userReducer,
             staff: staffReducer,
             services: serviceReducer,
+            settings: settingsReducer,
         },
     });
 };
