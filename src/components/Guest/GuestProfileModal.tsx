@@ -75,21 +75,6 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
     }
   }, [isOpen]);
 
-  const presetGuestAvatars = [
-    {
-      name: 'Executive Traveler',
-      url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Leisure Vacationer',
-      url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Royal Heritage Guest',
-      url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
-    },
-  ];
-
   const handleSave = () => {
     dispatch(
       updateUserProfile({
@@ -214,34 +199,6 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
                 <p className="text-xs text-slate-300">
                   Member ID: #GST-8842 • Status: Active Luxury Resident
                 </p>
-              </div>
-            </div>
-
-            {/* Avatar Presets */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
-                Choose Profile Photo Preset
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {presetGuestAvatars.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, avatarUrl: preset.url })}
-                    className={`p-2 rounded-xl border flex items-center gap-2 transition-all cursor-pointer ${
-                      formData.avatarUrl === preset.url
-                        ? 'border-amber-600 bg-amber-50/60 ring-2 ring-amber-400/40'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-200">
-                      <Image src={preset.url} alt={preset.name} fill sizes="32px" className="object-cover" />
-                    </div>
-                    <span className="text-[11px] font-bold text-slate-800 truncate text-left">
-                      {preset.name}
-                    </span>
-                  </button>
-                ))}
               </div>
             </div>
 

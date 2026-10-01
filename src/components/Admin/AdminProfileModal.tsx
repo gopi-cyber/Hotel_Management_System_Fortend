@@ -94,21 +94,6 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
     },
   ];
 
-  const presetAvatars = [
-    {
-      name: 'Executive Portrait',
-      url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Managing Director',
-      url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Chief Hotelier',
-      url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-    },
-  ];
-
   return (
     <Modal
       isOpen={isOpen}
@@ -193,34 +178,6 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                   <p className="text-xs text-slate-400 font-mono">
                     Security Clearance: Level 4 Super-Admin • System ID: #ADM-001
                   </p>
-                </div>
-              </div>
-
-              {/* Avatar Preset Chooser */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
-                  Choose Executive Avatar Preset
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {presetAvatars.map((preset) => (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() => handleChange('adminAvatarUrl', preset.url)}
-                      className={`p-2 rounded-xl border flex items-center gap-2 transition-all cursor-pointer ${
-                        formData.adminAvatarUrl === preset.url
-                          ? 'border-amber-600 bg-amber-50/60 ring-2 ring-amber-400/40'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-200">
-                        <Image src={preset.url} alt={preset.name} fill sizes="32px" className="object-cover" />
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-800 truncate text-left">
-                        {preset.name}
-                      </span>
-                    </button>
-                  ))}
                 </div>
               </div>
 
