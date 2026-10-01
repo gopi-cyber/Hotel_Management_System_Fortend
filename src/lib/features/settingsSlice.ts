@@ -23,14 +23,58 @@ export const formatPrice = (inrAmount: number, code: CurrencyCode = 'INR'): stri
   return `${conf.symbol}${converted.toLocaleString()}`;
 };
 
+export interface CompanyProfile {
+  adminName: string;
+  adminTitle: string;
+  adminEmail: string;
+  adminPhone: string;
+  adminAvatarUrl: string;
+  companyName: string;
+  brandName: string;
+  logoUrl: string;
+  cin: string;
+  gstin: string;
+  starRating: string;
+  address: string;
+  contactEmail: string;
+  conciergePhone: string;
+  emergencyPhone: string;
+  checkInTime: string;
+  checkOutTime: string;
+  taxGstRate: number;
+}
+
+export const DEFAULT_COMPANY_PROFILE: CompanyProfile = {
+  adminName: 'Gopinath (Executive Admin)',
+  adminTitle: 'Managing Director & Chief Hospitality Officer',
+  adminEmail: 'executive@luxestayhotel.com',
+  adminPhone: '+91 98200 99881',
+  adminAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  companyName: 'LuxeStay Hospitality & Heritage Resorts Private Limited',
+  brandName: 'LuxeStay Palace & Heritage Resort',
+  logoUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80',
+  cin: 'U55101MH2021PTC368940',
+  gstin: '27AABCL1234F1Z8',
+  starRating: '5-Star Luxury Heritage Deluxe',
+  address: 'Marina Promenade, Suite 1400, Colaba, Mumbai 400001, Maharashtra, India',
+  contactEmail: 'concierge@luxestayhotel.com',
+  conciergePhone: '+91 (022) 8800-LUXE',
+  emergencyPhone: '+91 98200 99881',
+  checkInTime: '14:00',
+  checkOutTime: '11:00',
+  taxGstRate: 12,
+};
+
 interface SettingsState {
   currency: CurrencyCode;
   nightAudit: boolean;
+  companyProfile: CompanyProfile;
 }
 
 const initialState: SettingsState = {
   currency: 'INR',
   nightAudit: false,
+  companyProfile: DEFAULT_COMPANY_PROFILE,
 };
 
 const settingsSlice = createSlice({
@@ -46,8 +90,11 @@ const settingsSlice = createSlice({
     setNightAudit: (state, action: PayloadAction<boolean>) => {
       state.nightAudit = action.payload;
     },
+    updateCompanyProfile: (state, action: PayloadAction<Partial<CompanyProfile>>) => {
+      state.companyProfile = { ...state.companyProfile, ...action.payload };
+    },
   },
 });
 
-export const { setCurrency, toggleNightAudit, setNightAudit } = settingsSlice.actions;
+export const { setCurrency, toggleNightAudit, setNightAudit, updateCompanyProfile } = settingsSlice.actions;
 export default settingsSlice.reducer;

@@ -1,5 +1,8 @@
 'use client';
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
+import { formatPrice } from '@/lib/features/settingsSlice';
 import Modal from '@/components/ui/Modal';
 import {
   TrendingUp,
@@ -33,6 +36,7 @@ export function ReportModal({
   occupiedRooms,
   totalBookings,
 }: ReportModalProps) {
+  const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
   const [timeframe, setTimeframe] = useState<'7d' | '30d'>('7d');
   const [activeTab, setActiveTab] = useState<'revenue' | 'channels'>('revenue');
 
@@ -98,7 +102,7 @@ export function ReportModal({
               <ArrowUpRight size={13} className="text-emerald-600" />
             </div>
             <span className="text-lg sm:text-xl font-bold font-display text-slate-900 block">
-              ₹{revPar.toLocaleString()}
+              {formatPrice(revPar, currency)}
             </span>
             <span className="text-[10px] text-emerald-700 font-semibold">+14.2% YoY</span>
           </div>
@@ -109,7 +113,7 @@ export function ReportModal({
               <DollarSign size={13} className="text-amber-600" />
             </div>
             <span className="text-lg sm:text-xl font-bold font-display text-slate-900 block">
-              ₹{adr.toLocaleString()}
+              {formatPrice(adr, currency)}
             </span>
             <span className="text-[10px] text-slate-500 font-semibold">Average / Night</span>
           </div>
@@ -131,7 +135,7 @@ export function ReportModal({
               <TrendingUp size={13} className="text-emerald-600" />
             </div>
             <span className="text-lg sm:text-xl font-bold font-display text-slate-900 block">
-              ₹{(safeRevenue).toLocaleString()}
+              {formatPrice(safeRevenue, currency)}
             </span>
             <span className="text-[10px] text-emerald-700 font-semibold">Audited MTD</span>
           </div>
@@ -201,7 +205,7 @@ export function ReportModal({
                 </p>
               </div>
               <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                Peak: ₹{maxRevenue.toLocaleString()}
+                Peak: {formatPrice(maxRevenue, currency)}
               </span>
             </div>
 
@@ -321,7 +325,7 @@ export function ReportModal({
                 <div>
                   <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
                     <span>Ocean Grand Deluxe</span>
-                    <span className="text-slate-900 font-bold">48% (₹{(safeRevenue * 0.48).toLocaleString()})</span>
+                    <span className="text-slate-900 font-bold">48% ({formatPrice(safeRevenue * 0.48, currency)})</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div className="bg-amber-500 h-2 rounded-full" style={{ width: '48%' }} />
@@ -331,7 +335,7 @@ export function ReportModal({
                 <div>
                   <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
                     <span>Garden Sanctuary Villa</span>
-                    <span className="text-slate-900 font-bold">34% (₹{(safeRevenue * 0.34).toLocaleString()})</span>
+                    <span className="text-slate-900 font-bold">34% ({formatPrice(safeRevenue * 0.34, currency)})</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div className="bg-emerald-600 h-2 rounded-full" style={{ width: '34%' }} />
@@ -341,7 +345,7 @@ export function ReportModal({
                 <div>
                   <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
                     <span>Presidential Penthouse</span>
-                    <span className="text-slate-900 font-bold">18% (₹{(safeRevenue * 0.18).toLocaleString()})</span>
+                    <span className="text-slate-900 font-bold">18% ({formatPrice(safeRevenue * 0.18, currency)})</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div className="bg-sky-600 h-2 rounded-full" style={{ width: '18%' }} />

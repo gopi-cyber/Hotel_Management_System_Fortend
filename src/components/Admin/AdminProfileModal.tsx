@@ -1,0 +1,515 @@
+'use client';
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/lib/store';
+import { updateCompanyProfile, CompanyProfile, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
+import Modal from '@/components/ui/Modal';
+import {
+  Building2,
+  ShieldCheck,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Clock,
+  Percent,
+  CheckCircle2,
+  Save,
+  Printer,
+  Sparkles,
+  Camera,
+  Globe,
+  Award,
+  FileBadge,
+  PhoneCall,
+  KeyRound,
+} from 'lucide-react';
+import Image from 'next/image';
+
+interface AdminProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModalProps) {
+  const dispatch = useDispatch();
+  const savedProfile = useSelector((state: RootState) => state.settings?.companyProfile || DEFAULT_COMPANY_PROFILE);
+  const currentUser = useSelector((state: RootState) => state.user?.user);
+
+  const [formData, setFormData] = useState<CompanyProfile>(savedProfile);
+  const [activeTab, setActiveTab] = useState<'profile' | 'company' | 'operations'>('profile');
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Sync state when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData(savedProfile);
+      setSavedSuccess(false);
+    }
+  }, [isOpen]);
+
+  const handleChange = (field: keyof CompanyProfile, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(updateCompanyProfile(formData));
+    setSavedSuccess(true);
+    setTimeout(() => {
+      setSavedSuccess(false);
+    }, 4000);
+  };
+
+  const presetLogos = [
+    {
+      name: 'Regal Gold Palace',
+      url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80',
+    },
+    {
+      name: 'Luxury Heritage Crest',
+      url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=150&q=80',
+    },
+    {
+      name: 'Boutique Grand Hotel',
+      url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=150&q=80',
+    },
+  ];
+
+  const presetAvatars = [
+    {
+      name: 'Executive Portrait',
+      url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    },
+    {
+      name: 'Managing Director',
+      url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+    },
+    {
+      name: 'Chief Hotelier',
+      url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    },
+  ];
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Executive Administration & Corporate Profile"
+      maxWidth="2xl"
+    >
+      <div className="space-y-6">
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-slate-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+              activeTab === 'profile'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <User size={16} />
+            <span>Admin Executive</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('company')}
+            className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+              activeTab === 'company'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Building2 size={16} />
+            <span>Company & Logo</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('operations')}
+            className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+              activeTab === 'operations'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <ShieldCheck size={16} />
+            <span>Hotel Operations</span>
+          </button>
+        </div>
+
+        {savedSuccess && (
+          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <span>Corporate Profile and Brand details saved successfully!</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSave} className="space-y-6">
+          {/* TAB 1: ADMIN EXECUTIVE PROFILE */}
+          {activeTab === 'profile' && (
+            <div className="space-y-5">
+              {/* Header Badge Card */}
+              <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-5 rounded-2xl text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 border border-slate-800 shadow-md">
+                <div className="relative group shrink-0">
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800">
+                    <Image
+                      src={formData.adminAvatarUrl || DEFAULT_COMPANY_PROFILE.adminAvatarUrl}
+                      alt={formData.adminName}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 text-center sm:text-left space-y-1">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <h3 className="text-lg font-bold font-display text-white">{formData.adminName}</h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30 uppercase tracking-wider">
+                      Executive Admin
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-200/90 font-medium">{formData.adminTitle}</p>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Security Clearance: Level 4 Super-Admin • System ID: #ADM-001
+                  </p>
+                </div>
+              </div>
+
+              {/* Avatar Preset Chooser */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Choose Executive Avatar Preset
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {presetAvatars.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleChange('adminAvatarUrl', preset.url)}
+                      className={`p-2 rounded-xl border flex items-center gap-2 transition-all cursor-pointer ${
+                        formData.adminAvatarUrl === preset.url
+                          ? 'border-amber-600 bg-amber-50/60 ring-2 ring-amber-400/40'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-200">
+                        <Image src={preset.url} alt={preset.name} fill sizes="32px" className="object-cover" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-800 truncate text-left">
+                        {preset.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Input Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Admin Full Name</label>
+                  <div className="relative">
+                    <User size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.adminName}
+                      onChange={(e) => handleChange('adminName', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Executive Title</label>
+                  <div className="relative">
+                    <Award size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.adminTitle}
+                      onChange={(e) => handleChange('adminTitle', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Official Executive Email</label>
+                  <div className="relative">
+                    <Mail size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="email"
+                      value={formData.adminEmail}
+                      onChange={(e) => handleChange('adminEmail', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Direct Phone / Hotkey</label>
+                  <div className="relative">
+                    <Phone size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.adminPhone}
+                      onChange={(e) => handleChange('adminPhone', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Custom Photo URL</label>
+                  <div className="relative">
+                    <Camera size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="url"
+                      value={formData.adminAvatarUrl}
+                      onChange={(e) => handleChange('adminAvatarUrl', e.target.value)}
+                      placeholder="https://example.com/avatar.jpg"
+                      className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: COMPANY & LOGO DETAIL */}
+          {activeTab === 'company' && (
+            <div className="space-y-5">
+              {/* Hotel Brand Logo Preview Card */}
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-5">
+                <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-slate-300 shadow-sm shrink-0 bg-white flex items-center justify-center p-2">
+                  <Image
+                    src={formData.logoUrl || DEFAULT_COMPANY_PROFILE.logoUrl}
+                    alt={formData.brandName}
+                    fill
+                    sizes="80px"
+                    className="object-contain"
+                  />
+                </div>
+
+                <div className="flex-1 space-y-1 text-center sm:text-left">
+                  <h4 className="text-base font-bold font-display text-slate-900">{formData.brandName}</h4>
+                  <p className="text-xs text-slate-600 font-medium">{formData.companyName}</p>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                    <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 text-[10px] font-bold">
+                      {formData.starRating}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-800 text-[10px] font-bold font-mono">
+                      GSTIN: {formData.gstin}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo Presets */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Select Hotel Brand Crest / Logo
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {presetLogos.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleChange('logoUrl', preset.url)}
+                      className={`p-2.5 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer ${
+                        formData.logoUrl === preset.url
+                          ? 'border-amber-600 bg-amber-50/60 ring-2 ring-amber-400/40'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-200 bg-white">
+                        <Image src={preset.url} alt={preset.name} fill sizes="48px" className="object-cover" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-800 text-center truncate w-full">
+                        {preset.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Company Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hotel Brand Name</label>
+                  <input
+                    type="text"
+                    value={formData.brandName}
+                    onChange={(e) => handleChange('brandName', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Company Registered Entity</label>
+                  <input
+                    type="text"
+                    value={formData.companyName}
+                    onChange={(e) => handleChange('companyName', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">GSTIN Tax Registration</label>
+                  <input
+                    type="text"
+                    value={formData.gstin}
+                    onChange={(e) => handleChange('gstin', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">CIN (Corporate ID)</label>
+                  <input
+                    type="text"
+                    value={formData.cin}
+                    onChange={(e) => handleChange('cin', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Registered Corporate Address</label>
+                  <div className="relative">
+                    <MapPin size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => handleChange('address', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Custom Logo URL</label>
+                  <input
+                    type="url"
+                    value={formData.logoUrl}
+                    onChange={(e) => handleChange('logoUrl', e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: HOTEL OPERATIONS & CONTACTS */}
+          {activeTab === 'operations' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Concierge Inquiries Email</label>
+                  <input
+                    type="email"
+                    value={formData.contactEmail}
+                    onChange={(e) => handleChange('contactEmail', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Concierge Toll-Free Helpline</label>
+                  <input
+                    type="text"
+                    value={formData.conciergePhone}
+                    onChange={(e) => handleChange('conciergePhone', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Duty Manager Hotline (24/7)</label>
+                  <input
+                    type="text"
+                    value={formData.emergencyPhone}
+                    onChange={(e) => handleChange('emergencyPhone', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hotel Star Classification</label>
+                  <input
+                    type="text"
+                    value={formData.starRating}
+                    onChange={(e) => handleChange('starRating', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Default Check-In Time</label>
+                  <input
+                    type="text"
+                    value={formData.checkInTime}
+                    onChange={(e) => handleChange('checkInTime', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Default Check-Out Time</label>
+                  <input
+                    type="text"
+                    value={formData.checkOutTime}
+                    onChange={(e) => handleChange('checkOutTime', e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Bar */}
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-medium">
+              Changes apply instantly across invoices and receipts.
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                className="btn-gold px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer"
+              >
+                <Save size={14} />
+                <span>Save Profile & Logo</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  );
+}

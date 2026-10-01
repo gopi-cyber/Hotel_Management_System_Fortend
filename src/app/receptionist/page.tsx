@@ -28,6 +28,7 @@ import StatCard from '@/components/ui/StatCard';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Modal from '@/components/ui/Modal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
+import { formatPrice } from '@/lib/features/settingsSlice';
 import WalkInModal from '@/components/Receptionist/WalkInModal';
 
 export default function ReceptionistPage() {
@@ -36,6 +37,7 @@ export default function ReceptionistPage() {
   const bookings = useSelector((state: RootState) => state.bookings.items);
   const rooms = useSelector((state: RootState) => state.rooms.items);
   const services = useSelector((state: RootState) => state.services.items);
+  const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
 
   const [activeTab, setActiveTab] = useState<'checkin' | 'rooms' | 'billing' | 'requests'>('checkin');
   const [searchQuery, setSearchQuery] = useState('');
@@ -271,7 +273,7 @@ export default function ReceptionistPage() {
         />
         <StatCard
           label="Settled Folio Revenue"
-          value={`₹${totalRevenue.toLocaleString()}`}
+          value={formatPrice(totalRevenue, currency)}
           icon={CreditCard}
           change="YTD Operations"
           changeType="positive"
@@ -379,7 +381,7 @@ export default function ReceptionistPage() {
                     </div>
                     <div className="flex justify-between font-bold text-slate-900 pt-1">
                       <span>Folio Total:</span>
-                      <span>₹{(Number(b.totalPrice) || 0).toLocaleString()}</span>
+                      <span>{formatPrice(Number(b.totalPrice) || 0, currency)}</span>
                     </div>
                   </div>
                   <div className="pt-2 flex justify-end gap-2">
@@ -501,7 +503,7 @@ export default function ReceptionistPage() {
                     )}
 
                     <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] font-bold">
-                      <span className="text-slate-900">₹{(room.price || 0).toLocaleString()}</span>
+                      <span className="text-slate-900">{formatPrice(room.price || 0, currency)}</span>
                       <span className="text-slate-500 capitalize">/ night</span>
                     </div>
                   </div>
@@ -602,7 +604,7 @@ export default function ReceptionistPage() {
                   <div className="flex justify-between text-slate-600">
                     <span>Folio Balance:</span>
                     <strong className="text-slate-900 font-display text-sm">
-                      ₹{(Number(b.totalPrice) || 0).toLocaleString()}
+                      {formatPrice(Number(b.totalPrice) || 0, currency)}
                     </strong>
                   </div>
                 </div>

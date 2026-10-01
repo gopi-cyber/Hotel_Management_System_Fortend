@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { formatPrice } from '@/lib/features/settingsSlice';
 import Modal from './Modal';
-import { Printer, Download, CheckCircle, ShieldCheck, Hotel, Sparkles } from 'lucide-react';
+import { Printer, Download, CheckCircle, ShieldCheck, Hotel, Sparkles, Building2 } from 'lucide-react';
+import Image from 'next/image';
 
 export interface InvoiceBooking {
   id: string | number;
@@ -31,6 +32,7 @@ interface InvoiceModalProps {
 export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
+  const company = useSelector((state: RootState) => state.settings?.companyProfile);
 
   if (!booking) return null;
 
@@ -72,19 +74,31 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
           {/* Header & Crest */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-slate-200 gap-4">
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-slate-950 text-amber-400 flex items-center justify-center font-bold font-display text-lg">
-                  L
-                </span>
+              <div className="flex items-center gap-2.5">
+                {company?.logoUrl ? (
+                  <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                    <Image
+                      src={company.logoUrl}
+                      alt={company.brandName}
+                      fill
+                      sizes="32px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <span className="w-8 h-8 rounded-lg bg-slate-950 text-amber-400 flex items-center justify-center font-bold font-display text-lg">
+                    L
+                  </span>
+                )}
                 <span className="text-xl font-bold font-display tracking-tight text-slate-950 uppercase">
-                  LuxeStay Palace
+                  {company?.brandName || 'LuxeStay Palace'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                Marine Drive, Nariman Point, Mumbai 400021, India
+                {company?.address || 'Marine Drive, Nariman Point, Mumbai 400021, India'}
               </p>
               <p className="text-[11px] text-slate-400 font-medium">
-                GSTIN: 27AABCL8842K1ZZ | CIN: U55101MH2021PTC384910
+                GSTIN: {company?.gstin || '27AABCL8842K1ZZ'} | CIN: {company?.cin || 'U55101MH2021PTC384910'}
               </p>
             </div>
 

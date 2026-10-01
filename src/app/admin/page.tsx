@@ -34,6 +34,7 @@ import StaffModal from '@/components/Admin/StaffModal';
 import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, User as UserAccount } from '@/lib/features/userSlice';
+import { formatPrice } from '@/lib/features/settingsSlice';
 
 export default function AdminPage() {
   type TabType = 'inventory' | 'staff' | 'reservations' | 'users' | 'reports';
@@ -58,6 +59,7 @@ export default function AdminPage() {
   const rooms = useSelector((state: RootState) => state.rooms.items);
   const staff = useSelector((state: RootState) => state.staff.items);
   const bookings = useSelector((state: RootState) => state.bookings.items);
+  const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
 
   useEffect(() => {
     dispatch(fetchRooms());
@@ -312,7 +314,7 @@ export default function AdminPage() {
         />
         <StatCard
           label="Gross Lodging Folio"
-          value={`₹${totalRevenue.toLocaleString()}`}
+          value={formatPrice(totalRevenue, currency)}
           icon={CreditCard}
           change="Audited YTD"
           changeType="positive"
@@ -398,7 +400,7 @@ export default function AdminPage() {
                       <td className="py-3.5 px-5 font-bold text-slate-900">#{room.number || room.roomNumber || room.id}</td>
                       <td className="py-3.5 px-5 font-semibold text-slate-800">{room.type}</td>
                       <td className="py-3.5 px-5 text-slate-900 font-bold">
-                        ₹{(room.price || 0).toLocaleString()}
+                        {formatPrice(room.price || 0, currency)}
                       </td>
                       <td className="py-3.5 px-5 text-slate-600">{room.capacity || 2} Guests</td>
                       <td className="py-3.5 px-5">
@@ -463,7 +465,7 @@ export default function AdminPage() {
                       <span className="text-xs text-slate-500 block">{room.type}</span>
                     </div>
                     <span className="font-bold text-slate-900 font-display text-base">
-                      ₹{(room.price || 0).toLocaleString()} <span className="text-xs font-normal text-slate-500">/ night</span>
+                      {formatPrice(room.price || 0, currency)} <span className="text-xs font-normal text-slate-500">/ night</span>
                     </span>
                   </div>
 
@@ -659,7 +661,7 @@ export default function AdminPage() {
                         {b.checkInDate} → {b.checkOutDate} ({b.nights || 1}N)
                       </td>
                       <td className="py-3.5 px-5 font-bold text-slate-900 font-display text-base">
-                        ₹{(Number(b.totalPrice) || 0).toLocaleString()}
+                        {formatPrice(Number(b.totalPrice) || 0, currency)}
                       </td>
                       <td className="py-3.5 px-5">
                         <StatusBadge status={b.status} />
@@ -692,7 +694,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
                     <span>{b.checkInDate} → {b.checkOutDate}</span>
-                    <strong className="text-slate-900">₹{(Number(b.totalPrice) || 0).toLocaleString()}</strong>
+                    <strong className="text-slate-900">{formatPrice(Number(b.totalPrice) || 0, currency)}</strong>
                   </div>
                   <div className="pt-2 flex justify-end">
                     <button
