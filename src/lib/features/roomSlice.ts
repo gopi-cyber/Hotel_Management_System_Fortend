@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
+export type HousekeepingStatus = 'inspected' | 'clean' | 'dirty' | 'cleaning_in_progress' | 'out_of_order';
+
 export interface Room {
     id: string;
     number: string;
@@ -8,6 +10,9 @@ export interface Room {
     type: string;
     price: number;
     status: 'available' | 'occupied' | 'maintenance';
+    housekeepingStatus?: HousekeepingStatus;
+    assignedHousekeeper?: string;
+    lastInspectedAt?: string;
     amenities: string[];
     capacity: number;
     image?: string;
@@ -41,6 +46,9 @@ const normalizeRoom = (room: Record<string, unknown>): Room => ({
     image: String(room.image ?? room.imageUrl ?? ''),
     imageUrl: String(room.image ?? room.imageUrl ?? ''),
     description: String(room.description ?? ''),
+    housekeepingStatus: (room.housekeepingStatus ? String(room.housekeepingStatus) : 'inspected') as HousekeepingStatus,
+    assignedHousekeeper: room.assignedHousekeeper ? String(room.assignedHousekeeper) : undefined,
+    lastInspectedAt: room.lastInspectedAt ? String(room.lastInspectedAt) : undefined,
     createdAt: room.createdAt ? String(room.createdAt) : undefined,
 });
 
@@ -122,6 +130,33 @@ const roomSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+        updateHousekeepingStatus: (
+            state,
+            action: { payload: { roomId: string; housekeepingStatus: HousekeepingStatus; assignedHousekeeper?: string } }
+        ) => {
+            const room = state.items.find(
+                (r) => String(r.id) === String(action.payload.roomId) || String(r.number) === String(action.payload.roomId)
+            );
+            if (room) {
+                room.housekeepingStatus = action.payload.housekeepingStatus;
+                if (action.payload.assignedHousekeeper !== undefined) {
+                    room.assignedHousekeeper = action.payload.assignedHousekeeper;
+                }
+                room.lastInspectedAt = new Date().toISOString();
+
+                if (typeof window !== 'undefined') {
+                    try {
+                        const local = JSON.parse(localStorage.getItem('luxestay_room_housekeeping') || '{}');
+                        local[room.id] = {
+                            status: room.housekeepingStatus,
+                            assignedHousekeeper: room.assignedHousekeeper,
+                            lastInspectedAt: room.lastInspectedAt,
+                        };
+                        localStorage.setItem('luxestay_room_housekeeping', JSON.stringify(local));
+                    } catch {}
+                }
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -132,6 +167,21 @@ const roomSlice = createSlice({
             .addCase(fetchRooms.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 state.items = action.payload;
+                if (typeof window !== 'undefined') {
+                    try {
+                        const local = localStorage.getItem('luxestay_room_housekeeping');
+                        if (local) {
+                            const parsed = JSON.parse(local);
+                            state.items.forEach((r) => {
+                                if (parsed[r.id]) {
+                                    r.housekeepingStatus = parsed[r.id].status;
+                                    if (parsed[r.id].assignedHousekeeper) r.assignedHousekeeper = parsed[r.id].assignedHousekeeper;
+                                    if (parsed[r.id].lastInspectedAt) r.lastInspectedAt = parsed[r.id].lastInspectedAt;
+                                }
+                            });
+                        }
+                    } catch {}
+                }
                 state.error = null;
             })
             .addCase(fetchRooms.rejected, (state, action) => {
@@ -153,5 +203,5 @@ const roomSlice = createSlice({
     },
 });
 
-export const { clearError } = roomSlice.actions;
+export const { clearError, updateHousekeepingStatus } = roomSlice.actions;
 export default roomSlice.reducer;

@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   SlidersHorizontal,
   ArrowUpDown,
+  Utensils,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -36,6 +37,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import DigitalKeyModal from '@/components/Guest/DigitalKeyModal';
 import RoomGalleryModal from '@/components/Guest/RoomGalleryModal';
+import GuestConciergeModal from '@/components/Guest/GuestConciergeModal';
 
 export default function GuestDashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -58,6 +60,8 @@ export default function GuestDashboard() {
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [selectedGalleryRoom, setSelectedGalleryRoom] = useState<Room | null>(null);
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  const [selectedConciergeBooking, setSelectedConciergeBooking] = useState<Booking | null>(null);
+  const [isConciergeOpen, setIsConciergeOpen] = useState(false);
   
   // Booking dates
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -258,27 +262,52 @@ export default function GuestDashboard() {
           </div>
 
           {myBookings.length > 0 && (
-            <div className="p-5 rounded-3xl bg-linear-to-r from-slate-950 via-[#1e1b4b] to-slate-900 text-white border border-amber-500/30 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
-                  <KeyRound size={24} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-5 rounded-3xl bg-linear-to-r from-slate-950 via-[#1e1b4b] to-slate-900 text-white border border-amber-500/30 shadow-xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                    <KeyRound size={24} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">Contactless RFID / NFC</span>
+                    <h3 className="text-base font-bold font-display text-white">Smart Suite Key</h3>
+                    <p className="text-xs text-slate-300 mt-0.5">Instant tap-to-unlock access for your room.</p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">Contactless RFID / NFC</span>
-                  <h3 className="text-lg font-bold font-display text-white">Smart Mobile Suite Key</h3>
-                  <p className="text-xs text-slate-300 mt-0.5">Instant tap-to-unlock access for your assigned room without stopping at reception.</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedKeyBooking(myBookings[0] || null);
+                    setIsKeyModalOpen(true);
+                  }}
+                  className="btn-gold py-2 px-4 text-xs font-bold shrink-0 inline-flex items-center gap-1.5 justify-center cursor-pointer"
+                >
+                  <KeyRound size={13} /> Open Key
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedKeyBooking(myBookings[0] || null);
-                  setIsKeyModalOpen(true);
-                }}
-                className="btn-gold py-2.5 px-5 text-xs font-bold shrink-0 inline-flex items-center gap-2 justify-center"
-              >
-                <KeyRound size={14} /> Open Digital Key
-              </button>
+
+              <div className="p-5 rounded-3xl bg-linear-to-r from-slate-900 via-amber-950/40 to-slate-950 text-white border border-amber-500/30 shadow-xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+                    <Utensils size={24} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">24/7 In-Room Service</span>
+                    <h3 className="text-base font-bold font-display text-white">Dining & Concierge</h3>
+                    <p className="text-xs text-slate-300 mt-0.5">Order gourmet dining, pillows & housekeeping.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedConciergeBooking(myBookings[0] || null);
+                    setIsConciergeOpen(true);
+                  }}
+                  className="btn-gold py-2 px-4 text-xs font-bold shrink-0 inline-flex items-center gap-1.5 justify-center cursor-pointer"
+                >
+                  <BellRing size={13} /> Order Service
+                </button>
+              </div>
             </div>
           )}
 
@@ -315,10 +344,28 @@ export default function GuestDashboard() {
                         <span>Check-Out</span>
                         <strong className="text-slate-900">{b.checkOutDate}</strong>
                       </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Guest ID / KYC</span>
+                        {b.kyc?.verified ? (
+                          <span className="text-emerald-700 font-bold inline-flex items-center gap-1 text-[11px]">
+                            <ShieldCheck size={12} /> Verified
+                          </span>
+                        ) : (
+                          <span className="text-amber-700 font-semibold text-[11px]">
+                            Pending Verification
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between text-slate-600 pt-1 border-t border-slate-200">
                         <span>Duration</span>
                         <strong className="text-slate-900">{b.nights || 1} Night(s)</strong>
                       </div>
+                      {b.incidentals && b.incidentals.length > 0 && (
+                        <div className="flex items-center justify-between text-amber-700 font-medium pt-1 border-t border-slate-200">
+                          <span>Room Incidentals ({b.incidentals.length})</span>
+                          <span>+{formatPrice(b.incidentals.reduce((sum, item) => sum + item.amount, 0), currency)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -333,6 +380,17 @@ export default function GuestDashboard() {
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedConciergeBooking(b);
+                          setIsConciergeOpen(true);
+                        }}
+                        className="px-2.5 py-1.5 text-xs font-bold text-slate-800 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        title="Order In-Room Dining & Services"
+                      >
+                        <Utensils size={13} className="text-amber-700" /> Concierge
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -352,12 +410,6 @@ export default function GuestDashboard() {
                       >
                         <FileText size={13} className="text-amber-700" /> Folio
                       </button>
-                      <Link
-                        href="/profile"
-                        className="px-2.5 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors inline-flex items-center gap-1"
-                      >
-                        <BellRing size={13} />
-                      </Link>
                     </div>
                   </div>
                 </div>
@@ -781,6 +833,13 @@ export default function GuestDashboard() {
         onClose={() => setIsGalleryModalOpen(false)}
         room={selectedGalleryRoom}
         onSelectBooking={(r) => handleStartBooking(r)}
+      />
+
+      {/* ────────────────── IN-ROOM DINING & CONCIERGE MODAL ────────────────── */}
+      <GuestConciergeModal
+        isOpen={isConciergeOpen}
+        onClose={() => setIsConciergeOpen(false)}
+        booking={selectedConciergeBooking || (myBookings.length > 0 ? myBookings[0] : null)}
       />
     </PortalShell>
   );

@@ -21,6 +21,13 @@ export interface InvoiceBooking {
   status: string;
   paymentMethod?: string;
   createdAt?: string;
+  incidentalCharges?: Array<{
+    id: string;
+    title: string;
+    category: string;
+    amount: number;
+    date: string;
+  }>;
 }
 
 interface InvoiceModalProps {
@@ -38,14 +45,18 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
 
   const nights = booking.nights || 1;
   const totalPrice = Number(booking.totalPrice) || 0;
+  const incidentals = booking.incidentalCharges || [];
+  const incidentalsTotal = incidentals.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   
   // Tax & breakdown calculations
   // Total = Base (89.28%) + CGST (5.36%) + SGST (5.36%) = 100% (12% GST inclusive)
-  const baseTariff = Math.round(totalPrice / 1.12);
+  const roomBase = Math.round((totalPrice - incidentalsTotal) / 1.12);
+  const incidentalsBase = Math.round(incidentalsTotal / 1.12);
+  const baseTariff = roomBase + incidentalsBase;
   const gstTotal = totalPrice - baseTariff;
   const cgst = Math.round(gstTotal / 2);
   const sgst = gstTotal - cgst;
-  const nightlyBase = Math.round(baseTariff / nights);
+  const nightlyBase = Math.round(roomBase / nights);
 
   const handlePrint = () => {
     window.print();
@@ -164,9 +175,29 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
                   <td className="py-3 px-3 text-center font-semibold">{nights}</td>
                   <td className="py-3 px-3 text-right font-medium">{formatPrice(nightlyBase, currency)}</td>
                   <td className="py-3 px-3 text-right font-semibold text-slate-900">
-                    {formatPrice(baseTariff, currency)}
+                    {formatPrice(roomBase, currency)}
                   </td>
                 </tr>
+                {incidentals.map((charge) => {
+                  const chargeBase = Math.round(Number(charge.amount || 0) / 1.12);
+                  return (
+                    <tr key={charge.id} className="bg-amber-50/20">
+                      <td className="py-2.5 px-3">
+                        <span className="font-bold text-slate-800 block">
+                          {charge.title}
+                        </span>
+                        <span className="text-[10px] text-amber-700 uppercase tracking-wider font-semibold">
+                          Incidental • {charge.category} • {new Date(charge.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-medium">1</td>
+                      <td className="py-2.5 px-3 text-right font-medium">{formatPrice(chargeBase, currency)}</td>
+                      <td className="py-2.5 px-3 text-right font-semibold text-slate-900">
+                        {formatPrice(chargeBase, currency)}
+                      </td>
+                    </tr>
+                  );
+                })}
                 <tr>
                   <td className="py-2.5 px-3 text-slate-600">Central GST (CGST @ 6%)</td>
                   <td className="py-2.5 px-3 text-center text-slate-400">—</td>

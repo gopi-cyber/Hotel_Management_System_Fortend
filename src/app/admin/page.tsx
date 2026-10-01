@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Image from 'next/image';
-import { fetchRooms, addRoom, updateRoom, deleteRoom, Room } from '@/lib/features/roomSlice';
+import { fetchRooms, addRoom, updateRoom, deleteRoom, updateHousekeepingStatus, HousekeepingStatus, Room } from '@/lib/features/roomSlice';
 import { fetchStaff, addStaff, updateStaff, deleteStaff, Staff } from '@/lib/features/staffSlice';
 import { fetchBookings, updateBooking, Booking } from '@/lib/features/bookingSlice';
 import { RootState, AppDispatch } from '@/lib/store';
@@ -25,6 +25,10 @@ import {
   UserCheck,
   UserCog,
   KeyRound,
+  PlusCircle,
+  Shield,
+  Sparkles,
+  Clock,
 } from 'lucide-react';
 import PortalShell from '@/components/PortalShell';
 import StatCard from '@/components/ui/StatCard';
@@ -33,6 +37,8 @@ import RoomModal from '@/components/Admin/RoomModal';
 import StaffModal from '@/components/Admin/StaffModal';
 import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
+import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
+import KYCVerificationModal from '@/components/Staff/KYCVerificationModal';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, User as UserAccount } from '@/lib/features/userSlice';
 import { formatPrice } from '@/lib/features/settingsSlice';
 
@@ -46,6 +52,8 @@ export default function AdminPage() {
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
+  const [selectedIncidentalBooking, setSelectedIncidentalBooking] = useState<Booking | null>(null);
+  const [selectedKYCBooking, setSelectedKYCBooking] = useState<Booking | null>(null);
 
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -369,6 +377,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-5 font-bold">Category</th>
                     <th className="py-3.5 px-5 font-bold">Rate / Night</th>
                     <th className="py-3.5 px-5 font-bold">Capacity</th>
+                    <th className="py-3.5 px-5 font-bold">Housekeeping</th>
                     <th className="py-3.5 px-5 font-bold">Status</th>
                     <th className="py-3.5 px-5 font-bold text-right">Actions</th>
                   </tr>
@@ -403,6 +412,31 @@ export default function AdminPage() {
                         {formatPrice(room.price || 0, currency)}
                       </td>
                       <td className="py-3.5 px-5 text-slate-600">{room.capacity || 2} Guests</td>
+                      <td className="py-3.5 px-5">
+                        <select
+                          value={room.housekeepingStatus || 'inspected'}
+                          onChange={(e) => {
+                            dispatch(updateHousekeepingStatus({ roomId: room.id, housekeepingStatus: e.target.value as any }));
+                            setToastMsg(`Suite #${room.number || room.roomNumber || room.id} housekeeping set to ${e.target.value.replace(/_/g, ' ')}`);
+                            setTimeout(() => setToastMsg(''), 2500);
+                          }}
+                          className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors outline-none cursor-pointer capitalize ${
+                            (room.housekeepingStatus || 'inspected') === 'inspected' || (room.housekeepingStatus || 'inspected') === 'clean'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : room.housekeepingStatus === 'cleaning_in_progress'
+                              ? 'bg-sky-50 text-sky-800 border-sky-200'
+                              : room.housekeepingStatus === 'dirty'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-rose-50 text-rose-800 border-rose-200'
+                          }`}
+                        >
+                          <option value="inspected">Inspected & Ready</option>
+                          <option value="clean">Clean</option>
+                          <option value="cleaning_in_progress">Cleaning In Progress</option>
+                          <option value="dirty">Needs Cleaning</option>
+                          <option value="out_of_order">Out of Order</option>
+                        </select>
+                      </td>
                       <td className="py-3.5 px-5">
                         <StatusBadge status={room.status} />
                       </td>
@@ -645,6 +679,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-5 font-bold">Booking ID</th>
                     <th className="py-3.5 px-5 font-bold">Guest Name</th>
                     <th className="py-3.5 px-5 font-bold">Assigned Suite</th>
+                    <th className="py-3.5 px-5 font-bold">Guest ID / KYC</th>
                     <th className="py-3.5 px-5 font-bold">Stay Schedule</th>
                     <th className="py-3.5 px-5 font-bold">Total Folio</th>
                     <th className="py-3.5 px-5 font-bold">Status</th>
@@ -657,22 +692,58 @@ export default function AdminPage() {
                       <td className="py-3.5 px-5 font-bold text-slate-900">#{b.id}</td>
                       <td className="py-3.5 px-5 font-semibold text-slate-800">{b.guestName}</td>
                       <td className="py-3.5 px-5 text-slate-700">Suite #{b.roomNumber || b.roomId}</td>
+                      <td className="py-3.5 px-5">
+                        {b.kyc?.verified ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedKYCBooking(b)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition-all cursor-pointer"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            Verified
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedKYCBooking(b)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold hover:bg-amber-100 transition-all cursor-pointer"
+                          >
+                            <Shield className="w-3.5 h-3.5 text-amber-600" />
+                            Verify ID
+                          </button>
+                        )}
+                      </td>
                       <td className="py-3.5 px-5 text-slate-600">
                         {b.checkInDate} → {b.checkOutDate} ({b.nights || 1}N)
                       </td>
                       <td className="py-3.5 px-5 font-bold text-slate-900 font-display text-base">
                         {formatPrice(Number(b.totalPrice) || 0, currency)}
+                        {b.incidentalCharges && b.incidentalCharges.length > 0 && (
+                          <span className="text-[10px] text-amber-700 block font-sans font-medium">
+                            +{formatPrice(b.incidentalCharges.reduce((sum, item) => sum + Number(item.amount || 0), 0), currency)} extras
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-5">
                         <StatusBadge status={b.status} />
                       </td>
-                      <td className="py-3.5 px-5 text-right">
+                      <td className="py-3.5 px-5 text-right space-x-2">
+                        {b.status === 'checked_in' && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedIncidentalBooking(b)}
+                            className="py-1 px-2 text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Post incidental charge"
+                          >
+                            <PlusCircle size={13} /> + Charge
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setSelectedFolioBooking(b)}
-                          className="px-2.5 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg inline-flex items-center gap-1 border border-amber-200 cursor-pointer"
+                          className="btn-gold py-1.5 px-3 text-xs"
                         >
-                          <FileText size={12} /> Folio
+                          Inspect Folio
                         </button>
                       </td>
                     </tr>
@@ -892,6 +963,20 @@ export default function AdminPage() {
         isOpen={!!selectedFolioBooking}
         onClose={() => setSelectedFolioBooking(null)}
         booking={selectedFolioBooking}
+      />
+
+      {/* ────────────────── INCIDENTAL FOLIO CHARGE MODAL ────────────────── */}
+      <IncidentalChargeModal
+        isOpen={!!selectedIncidentalBooking}
+        onClose={() => setSelectedIncidentalBooking(null)}
+        booking={selectedIncidentalBooking}
+      />
+
+      {/* ────────────────── KYC DOCUMENT VERIFICATION MODAL ────────────────── */}
+      <KYCVerificationModal
+        isOpen={!!selectedKYCBooking}
+        onClose={() => setSelectedKYCBooking(null)}
+        booking={selectedKYCBooking}
       />
     </PortalShell>
   );
