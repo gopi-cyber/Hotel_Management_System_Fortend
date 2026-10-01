@@ -93,10 +93,10 @@ export default function RegisterPage() {
 
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight">
-                Create Account
+                Create Guest Account
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                Register your account to access LuxeStay services.
+                Register for private guest access. Staff &amp; Administrative accounts are provisioned exclusively by Hotel Administration.
               </p>
             </div>
 

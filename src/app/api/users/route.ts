@@ -81,11 +81,12 @@ export async function POST(request: NextRequest) {
         : NextResponse.json({ error: 'Invalid username/email or password' }, { status: 401 });
     }
 
-    // ── New User Registration (Defaults to 'guest') ──
+    // ── New User Registration (Strictly Guest Role Only) ──
     if (!body.username || !body.email || !body.password) {
       return NextResponse.json({ error: 'Username, email and password are required' }, { status: 400 });
     }
-    const registrationBody = { ...body, role: body.role || 'guest' };
+    // Security enforcement: public registration can ONLY ever create 'guest' accounts.
+    const registrationBody = { ...body, role: 'guest' };
 
     try {
       const controller = new AbortController();
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
       name: body.name || body.username,
       email: body.email || `${body.username}@example.com`,
       phone: body.phone || '',
-      role: body.role || 'guest'
+      role: 'guest' // Strict: public registration is guest only
     };
     fallbackData.users.push(newUser);
     return NextResponse.json(publicUser(newUser), { status: 201 });

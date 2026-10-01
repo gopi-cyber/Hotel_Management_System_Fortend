@@ -38,6 +38,7 @@ import InvoiceModal from '@/components/ui/InvoiceModal';
 import DigitalKeyModal from '@/components/Guest/DigitalKeyModal';
 import RoomGalleryModal from '@/components/Guest/RoomGalleryModal';
 import GuestConciergeModal from '@/components/Guest/GuestConciergeModal';
+import PaymentGatewayModal from '@/components/Guest/PaymentGatewayModal';
 
 export default function GuestDashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -78,6 +79,7 @@ export default function GuestDashboard() {
   // Booking Modal & Payment
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isPaymentGatewayOpen, setIsPaymentGatewayOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'arrival'>('upi');
   const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState('');
@@ -105,7 +107,11 @@ export default function GuestDashboard() {
     setIsBookingModalOpen(true);
   };
 
-  const handleConfirmReservation = async () => {
+  const handleConfirmReservation = async (paymentDetails?: {
+    transactionId: string;
+    methodLabel: string;
+    paidStatus: 'paid' | 'pending';
+  }) => {
     if (!selectedRoom || !user) return;
     setIsConfirming(true);
 
@@ -113,6 +119,14 @@ export default function GuestDashboard() {
     const checkOut = new Date(checkOutDate);
     const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
     const totalPrice = nights * selectedRoom.price;
+
+    const chosenMethodLabel =
+      paymentDetails?.methodLabel ||
+      (paymentMethod === 'upi'
+        ? 'Instant UPI / QR'
+        : paymentMethod === 'card'
+        ? 'Encrypted Luxury Card'
+        : 'Pay at Front Desk Check-in');
 
     try {
       const response = await fetch('/api/bookings', {
@@ -126,19 +140,22 @@ export default function GuestDashboard() {
           checkOutDate,
           totalPrice,
           nights,
-          paymentMethod: paymentMethod === 'upi' ? 'Instant UPI / GPay' : paymentMethod === 'card' ? 'Encrypted Luxury Card' : 'Pay at Front Desk Check-in',
+          paymentMethod: chosenMethodLabel,
           status: 'confirmed',
         }),
       });
 
       if (response.ok) {
-        setBookingSuccess(`Your reservation for ${selectedRoom.name || selectedRoom.type} has been confirmed!`);
+        setBookingSuccess(
+          `Your reservation for ${selectedRoom.name || selectedRoom.type} has been confirmed via ${chosenMethodLabel}!`
+        );
         setIsBookingModalOpen(false);
+        setIsPaymentGatewayOpen(false);
         await dispatch(fetchUserBookings(user.id));
         // Update room status to occupied in state
         await dispatch(updateRoom({ ...selectedRoom, status: 'occupied' }));
         setActiveTab('stays');
-        setTimeout(() => setBookingSuccess(''), 5000);
+        setTimeout(() => setBookingSuccess(''), 6000);
       } else {
         setBookingError('Unable to complete reservation. Please try again.');
       }
@@ -797,20 +814,57 @@ export default function GuestDashboard() {
               <button
                 type="button"
                 disabled={isConfirming}
-                onClick={handleConfirmReservation}
+                onClick={() => {
+                  setIsBookingModalOpen(false);
+                  setIsPaymentGatewayOpen(true);
+                }}
                 className="btn-gold py-2.5 px-6 text-xs inline-flex items-center gap-2 cursor-pointer"
               >
-                {isConfirming ? (
-                  <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                {paymentMethod === 'upi' ? (
+                  <>
+                    Proceed to UPI Scan &amp; Pay <ArrowRight size={14} />
+                  </>
+                ) : paymentMethod === 'card' ? (
+                  <>
+                    Proceed to Card Settlement <ArrowRight size={14} />
+                  </>
                 ) : (
                   <>
-                    Confirm & Reserve <ArrowRight size={14} />
+                    Review &amp; Confirm Guarantee <ArrowRight size={14} />
                   </>
                 )}
               </button>
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* ────────────────── INTERACTIVE PAYMENT GATEWAY & SCANNER ────────────────── */}
+      {selectedRoom && isPaymentGatewayOpen && (
+        <PaymentGatewayModal
+          isOpen={isPaymentGatewayOpen}
+          onClose={() => setIsPaymentGatewayOpen(false)}
+          room={selectedRoom}
+          nights={Math.max(
+            1,
+            Math.ceil(
+              (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)
+            )
+          )}
+          totalAmount={(() => {
+            const nights = Math.max(
+              1,
+              Math.ceil(
+                (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)
+              )
+            );
+            const subtotal = nights * selectedRoom.price;
+            const tax = Math.round(subtotal * 0.12);
+            return subtotal + tax;
+          })()}
+          paymentMethod={paymentMethod}
+          onPaymentSuccess={(details) => handleConfirmReservation(details)}
+        />
       )}
 
       {/* ────────────────── OFFICIAL GUEST TAX FOLIO / INVOICE ────────────────── */}

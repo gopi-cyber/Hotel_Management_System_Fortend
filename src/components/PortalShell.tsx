@@ -126,10 +126,10 @@ export function PortalShell({
   const defaultNavs: Record<string, PortalNavItem[]> = {
     admin: [
       { id: 'inventory', label: 'Suites & Rooms', href: '/admin', icon: BedDouble },
-      { id: 'staff', label: 'Staff Roster', href: '/admin', icon: Users },
+      { id: 'staff', label: 'Staff', href: '/admin', icon: Users },
       { id: 'reservations', label: 'Reservations', href: '/admin', icon: CalendarCheck },
       { id: 'users', label: 'Access & Roles', href: '/admin', icon: ShieldCheck },
-      { id: 'reports', label: 'Executive Analytics', href: '/admin', icon: BarChart3 },
+      { id: 'reports', label: 'Reports', href: '/admin', icon: BarChart3 },
     ],
     receptionist: [
       { id: 'checkin', label: 'Arrivals & Check-in', href: '/receptionist', icon: UserCheck },
