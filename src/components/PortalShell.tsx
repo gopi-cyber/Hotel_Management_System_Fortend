@@ -12,6 +12,8 @@ import {
   CURRENCY_MAP,
 } from '@/lib/features/settingsSlice';
 import AdminProfileModal from '@/components/Admin/AdminProfileModal';
+import StaffProfileModal from '@/components/Staff/StaffProfileModal';
+import GuestProfileModal from '@/components/Guest/GuestProfileModal';
 import {
   Hotel,
   LayoutDashboard,
@@ -69,9 +71,28 @@ export function PortalShell({
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
   const nightAudit = useSelector((state: RootState) => state.settings?.nightAudit || false);
   const companyProfile = useSelector((state: RootState) => state.settings?.companyProfile);
-  const [isAdminProfileOpen, setIsAdminProfileOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const userAvatar =
+    user?.role === 'admin'
+      ? (companyProfile?.adminAvatarUrl || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')
+      : (user?.role === 'receptionist' || user?.role === 'staff')
+      ? (user?.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80')
+      : (user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
+
+  const userDisplayName =
+    user?.role === 'admin'
+      ? (companyProfile?.adminName || user?.name || user?.username)
+      : (user?.name || user?.username);
+
+  const profileModalTitle =
+    user?.role === 'admin'
+      ? 'Admin & Corporate Profile'
+      : (user?.role === 'receptionist' || user?.role === 'staff')
+      ? 'Staff Hospitality Profile'
+      : 'Guest Stay & Loyalty Profile';
 
   useEffect(() => {
     setMounted(true);
@@ -238,34 +259,24 @@ export function PortalShell({
           <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
             <button
               type="button"
-              onClick={() => {
-                if (user.role === 'admin') {
-                  setIsAdminProfileOpen(true);
-                }
-              }}
-              className={`flex items-center gap-3 truncate text-left transition-opacity ${
-                user.role === 'admin' ? 'cursor-pointer hover:opacity-85' : 'cursor-default'
-              }`}
-              title={user.role === 'admin' ? 'Click to view/edit Admin & Company Profile' : undefined}
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-3 truncate text-left transition-opacity cursor-pointer hover:opacity-85"
+              title={`Click to view/edit ${profileModalTitle}`}
             >
               <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-amber-400 text-sm border border-slate-700 shrink-0">
-                {user.role === 'admin' && companyProfile?.adminAvatarUrl ? (
-                  <img
-                    src={companyProfile.adminAvatarUrl}
-                    alt={companyProfile.adminName || 'Admin'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  (user.name || user.username || 'U')[0].toUpperCase()
-                )}
+                <img
+                  src={userAvatar}
+                  alt={userDisplayName || 'User'}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="truncate">
                 <p className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                  <span>{user.role === 'admin' ? (companyProfile?.adminName || user.name || user.username) : (user.name || user.username)}</span>
+                  <span>{userDisplayName}</span>
                 </p>
                 <p className="text-xs text-slate-400 capitalize flex items-center gap-1">
                   <span>{user.role}</span>
-                  {user.role === 'admin' && <span className="text-[10px] text-amber-400 font-semibold">• Profile</span>}
+                  <span className="text-[10px] text-amber-400 font-semibold">• Profile</span>
                 </p>
               </div>
             </button>
@@ -385,30 +396,25 @@ export function PortalShell({
               <button
                 type="button"
                 onClick={() => {
-                  if (user.role === 'admin') {
-                    setIsAdminProfileOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }
+                  setIsProfileOpen(true);
+                  setIsMobileMenuOpen(false);
                 }}
-                className={`flex items-center gap-3 text-left ${user.role === 'admin' ? 'cursor-pointer hover:opacity-85' : 'cursor-default'}`}
+                className="flex items-center gap-3 text-left cursor-pointer hover:opacity-85"
+                title={`Click to view/edit ${profileModalTitle}`}
               >
                 <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-amber-400 text-xs border border-slate-700 shrink-0">
-                  {user.role === 'admin' && companyProfile?.adminAvatarUrl ? (
-                    <img
-                      src={companyProfile.adminAvatarUrl}
-                      alt={companyProfile.adminName || 'Admin'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    (user.name || user.username || 'U')[0].toUpperCase()
-                  )}
+                  <img
+                    src={userAvatar}
+                    alt={userDisplayName || 'User'}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">
-                    {user.role === 'admin' ? (companyProfile?.adminName || user.name || user.username) : (user.name || user.username)}
+                    {userDisplayName}
                   </p>
                   <p className="text-xs text-slate-400 capitalize">
-                    {user.role} {user.role === 'admin' && '• Profile'}
+                    {user.role} • Profile
                   </p>
                 </div>
               </button>
@@ -492,28 +498,26 @@ export function PortalShell({
                 <span>{nightAudit ? 'Day Shift' : 'Night Audit'}</span>
               </button>
 
-              {/* Admin Profile Photo Button */}
-              {user.role === 'admin' && (
-                <button
-                  type="button"
-                  onClick={() => setIsAdminProfileOpen(true)}
-                  title="Open Admin & Company Profile"
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                    nightAudit
-                      ? 'bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700'
-                      : 'bg-amber-50/80 border-amber-200 text-amber-900 hover:bg-amber-100'
-                  }`}
-                >
-                  <div className="relative w-6 h-6 rounded-full overflow-hidden border border-amber-500/40 shrink-0 bg-slate-900">
-                    <img
-                      src={companyProfile?.adminAvatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
-                      alt={companyProfile?.adminName || 'Admin'}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="hidden md:inline font-semibold">{companyProfile?.adminName || 'Admin Profile'}</span>
-                </button>
-              )}
+              {/* Profile Photo Button */}
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                title={`Open ${profileModalTitle}`}
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                  nightAudit
+                    ? 'bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700'
+                    : 'bg-amber-50/80 border-amber-200 text-amber-900 hover:bg-amber-100'
+                }`}
+              >
+                <div className="relative w-6 h-6 rounded-full overflow-hidden border border-amber-500/40 shrink-0 bg-slate-900">
+                  <img
+                    src={userAvatar}
+                    alt={userDisplayName || 'User'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="hidden md:inline font-semibold">{userDisplayName}</span>
+              </button>
 
               {actions}
             </div>
@@ -555,11 +559,23 @@ export function PortalShell({
           <span className="mt-0.5 font-bold">Logout</span>
         </button>
       </div>
-      {/* ────────────────── ADMIN & COMPANY PROFILE MODAL ────────────────── */}
+      {/* ────────────────── ROLE-SPECIFIC PROFILE MODALS ────────────────── */}
       {user.role === 'admin' && (
         <AdminProfileModal
-          isOpen={isAdminProfileOpen}
-          onClose={() => setIsAdminProfileOpen(false)}
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      )}
+      {(user.role === 'receptionist' || user.role === 'staff') && (
+        <StaffProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      )}
+      {user.role === 'guest' && (
+        <GuestProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
         />
       )}
     </div>

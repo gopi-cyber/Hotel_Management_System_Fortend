@@ -10,6 +10,18 @@ export interface User {
     role: string;
     name?: string;
     phone?: string;
+    avatarUrl?: string;
+    department?: string;
+    shift?: string;
+    employeeId?: string;
+    loyaltyTier?: string;
+    loyaltyPoints?: number;
+    dietaryPreference?: string;
+    roomPreference?: string;
+    pillowPreference?: string;
+    temperaturePreference?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
 }
 
 interface UserState {
@@ -77,6 +89,15 @@ const userSlice = createSlice({
             state.isAuthenticated = true;
             state.error = null;
         },
+        updateUserProfile: (state, action: { payload: Partial<User> }) => {
+            if (state.user) {
+                state.user = { ...state.user, ...action.payload };
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('vortex_user', JSON.stringify(state.user));
+                    localStorage.setItem(`vortex_profile_${state.user.id || state.user.username}`, JSON.stringify(state.user));
+                }
+            }
+        },
         logout: (state) => {
             state.user = null;
             state.isAuthenticated = false;
@@ -124,5 +145,5 @@ const userSlice = createSlice({
     },
 });
 
-export const { logout, restoreSession } = userSlice.actions;
+export const { logout, restoreSession, updateUserProfile } = userSlice.actions;
 export default userSlice.reducer;
