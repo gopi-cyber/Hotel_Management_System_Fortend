@@ -210,24 +210,8 @@ export function PortalShell({
 
         {/* User Card, Settings & Logout */}
         <div className="border-t border-slate-800/80 pt-4 mt-6 space-y-3">
-          {/* Night Audit & Currency Quick Toggles */}
-          <div className="space-y-2 pb-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="font-semibold uppercase tracking-wider text-[10px]">Audit Shift</span>
-              <button
-                type="button"
-                onClick={() => dispatch(toggleNightAudit())}
-                className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                  nightAudit
-                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                {nightAudit ? <Sun size={12} className="text-amber-400" /> : <Moon size={12} className="text-slate-400" />}
-                <span>{nightAudit ? 'Day Shift' : 'Night Audit'}</span>
-              </button>
-            </div>
-
+          {/* Currency Quick Toggle */}
+          <div className="pb-2">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Currency</span>
               <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-800 rounded-lg border border-slate-700 text-xs">
@@ -238,9 +222,9 @@ export function PortalShell({
                   className="bg-transparent font-bold text-xs text-white cursor-pointer focus:outline-none"
                   aria-label="Currency"
                 >
-                  {Object.values(CURRENCY_MAP).map((c) => (
-                    <option key={c.code} value={c.code} className="bg-slate-900 text-white">
-                      {c.label}
+                  {(Object.keys(CURRENCY_MAP) as CurrencyCode[]).map((code) => (
+                    <option key={code} value={code} className="bg-slate-900 text-white font-medium">
+                      {code} ({CURRENCY_MAP[code].symbol})
                     </option>
                   ))}
                 </select>
