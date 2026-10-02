@@ -78,7 +78,7 @@ export default function RoomGalleryModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`${room.name} — Visual Tour`}
-      maxWidth="max-w-4xl"
+      maxWidth="2xl"
     >
       <div className="space-y-6">
         {/* Main High-Res Viewer */}

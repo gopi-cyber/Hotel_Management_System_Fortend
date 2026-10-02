@@ -79,26 +79,11 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
     }
   };
 
-  const presetLogos = [
-    {
-      name: 'Regal Gold Palace',
-      url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80',
-    },
-    {
-      name: 'Luxury Heritage Crest',
-      url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=150&q=80',
-    },
-    {
-      name: 'Boutique Grand Hotel',
-      url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=150&q=80',
-    },
-  ];
-
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Executive Administration & Corporate Profile"
+      title="Admin Profile"
       maxWidth="2xl"
     >
       <div className="space-y-6">
@@ -156,14 +141,20 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
               {/* Header Badge Card */}
               <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-5 rounded-2xl text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 border border-slate-800 shadow-md">
                 <div className="relative group shrink-0">
-                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800">
-                    <Image
-                      src={formData.adminAvatarUrl || DEFAULT_COMPANY_PROFILE.adminAvatarUrl}
-                      alt={formData.adminName}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800 flex items-center justify-center">
+                    {formData.adminAvatarUrl ? (
+                      <Image
+                        src={formData.adminAvatarUrl}
+                        alt={formData.adminName}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-amber-400 font-display">
+                        {(formData.adminName || 'A')[0].toUpperCase()}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -265,13 +256,19 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
               {/* Hotel Brand Logo Preview Card */}
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-5">
                 <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-slate-300 shadow-sm shrink-0 bg-white flex items-center justify-center p-2">
-                  <Image
-                    src={formData.logoUrl || DEFAULT_COMPANY_PROFILE.logoUrl}
-                    alt={formData.brandName}
-                    fill
-                    sizes="80px"
-                    className="object-contain"
-                  />
+                  {formData.logoUrl ? (
+                    <Image
+                      src={formData.logoUrl}
+                      alt={formData.brandName}
+                      fill
+                      sizes="80px"
+                      className="object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 font-bold text-xs text-center">
+                      No Logo
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1 space-y-1 text-center sm:text-left">
@@ -288,31 +285,28 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
               </div>
 
-              {/* Logo Presets */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
-                  Select Hotel Brand Crest / Logo
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {presetLogos.map((preset) => (
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Hotel Logo</label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold cursor-pointer transition-colors shadow-xs">
+                    <Upload size={14} className="text-amber-600" />
+                    <span>Choose Logo File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, 'logoUrl')}
+                    />
+                  </label>
+                  {formData.logoUrl && (
                     <button
-                      key={preset.name}
                       type="button"
-                      onClick={() => handleChange('logoUrl', preset.url)}
-                      className={`p-2.5 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer ${
-                        formData.logoUrl === preset.url
-                          ? 'border-amber-600 bg-amber-50/60 ring-2 ring-amber-400/40'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
+                      onClick={() => handleChange('logoUrl', '')}
+                      className="text-xs text-rose-600 font-bold hover:underline"
                     >
-                      <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-200 bg-white">
-                        <Image src={preset.url} alt={preset.name} fill sizes="48px" className="object-cover" />
-                      </div>
-                      <span className="text-[11px] font-bold text-slate-800 text-center truncate w-full">
-                        {preset.name}
-                      </span>
+                      Remove Logo
                     </button>
-                  ))}
+                  )}
                 </div>
               </div>
 
@@ -373,23 +367,6 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                       className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
                       required
                     />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Upload Hotel Logo from Device</label>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold cursor-pointer transition-colors shadow-xs">
-                      <Upload size={14} className="text-amber-600" />
-                      <span>Choose Logo File</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, 'logoUrl')}
-                      />
-                    </label>
-                    <span className="text-[11px] text-slate-500">Upload crest/PNG • Saves instantly to invoices</span>
                   </div>
                 </div>
               </div>

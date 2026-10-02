@@ -22,6 +22,7 @@ import {
 interface GuestConciergeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  booking?: any;
   roomId?: string;
   roomNumber?: string;
   guestId?: string;
@@ -125,11 +126,16 @@ const CATALOG_ITEMS: ServiceCatalogItem[] = [
 export default function GuestConciergeModal({
   isOpen,
   onClose,
-  roomId = '101',
-  roomNumber = '101',
-  guestId = '3',
-  guestName = 'Valued Guest',
+  booking,
+  roomId: propRoomId,
+  roomNumber: propRoomNumber,
+  guestId: propGuestId,
+  guestName: propGuestName,
 }: GuestConciergeModalProps) {
+  const roomId = propRoomId || (booking as any)?.roomId || '101';
+  const roomNumber = propRoomNumber || (booking as any)?.roomNumber || '101';
+  const guestId = propGuestId || (booking as any)?.userId || '3';
+  const guestName = propGuestName || (booking as any)?.guestName || 'Valued Guest';
   const dispatch = useDispatch<AppDispatch>();
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
 
@@ -212,7 +218,7 @@ export default function GuestConciergeModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="24/7 Royal Concierge & In-Room Service" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="24/7 Royal Concierge & In-Room Service" maxWidth="lg">
       <div className="space-y-6">
         {/* Banner */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white flex items-center justify-between border border-amber-500/30 shadow-md">

@@ -5,11 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/lib/store';
 import { logout, restoreSession, User as SessionUser } from '@/lib/features/userSlice';
-import {
-  setCurrency,
-  CurrencyCode,
-  CURRENCY_MAP,
-} from '@/lib/features/settingsSlice';
+
 import AdminProfileModal from '@/components/Admin/AdminProfileModal';
 import StaffProfileModal from '@/components/Staff/StaffProfileModal';
 import GuestProfileModal from '@/components/Guest/GuestProfileModal';
@@ -29,7 +25,6 @@ import {
   Bell,
   Settings,
   ShieldCheck,
-  Globe,
 } from 'lucide-react';
 
 export interface PortalNavItem {
@@ -74,15 +69,17 @@ export function PortalShell({
 
   const userAvatar =
     user?.role === 'admin'
-      ? (companyProfile?.adminAvatarUrl || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')
-      : (user?.role === 'receptionist' || user?.role === 'staff')
-      ? (user?.avatarUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80')
-      : (user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
+      ? (companyProfile?.adminAvatarUrl || user?.avatarUrl || '')
+      : (user?.avatarUrl || '');
+
+  const hasAvatar = Boolean(userAvatar && userAvatar.trim().length > 0);
 
   const userDisplayName =
     user?.role === 'admin'
       ? (companyProfile?.adminName || user?.name || user?.username)
       : (user?.name || user?.username);
+
+  const userInitial = (userDisplayName || user?.username || 'U')[0]?.toUpperCase() || 'U';
 
   const profileModalTitle =
     user?.role === 'admin'
@@ -173,15 +170,23 @@ export function PortalShell({
         <div>
           {/* Brand Crest */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <Hotel className="text-slate-950" size={22} />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-md overflow-hidden group-hover:scale-105 transition-transform shrink-0">
+              {companyProfile?.logoUrl ? (
+                <img
+                  src={companyProfile.logoUrl}
+                  alt={companyProfile.brandName || 'Hotel Logo'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Hotel className="text-amber-400" size={22} />
+              )}
             </div>
-            <div>
-              <span className="font-display text-2xl font-bold tracking-tight text-white block leading-none">
-                LuxeStay
+            <div className="truncate">
+              <span className="font-display text-xl font-bold tracking-tight text-white block leading-none truncate">
+                {companyProfile?.brandName || companyProfile?.companyName || 'LuxeStay'}
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold mt-1 block">
-                Hotels & Residences
+              <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold mt-1 block truncate">
+                {companyProfile?.tagline || 'Hotels & Residences'}
               </span>
             </div>
           </Link>
@@ -230,30 +235,8 @@ export function PortalShell({
         </div>
 
         {/* User Card, Settings & Logout */}
-        <div className="border-t border-slate-800/80 pt-4 mt-6 space-y-3">
-          {/* Currency Quick Toggle */}
-          <div className="pb-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="font-semibold uppercase tracking-wider text-[10px]">Currency</span>
-              <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-800 rounded-lg border border-slate-700 text-xs">
-                <Globe size={11} className="text-amber-400 shrink-0" />
-                <select
-                  value={currency}
-                  onChange={(e) => dispatch(setCurrency(e.target.value as CurrencyCode))}
-                  className="bg-transparent font-bold text-xs text-white cursor-pointer focus:outline-none"
-                  aria-label="Currency"
-                >
-                  {(Object.keys(CURRENCY_MAP) as CurrencyCode[]).map((code) => (
-                    <option key={code} value={code} className="bg-slate-900 text-white font-medium">
-                      {code} ({CURRENCY_MAP[code].symbol})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
+        <div className="border-t border-slate-800/80 pt-4 mt-6">
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => setIsProfileOpen(true)}
@@ -261,29 +244,34 @@ export function PortalShell({
               title={`Click to view/edit ${profileModalTitle}`}
             >
               <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-amber-400 text-sm border border-slate-700 shrink-0">
-                <img
-                  src={userAvatar}
-                  alt={userDisplayName || 'User'}
-                  className="w-full h-full object-cover"
-                />
+                {hasAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt={userDisplayName || 'User'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="font-bold text-amber-400 text-sm font-display">
+                    {userInitial}
+                  </span>
+                )}
               </div>
               <div className="truncate">
-                <p className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                  <span>{userDisplayName}</span>
+                <p className="text-xs font-bold text-white truncate hover:text-amber-400 transition-colors">
+                  {userDisplayName}
                 </p>
-                <p className="text-xs text-slate-400 capitalize flex items-center gap-1">
-                  <span>{user.role}</span>
-                  <span className="text-[10px] text-amber-400 font-semibold">• Profile</span>
+                <p className="text-[10px] text-slate-400 capitalize truncate">
+                  {user?.role} • Profile
                 </p>
               </div>
             </button>
             <button
               type="button"
               onClick={handleLogout}
-              title="Sign out"
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+              title="Sign out of portal"
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
@@ -292,10 +280,20 @@ export function PortalShell({
       {/* ────────────────── MOBILE / TABLET TOP APP BAR ────────────────── */}
       <header className="lg:hidden bg-[#0b0f17] text-white px-4 py-3.5 flex items-center justify-between border-b border-slate-800 sticky top-0 z-40 print:hidden">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
-            <Hotel className="text-slate-950" size={18} />
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center overflow-hidden shrink-0">
+            {companyProfile?.logoUrl ? (
+              <img
+                src={companyProfile.logoUrl}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Hotel className="text-amber-400" size={18} />
+            )}
           </div>
-          <span className="font-display text-xl font-bold tracking-tight text-white">LuxeStay</span>
+          <span className="font-display text-lg font-bold tracking-tight text-white truncate">
+            {companyProfile?.brandName || companyProfile?.companyName || 'LuxeStay'}
+          </span>
         </Link>
 
         <button
@@ -355,27 +353,6 @@ export function PortalShell({
               })}
             </nav>
 
-            {/* Currency Switcher for Mobile Drawer */}
-            <div className="pt-4 border-t border-slate-800">
-              <div className="flex items-center justify-between px-3 py-2 bg-slate-900/80 rounded-xl border border-slate-800 text-xs text-slate-300">
-                <span className="flex items-center gap-1.5 font-medium text-slate-400">
-                  <Globe size={13} className="text-amber-500" /> Currency
-                </span>
-                <select
-                  value={currency}
-                  onChange={(e) => dispatch(setCurrency(e.target.value as CurrencyCode))}
-                  className="bg-transparent font-bold text-xs text-amber-400 cursor-pointer focus:outline-none"
-                  aria-label="Currency"
-                >
-                  {Object.values(CURRENCY_MAP).map((c) => (
-                    <option key={c.code} value={c.code} className="bg-slate-900 text-white">
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
               <button
                 type="button"
@@ -387,18 +364,24 @@ export function PortalShell({
                 title={`Click to view/edit ${profileModalTitle}`}
               >
                 <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-amber-400 text-xs border border-slate-700 shrink-0">
-                  <img
-                    src={userAvatar}
-                    alt={userDisplayName || 'User'}
-                    className="w-full h-full object-cover"
-                  />
+                  {hasAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt={userDisplayName || 'User'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="font-bold text-amber-400 text-xs font-display">
+                      {userInitial}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">
                     {userDisplayName}
                   </p>
                   <p className="text-xs text-slate-400 capitalize">
-                    {user.role} • Profile
+                    {user?.role} • Profile
                   </p>
                 </div>
               </button>

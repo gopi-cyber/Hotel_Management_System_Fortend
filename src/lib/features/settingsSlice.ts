@@ -31,6 +31,7 @@ export interface CompanyProfile {
   adminAvatarUrl: string;
   companyName: string;
   brandName: string;
+  tagline?: string;
   logoUrl: string;
   cin: string;
   gstin: string;
@@ -46,23 +47,33 @@ export interface CompanyProfile {
 
 export const DEFAULT_COMPANY_PROFILE: CompanyProfile = {
   adminName: 'Gopinath (Executive Admin)',
-  adminTitle: 'Managing Director & Chief Hospitality Officer',
+  adminTitle: 'Managing Director & General Manager',
   adminEmail: 'executive@luxestayhotel.com',
   adminPhone: '+91 98200 99881',
-  adminAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-  companyName: 'LuxeStay Hospitality & Heritage Resorts Private Limited',
-  brandName: 'LuxeStay Palace & Heritage Resort',
-  logoUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=150&q=80',
+  adminAvatarUrl: '',
+  companyName: 'LuxeStay Hotel & Resort',
+  brandName: 'LuxeStay Hotel',
+  logoUrl: '',
   cin: 'U55101MH2021PTC368940',
   gstin: '27AABCL1234F1Z8',
-  starRating: '5-Star Luxury Heritage Deluxe',
-  address: 'Marina Promenade, Suite 1400, Colaba, Mumbai 400001, Maharashtra, India',
+  starRating: '5-Star Luxury Resort',
+  address: 'Marina Promenade, Colaba, Mumbai 400001, Maharashtra, India',
   contactEmail: 'concierge@luxestayhotel.com',
-  conciergePhone: '+91 (022) 8800-LUXE',
+  conciergePhone: '+91 98200 44101',
   emergencyPhone: '+91 98200 99881',
   checkInTime: '14:00',
   checkOutTime: '11:00',
   taxGstRate: 12,
+};
+
+const getInitialProfile = (): CompanyProfile => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('luxestay_company_profile');
+      if (saved) return { ...DEFAULT_COMPANY_PROFILE, ...JSON.parse(saved) };
+    } catch {}
+  }
+  return DEFAULT_COMPANY_PROFILE;
 };
 
 interface SettingsState {
@@ -74,7 +85,7 @@ interface SettingsState {
 const initialState: SettingsState = {
   currency: 'INR',
   nightAudit: false,
-  companyProfile: DEFAULT_COMPANY_PROFILE,
+  companyProfile: getInitialProfile(),
 };
 
 const settingsSlice = createSlice({
@@ -92,6 +103,9 @@ const settingsSlice = createSlice({
     },
     updateCompanyProfile: (state, action: PayloadAction<Partial<CompanyProfile>>) => {
       state.companyProfile = { ...state.companyProfile, ...action.payload };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('luxestay_company_profile', JSON.stringify(state.companyProfile));
+      }
     },
   },
 });

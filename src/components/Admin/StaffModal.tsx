@@ -13,7 +13,7 @@ interface StaffModalProps {
 export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'Management' | 'Receptionist' | 'Housekeeping'>('Receptionist');
+  const [role, setRole] = useState('Receptionist');
   const [shift, setShift] = useState<'Morning' | 'Afternoon' | 'Night'>('Morning');
   const [status, setStatus] = useState<'Active' | 'On Leave' | 'Inactive'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,8 +56,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={staff ? `Edit Staff Member` : 'Add Staff Member'}
-      subtitle="Manage employee operational roles, shift assignments, and status."
+      title={staff ? `Edit Staff` : 'Add Staff'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -76,7 +75,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-            Official Email
+            Email
           </label>
           <input
             type="email"
@@ -91,17 +90,45 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Role
+              Role / Designation
             </label>
-            <select
+            <input
+              type="text"
+              list="hotel-roles-list"
               value={role}
-              onChange={(e) => setRole(e.target.value as Staff['role'])}
+              onChange={(e) => setRole(e.target.value)}
+              placeholder="e.g. Concierge, Chef, Bartender..."
+              required
               className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
-            >
-              <option value="Receptionist">Receptionist</option>
-              <option value="Management">Management</option>
-              <option value="Housekeeping">Housekeeping</option>
-            </select>
+            />
+            <datalist id="hotel-roles-list">
+              <option value="Receptionist" />
+              <option value="Front Office Manager" />
+              <option value="General Manager" />
+              <option value="Assistant Manager" />
+              <option value="Duty Manager" />
+              <option value="Concierge" />
+              <option value="Housekeeping Supervisor" />
+              <option value="Housekeeper / Room Attendant" />
+              <option value="Executive Chef" />
+              <option value="Sous Chef" />
+              <option value="Cook / Kitchen Staff" />
+              <option value="Food & Beverage Captain" />
+              <option value="Waiter / Waitress" />
+              <option value="Bartender / Mixologist" />
+              <option value="Valet & Bellhop" />
+              <option value="Door Attendant" />
+              <option value="Security Supervisor" />
+              <option value="Security Officer" />
+              <option value="Maintenance Engineer" />
+              <option value="Electrician" />
+              <option value="Plumber" />
+              <option value="Spa Therapist" />
+              <option value="Fitness Trainer" />
+              <option value="Finance & Accounts" />
+              <option value="IT Support" />
+              <option value="Event Coordinator" />
+            </datalist>
           </div>
 
           <div>

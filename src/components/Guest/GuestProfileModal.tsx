@@ -37,9 +37,7 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
     name: user?.name || user?.username || 'Valued Guest',
     email: user?.email || 'guest@luxestay.com',
     phone: user?.phone || '+91 98765 43210',
-    avatarUrl:
-      user?.avatarUrl ||
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: user?.avatarUrl || '',
     loyaltyTier: user?.loyaltyTier || 'Diamond Royal Guest',
     loyaltyPoints: user?.loyaltyPoints || 14250,
     dietaryPreference: user?.dietaryPreference || 'Pure Vegetarian',
@@ -59,9 +57,7 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
         name: user.name || user.username || 'Valued Guest',
         email: user.email || 'guest@luxestay.com',
         phone: user.phone || '+91 98765 43210',
-        avatarUrl:
-          user.avatarUrl ||
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        avatarUrl: user.avatarUrl || '',
         loyaltyTier: user.loyaltyTier || 'Diamond Royal Guest',
         loyaltyPoints: user.loyaltyPoints || 14250,
         dietaryPreference: user.dietaryPreference || 'Pure Vegetarian',
@@ -175,14 +171,20 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
           <div className="space-y-5">
             {/* VIP Card Banner */}
             <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 p-5 rounded-2xl text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 border border-amber-500/30 shadow-lg">
-              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800 shrink-0">
-                <Image
-                  src={formData.avatarUrl}
-                  alt={formData.name}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800 shrink-0 flex items-center justify-center">
+                {formData.avatarUrl ? (
+                  <Image
+                    src={formData.avatarUrl}
+                    alt={formData.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-amber-400 font-display">
+                    {(formData.name || 'G')[0]?.toUpperCase() || 'G'}
+                  </span>
+                )}
               </div>
 
               <div className="flex-1 text-center sm:text-left space-y-1">

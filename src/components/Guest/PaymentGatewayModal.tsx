@@ -129,7 +129,7 @@ export default function PaymentGatewayModal({
           : 'Guaranteed Reservation Guarantee'
       }
       subtitle={`Total Settlement: ${formatPrice(totalAmount, currency)} for Suite #${room.roomNumber || room.number || room.id}`}
-      size="md"
+      maxWidth="md"
     >
       <div className="space-y-5">
         {/* Header Summary Pill */}

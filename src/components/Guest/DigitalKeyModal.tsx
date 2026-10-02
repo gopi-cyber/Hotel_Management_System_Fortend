@@ -88,7 +88,7 @@ export default function DigitalKeyModal({
   const displayName = booking?.guestName || guestName;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Digital Key & NFC Suite Access" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Digital Key & NFC Suite Access" maxWidth="md">
       <div className="space-y-6">
         {/* Virtual Smart NFC Card */}
         <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#1e1b4b] via-[#0f172a] to-[#020617] p-6 text-white shadow-2xl border border-amber-500/30">

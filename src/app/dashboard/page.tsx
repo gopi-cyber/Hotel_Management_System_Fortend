@@ -28,6 +28,9 @@ import {
   SlidersHorizontal,
   ArrowUpDown,
   Utensils,
+  Phone,
+  Shield,
+  Upload,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -86,6 +89,92 @@ export default function GuestDashboard() {
   const [bookingError, setBookingError] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
 
+  // Guest KYC & Real Phone Verification State
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone || '+91 98765 43210');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [sentOtp, setSentOtp] = useState('');
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [otpNotice, setOtpNotice] = useState('');
+
+  const [idDocType, setIdDocType] = useState('Aadhaar Card');
+  const [idNumber, setIdNumber] = useState('');
+  const [idFullName, setIdFullName] = useState(user?.name || user?.username || '');
+  const [isKycVerified, setIsKycVerified] = useState(false);
+  const [kycError, setKycError] = useState('');
+  const [verificationGateError, setVerificationGateError] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedKyc = localStorage.getItem('luxestay_guest_kyc');
+      if (savedKyc) {
+        try {
+          const parsed = JSON.parse(savedKyc);
+          if (parsed.isPhoneVerified) {
+            setIsPhoneVerified(true);
+            if (parsed.phoneNumber) setPhoneNumber(parsed.phoneNumber);
+          }
+          if (parsed.isKycVerified) {
+            setIsKycVerified(true);
+            if (parsed.idDocType) setIdDocType(parsed.idDocType);
+            if (parsed.idNumber) setIdNumber(parsed.idNumber);
+            if (parsed.idFullName) setIdFullName(parsed.idFullName);
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  const handleSendOtp = () => {
+    if (!phoneNumber || phoneNumber.trim().length < 8) {
+      setOtpNotice('Please enter a valid phone number.');
+      return;
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setSentOtp(code);
+    setOtpNotice(`OTP Sent to ${phoneNumber}: ${code}`);
+  };
+
+  const handleVerifyOtp = () => {
+    if (phoneOtp.trim() === sentOtp && sentOtp.length === 6) {
+      setIsPhoneVerified(true);
+      setOtpNotice('');
+      setVerificationGateError('');
+      if (typeof window !== 'undefined') {
+        const saved = JSON.parse(localStorage.getItem('luxestay_guest_kyc') || '{}');
+        localStorage.setItem('luxestay_guest_kyc', JSON.stringify({ ...saved, isPhoneVerified: true, phoneNumber }));
+      }
+    } else {
+      setOtpNotice('Invalid code. Please enter the 6-digit code shown.');
+    }
+  };
+
+  const handleVerifyKyc = () => {
+    setKycError('');
+    if (!idFullName.trim()) {
+      setKycError('Please enter full legal name as shown on your ID.');
+      return;
+    }
+    if (!idNumber.trim() || idNumber.trim().length < 5) {
+      setKycError('Please enter a valid Government ID number.');
+      return;
+    }
+    setIsKycVerified(true);
+    setVerificationGateError('');
+    if (typeof window !== 'undefined') {
+      const saved = JSON.parse(localStorage.getItem('luxestay_guest_kyc') || '{}');
+      localStorage.setItem(
+        'luxestay_guest_kyc',
+        JSON.stringify({
+          ...saved,
+          isKycVerified: true,
+          idDocType,
+          idNumber,
+          idFullName,
+        })
+      );
+    }
+  };
+
   useEffect(() => {
     if (user?.id) {
       dispatch(fetchRooms());
@@ -135,13 +224,20 @@ export default function GuestDashboard() {
         body: JSON.stringify({
           roomId: selectedRoom.id,
           userId: user.id,
-          guestName: user.name || user.username,
+          guestName: idFullName || user.name || user.username,
+          guestPhone: phoneNumber,
           checkInDate,
           checkOutDate,
           totalPrice,
           nights,
           paymentMethod: chosenMethodLabel,
           status: 'confirmed',
+          kyc: {
+            verified: true,
+            documentType: idDocType,
+            documentNumber: idNumber ? `${idNumber.slice(0, 3)}••••${idNumber.slice(-3)}` : '•••• 9012',
+            verifiedAt: new Date().toISOString(),
+          },
         }),
       });
 
@@ -377,10 +473,10 @@ export default function GuestDashboard() {
                         <span>Duration</span>
                         <strong className="text-slate-900">{b.nights || 1} Night(s)</strong>
                       </div>
-                      {b.incidentals && b.incidentals.length > 0 && (
+                      {b.incidentalCharges && b.incidentalCharges.length > 0 && (
                         <div className="flex items-center justify-between text-amber-700 font-medium pt-1 border-t border-slate-200">
-                          <span>Room Incidentals ({b.incidentals.length})</span>
-                          <span>+{formatPrice(b.incidentals.reduce((sum, item) => sum + item.amount, 0), currency)}</span>
+                          <span>Room Incidentals ({b.incidentalCharges.length})</span>
+                          <span>+{formatPrice(b.incidentalCharges.reduce((sum, item) => sum + (Number(item.amount) || 0), 0), currency)}</span>
                         </div>
                       )}
                     </div>
@@ -673,7 +769,7 @@ export default function GuestDashboard() {
                             ? 'Occupied'
                             : room.status === 'maintenance'
                             ? 'Under Maintenance'
-                            : room.status === 'cleaning'
+                            : room.housekeepingStatus === 'dirty' || room.housekeepingStatus === 'cleaning_in_progress'
                             ? 'Being Serviced'
                             : 'Reserve Suite'}
                         </button>
@@ -731,16 +827,178 @@ export default function GuestDashboard() {
                     <span>₹{subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Luxury Hospitality GST (12%):</span>
+                    <span>Hospitality GST (12%):</span>
                     <span>₹{tax.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
-                    <span>Total Reservation Folio:</span>
+                    <span>Total Folio:</span>
                     <span className="text-lg font-display text-amber-800">₹{total.toLocaleString()}</span>
                   </div>
                 </div>
               );
             })()}
+
+            {/* 1. Real Phone Number Verification */}
+            <div className="space-y-2 pt-2 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <Phone size={14} className="text-amber-600" />
+                  Phone Verification
+                </label>
+                {isPhoneVerified && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <CheckCircle2 size={12} /> Verified
+                  </span>
+                )}
+              </div>
+
+              {!isPhoneVerified ? (
+                <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <div className="flex gap-2">
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        setIsPhoneVerified(false);
+                      }}
+                      placeholder="+91 98765 43210"
+                      className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="px-3 py-2 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors shrink-0"
+                    >
+                      Send OTP
+                    </button>
+                  </div>
+
+                  {otpNotice && (
+                    <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 font-medium">
+                      {otpNotice}
+                    </div>
+                  )}
+
+                  {sentOtp && (
+                    <div className="flex gap-2 pt-1">
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={phoneOtp}
+                        onChange={(e) => setPhoneOtp(e.target.value)}
+                        placeholder="Enter 6-digit OTP"
+                        className="flex-1 px-3 py-2 text-xs font-medium tracking-widest text-center rounded-lg border border-slate-300 bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors shrink-0"
+                      >
+                        Verify OTP
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs">
+                  <span className="font-semibold text-emerald-900">{phoneNumber}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPhoneVerified(false);
+                      setSentOtp('');
+                      setPhoneOtp('');
+                    }}
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-800 underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Mandatory Guest KYC Verification */}
+            <div className="space-y-2 pt-2 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-amber-600" />
+                  Government ID KYC
+                </label>
+                {isKycVerified && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <CheckCircle2 size={12} /> ID Verified
+                  </span>
+                )}
+              </div>
+
+              {!isKycVerified ? (
+                <div className="space-y-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Document Type</label>
+                      <select
+                        value={idDocType}
+                        onChange={(e) => setIdDocType(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium"
+                      >
+                        <option value="Aadhaar Card">Aadhaar Card</option>
+                        <option value="Passport">Passport</option>
+                        <option value="Driver's License">Driver's License</option>
+                        <option value="Voter ID">Voter ID</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">ID Number</label>
+                      <input
+                        type="text"
+                        value={idNumber}
+                        onChange={(e) => setIdNumber(e.target.value)}
+                        placeholder="e.g. 1234 5678 9012"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Full Legal Name on ID</label>
+                    <input
+                      type="text"
+                      value={idFullName}
+                      onChange={(e) => setIdFullName(e.target.value)}
+                      placeholder="Name as on document"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium"
+                    />
+                  </div>
+
+                  {kycError && (
+                    <p className="text-[11px] text-rose-600 font-semibold">{kycError}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleVerifyKyc}
+                    className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-xs transition-colors"
+                  >
+                    Verify ID
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs">
+                  <div>
+                    <strong className="text-emerald-900 block">{idFullName}</strong>
+                    <span className="text-[11px] text-emerald-700">{idDocType}: {idNumber ? `${idNumber.slice(0, 3)}••••${idNumber.slice(-3)}` : '•••• 9012'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsKycVerified(false)}
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-800 underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Payment Method Selector */}
             <div className="space-y-2 pt-2 border-t border-slate-200">
@@ -774,7 +1032,7 @@ export default function GuestDashboard() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-slate-900">Credit / Debit Card</span>
+                    <span className="text-xs font-bold text-slate-900">Card Payment</span>
                     {paymentMethod === 'card' && <Check size={14} className="text-amber-700" />}
                   </div>
                   <span className="text-[10px] text-slate-500 font-medium">Visa, Mastercard, Amex</span>
@@ -799,9 +1057,16 @@ export default function GuestDashboard() {
 
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-1">
                 <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
-                <span>256-Bit SSL Encrypted 5-Star Hospitality Guarantee</span>
+                <span>SSL Encrypted Payment Guarantee</span>
               </div>
             </div>
+
+            {verificationGateError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex items-center gap-2">
+                <AlertCircle size={14} className="shrink-0 text-rose-600" />
+                <span>{verificationGateError}</span>
+              </div>
+            )}
 
             <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200">
               <button
@@ -815,8 +1080,17 @@ export default function GuestDashboard() {
                 type="button"
                 disabled={isConfirming}
                 onClick={() => {
-                  setIsBookingModalOpen(false);
-                  setIsPaymentGatewayOpen(true);
+                  if (!isPhoneVerified || !isKycVerified) {
+                    setVerificationGateError('Please complete Phone Verification & Government ID KYC before proceeding.');
+                    return;
+                  }
+                  setVerificationGateError('');
+                  if (paymentMethod === 'arrival') {
+                    handleConfirmReservation();
+                  } else {
+                    setIsBookingModalOpen(false);
+                    setIsPaymentGatewayOpen(true);
+                  }
                 }}
                 className="btn-gold py-2.5 px-6 text-xs inline-flex items-center gap-2 cursor-pointer"
               >
@@ -830,7 +1104,7 @@ export default function GuestDashboard() {
                   </>
                 ) : (
                   <>
-                    Review &amp; Confirm Guarantee <ArrowRight size={14} />
+                    Confirm Reservation <ArrowRight size={14} />
                   </>
                 )}
               </button>

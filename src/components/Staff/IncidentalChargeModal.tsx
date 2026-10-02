@@ -103,7 +103,7 @@ export default function IncidentalChargeModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Post Incidental Charge to Room Folio" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Post Incidental Charge to Room Folio" maxWidth="md">
       <div className="space-y-5">
         {/* Folio Header Target */}
         <div className="p-3.5 rounded-xl bg-slate-900 text-white flex items-center justify-between border border-amber-500/30">

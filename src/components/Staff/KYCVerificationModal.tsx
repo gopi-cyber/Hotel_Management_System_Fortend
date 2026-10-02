@@ -95,7 +95,7 @@ export default function KYCVerificationModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Guest KYC & Identity Verification" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Guest KYC & Identity Verification" maxWidth="md">
       <div className="space-y-5">
         {/* Header summary */}
         <div className="p-3.5 rounded-xl bg-slate-900 text-white flex items-center justify-between border border-amber-500/30">

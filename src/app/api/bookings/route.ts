@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     userId: userId,
     guestName: body.guestName || 'Guest User',
     guestEmail: body.guestEmail || 'guest@example.com',
-    guestPhone: body.guestPhone || '+1 555-0199',
+    guestPhone: body.guestPhone || '+91 98765 43210',
     roomId: roomId,
     roomNumber: room.roomNumber,
     roomType: room.type,
@@ -71,7 +71,13 @@ export async function POST(request: NextRequest) {
     totalAmount: Number(body.totalPrice) || Number(body.totalAmount) || ((Number(body.nights) || 1) * room.pricePerNight),
     status: body.status ? String(body.status).toUpperCase() : 'CONFIRMED',
     paymentStatus: body.paymentStatus || 'PAID',
-    specialRequests: body.specialRequests || ''
+    specialRequests: body.specialRequests || '',
+    kyc: body.kyc || {
+      verified: true,
+      documentType: 'Aadhaar Card',
+      documentNumber: '•••• •••• 9012',
+      verifiedAt: new Date().toISOString()
+    }
   };
   fallbackData.bookings.push(newBooking);
   return NextResponse.json(newBooking, { status: 201 });

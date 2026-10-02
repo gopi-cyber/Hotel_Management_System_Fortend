@@ -41,9 +41,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
     name: user?.name || 'Staff Receptionist',
     email: user?.email || 'reception@luxestay.com',
     phone: user?.phone || '+91 98200 44101',
-    avatarUrl:
-      user?.avatarUrl ||
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: user?.avatarUrl || '',
     department: user?.department || 'Front Desk & Guest Services',
     shift: user?.shift || 'Morning Shift (06:00 - 15:00)',
     employeeId: user?.employeeId || 'STF-104',
@@ -58,9 +56,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
         name: user.name || 'Staff Receptionist',
         email: user.email || 'reception@luxestay.com',
         phone: user.phone || '+91 98200 44101',
-        avatarUrl:
-          user.avatarUrl ||
-          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+        avatarUrl: user.avatarUrl || '',
         department: user.department || 'Front Desk & Guest Services',
         shift: user.shift || 'Morning Shift (06:00 - 15:00)',
         employeeId: user.employeeId || 'STF-104',
@@ -164,14 +160,20 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
           <div className="space-y-5">
             {/* Staff Card Banner */}
             <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-5 rounded-2xl text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 border border-slate-800 shadow-md">
-              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800 shrink-0">
-                <Image
-                  src={formData.avatarUrl}
-                  alt={formData.name}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800 shrink-0 flex items-center justify-center">
+                {formData.avatarUrl ? (
+                  <Image
+                    src={formData.avatarUrl}
+                    alt={formData.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-amber-400 font-display">
+                    {(formData.name || 'S')[0]?.toUpperCase() || 'S'}
+                  </span>
+                )}
               </div>
 
               <div className="flex-1 text-center sm:text-left space-y-1">

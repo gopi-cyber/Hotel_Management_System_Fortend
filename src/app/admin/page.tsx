@@ -38,7 +38,6 @@ import StaffModal from '@/components/Admin/StaffModal';
 import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
-import KYCVerificationModal from '@/components/Staff/KYCVerificationModal';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, User as UserAccount } from '@/lib/features/userSlice';
 import { formatPrice } from '@/lib/features/settingsSlice';
 
@@ -53,7 +52,6 @@ export default function AdminPage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
   const [selectedIncidentalBooking, setSelectedIncidentalBooking] = useState<Booking | null>(null);
-  const [selectedKYCBooking, setSelectedKYCBooking] = useState<Booking | null>(null);
 
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -347,11 +345,8 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
-                Suites & Room Inventory
+                Rooms & Inventory
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Manage room keys, pricing per night, guest capacity, and maintenance status.
-              </p>
             </div>
 
             <div className="relative w-full sm:w-72">
@@ -539,11 +534,8 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
-                Hospitality Staff Directory
+                Staff Directory
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Manage Front Desk, Management, and Housekeeping shift assignments.
-              </p>
             </div>
 
             <div className="relative w-full sm:w-72">
@@ -646,17 +638,14 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ────────────────── TAB 3: RESERVATIONS ────────────────── */}
+      {/* ────────────────── TAB 3: RESERVATIONS ROSTER ────────────────── */}
       {activeTab === 'reservations' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
-                Master Guest Reservations
+                Reservations
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Comprehensive folio log of all confirmed, in-house, and completed bookings.
-              </p>
             </div>
 
             <div className="relative w-full sm:w-72">
@@ -694,23 +683,15 @@ export default function AdminPage() {
                       <td className="py-3.5 px-5 text-slate-700">Suite #{b.roomNumber || b.roomId}</td>
                       <td className="py-3.5 px-5">
                         {b.kyc?.verified ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedKYCBooking(b)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition-all cursor-pointer"
-                          >
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                             Verified
-                          </button>
+                          </span>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedKYCBooking(b)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold hover:bg-amber-100 transition-all cursor-pointer"
-                          >
-                            <Shield className="w-3.5 h-3.5 text-amber-600" />
-                            Verify ID
-                          </button>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-semibold">
+                            <Shield className="w-3.5 h-3.5 text-slate-400" />
+                            Not Verified
+                          </span>
                         )}
                       </td>
                       <td className="py-3.5 px-5 text-slate-600">
@@ -790,68 +771,20 @@ export default function AdminPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900 flex items-center gap-2">
                 <ShieldCheck className="text-amber-600" size={24} />
-                User Access & Role Permissions (RBAC)
+                Users & Roles
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Authoritative security control. Set and elevate account privileges across the hotel network.
-              </p>
             </div>
 
             <div className="relative w-full sm:w-72">
               <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search username, email, role..."
+                placeholder="Search user, email, role..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white shadow-xs focus:ring-2 focus:ring-amber-500/20 outline-none"
               />
             </div>
-          </div>
-
-          {/* RBAC Security Policy & Role Tier Architecture */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-1.5">
-              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-600 inline-block" />
-                <span>Executive Administrator</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Full command: Room rack inventory, staff roster, night audit reports, financial analytics, and user role elevation.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-1.5">
-              <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" />
-                <span>Front Desk Receptionist</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Operational PMS: Live guest check-in/out, KYC ID verification, room rack housekeeping, and incidental folio posting.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-sky-50/70 border border-sky-200/80 space-y-1.5">
-              <div className="flex items-center gap-2 text-sky-900 font-bold text-xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-600 inline-block" />
-                <span>Guest Residence (Public)</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Default signup tier: Suite reservations, instant UPI/Card payments, digital room keys, and in-room concierge ordering.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="text-amber-400 w-4 h-4 shrink-0" />
-              <span>
-                <strong>Strict Security Policy:</strong> Public registration is strictly restricted to Guest accounts. Role elevation to Front Desk or Executive Admin can only be authorized from this administrator panel.
-              </span>
-            </div>
-            <span className="text-slate-400 text-[11px] font-mono shrink-0">
-              {allUsers.length} Registered Accounts
-            </span>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm">
@@ -1031,13 +964,6 @@ export default function AdminPage() {
         isOpen={!!selectedIncidentalBooking}
         onClose={() => setSelectedIncidentalBooking(null)}
         booking={selectedIncidentalBooking}
-      />
-
-      {/* ────────────────── KYC DOCUMENT VERIFICATION MODAL ────────────────── */}
-      <KYCVerificationModal
-        isOpen={!!selectedKYCBooking}
-        onClose={() => setSelectedKYCBooking(null)}
-        booking={selectedKYCBooking}
       />
     </PortalShell>
   );

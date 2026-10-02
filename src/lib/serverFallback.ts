@@ -42,6 +42,13 @@ export interface FallbackBooking {
     paymentStatus: string;
     specialRequests?: string;
     createdAt?: string;
+    kyc?: {
+      verified: boolean;
+      documentType?: string;
+      documentNumber?: string;
+      verifiedAt?: string;
+      notes?: string;
+    };
 }
 
 export interface FallbackStaff {

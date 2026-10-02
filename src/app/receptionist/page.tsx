@@ -563,7 +563,7 @@ export default function ReceptionistPage() {
             {filteredRooms.map((room) => {
               const isAvailable = room.status === 'available';
               const isOccupied = room.status === 'occupied';
-              const isCleaning = room.status === 'cleaning';
+              const isCleaning = room.housekeepingStatus === 'dirty' || room.housekeepingStatus === 'cleaning_in_progress';
               const isMaintenance = room.status === 'maintenance';
 
               const activeBooking = isOccupied
@@ -972,7 +972,6 @@ export default function ReceptionistPage() {
           isOpen={!!housekeepingWarning}
           onClose={() => setHousekeepingWarning(null)}
           title="Housekeeping Readiness Alert"
-          size="sm"
         >
           <div className="space-y-4">
             <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-3">

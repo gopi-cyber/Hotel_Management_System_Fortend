@@ -4,7 +4,7 @@ export interface Staff {
     id: string;
     name: string;
     email: string;
-    role: 'Management' | 'Receptionist' | 'Housekeeping';
+    role: string;
     shift: 'Morning' | 'Afternoon' | 'Night';
     status: 'Active' | 'On Leave' | 'Inactive';
     createdAt?: string;
