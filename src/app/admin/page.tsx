@@ -49,6 +49,8 @@ export default function AdminPage() {
 
   // Modals state
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [customRoleUserId, setCustomRoleUserId] = useState<string | null>(null);
+  const [customRoleInput, setCustomRoleInput] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
   const [selectedIncidentalBooking, setSelectedIncidentalBooking] = useState<Booking | null>(null);
@@ -672,7 +674,7 @@ export default function AdminPage() {
                   {filteredBookings.map((b) => (
                     <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3.5 px-5 font-bold text-slate-900">{b.id}</td>
-                      <td className="py-3.5 px-5 font-semibold text-slate-800">{b.guestName}</td>
+                      <td className="py-3.5 px-5 font-semibold text-slate-800 max-w-[180px] break-words line-clamp-2" title={b.guestName}>{b.guestName}</td>
                       <td className="py-3.5 px-5 text-slate-700">Room {String(b.roomNumber || b.roomId).replace(/^#/, '')}</td>
                       <td className="py-3.5 px-5">
                         {b.kyc?.verified ? (
@@ -687,8 +689,9 @@ export default function AdminPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-5 text-slate-600">
-                        {b.checkInDate} → {b.checkOutDate} ({b.nights || 1}N)
+                      <td className="py-3.5 px-5 text-slate-600 whitespace-nowrap">
+                        <div>{b.checkInDate} →</div>
+                        <div>{b.checkOutDate} ({b.nights || 1}N)</div>
                       </td>
                       <td className="py-3.5 px-5 font-bold text-slate-900 font-display text-base">
                         {formatPrice(Number(b.totalPrice) || 0, currency)}
@@ -717,7 +720,7 @@ export default function AdminPage() {
                           onClick={() => setSelectedFolioBooking(b)}
                           className="btn-gold py-1.5 px-3 text-xs"
                         >
-                          View Bill / Invoice
+                          Invoice
                         </button>
                       </td>
                     </tr>
@@ -747,7 +750,7 @@ export default function AdminPage() {
                       onClick={() => setSelectedFolioBooking(b)}
                       className="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg inline-flex items-center gap-1.5 border border-amber-200 cursor-pointer"
                     >
-                      <FileText size={12} /> View Bill / Invoice
+                      <FileText size={12} /> Invoice
                     </button>
                   </div>
                 </div>
@@ -788,7 +791,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-5 font-bold">Account User</th>
                     <th className="py-3.5 px-5 font-bold">Contact Email</th>
                     <th className="py-3.5 px-5 font-bold">Current Privilege</th>
-                    <th className="py-3.5 px-5 font-bold">Elevate / Modify Role</th>
+                    <th className="py-3.5 px-5 font-bold">Role</th>
                     <th className="py-3.5 px-5 font-bold text-right">Actions</th>
                   </tr>
                 </thead>
@@ -827,7 +830,7 @@ export default function AdminPage() {
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               role === 'admin' ? 'bg-amber-600' : role === 'receptionist' || role === 'staff' ? 'bg-emerald-600' : 'bg-sky-600'
                             }`} />
-                            {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Front Desk' : 'Guest'}
+                            {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Staff' : role === 'guest' ? 'Guest' : role}
                           </span>
                         </td>
                         <td className="py-3.5 px-5">
@@ -835,15 +838,60 @@ export default function AdminPage() {
                             <span className="text-xs text-slate-400 font-medium">
                               Primary Account
                             </span>
+                          ) : customRoleUserId === String(u.id) ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={customRoleInput}
+                                onChange={(e) => setCustomRoleInput(e.target.value)}
+                                placeholder="Custom role..."
+                                className="text-xs px-2 py-1 border border-slate-300 rounded-lg outline-none w-28 font-medium text-slate-800"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (customRoleInput.trim()) {
+                                    handleRoleChange(String(u.id), customRoleInput.trim().toLowerCase());
+                                  }
+                                  setCustomRoleUserId(null);
+                                  setCustomRoleInput('');
+                                }}
+                                className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCustomRoleUserId(null);
+                                  setCustomRoleInput('');
+                                }}
+                                className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           ) : (
                             <select
                               value={role}
-                              onChange={(e) => handleRoleChange(String(u.id), e.target.value)}
-                              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 hover:border-amber-500 focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors shadow-xs"
+                              onChange={(e) => {
+                                if (e.target.value === 'custom') {
+                                  setCustomRoleUserId(String(u.id));
+                                  setCustomRoleInput('');
+                                  return;
+                                }
+                                handleRoleChange(String(u.id), e.target.value);
+                              }}
+                              className="text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 hover:border-amber-500 focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors shadow-xs capitalize"
                             >
-                              <option value="guest">Guest (Default Residence)</option>
-                              <option value="receptionist">Receptionist (Front Desk PMS)</option>
-                              <option value="admin">Administrator (Executive Console)</option>
+                              <option value="guest">guest</option>
+                              <option value="receptionist">receptionist</option>
+                              <option value="admin">admin</option>
+                              {!['guest', 'receptionist', 'admin'].includes(role) && (
+                                <option value={role}>{role}</option>
+                              )}
+                              <option value="custom">+ Custom Role...</option>
                             </select>
                           )}
                         </td>
@@ -892,7 +940,7 @@ export default function AdminPage() {
                             : 'bg-sky-100 text-sky-900'
                         }`}
                       >
-                        {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Front Desk' : 'Guest'}
+                        {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Staff' : role === 'guest' ? 'Guest' : role}
                       </span>
                     </div>
 
@@ -902,11 +950,14 @@ export default function AdminPage() {
                         disabled={isRootAdmin}
                         value={role}
                         onChange={(e) => handleRoleChange(String(u.id), e.target.value)}
-                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800"
+                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 capitalize"
                       >
-                        <option value="admin">Admin</option>
-                        <option value="receptionist">Receptionist</option>
-                        <option value="guest">Guest</option>
+                        <option value="guest">guest</option>
+                        <option value="receptionist">receptionist</option>
+                        <option value="admin">admin</option>
+                        {!['guest', 'receptionist', 'admin'].includes(role) && (
+                          <option value={role}>{role}</option>
+                        )}
                       </select>
                     </div>
                   </div>

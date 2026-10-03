@@ -186,13 +186,16 @@ button, a, input, select {
 @media print {
   body {
     background: #ffffff !important;
-    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   body * {
     visibility: hidden;
   }
   #printable-invoice, #printable-invoice * {
     visibility: visible;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   #printable-invoice {
     position: fixed;
@@ -203,6 +206,7 @@ button, a, input, select {
     padding: 24px;
     border: none !important;
     box-shadow: none !important;
+    background: #ffffff !important;
   }
   aside, nav, header, footer, button, .print-hidden {
     display: none !important;

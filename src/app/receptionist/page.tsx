@@ -355,7 +355,7 @@ export default function ReceptionistPage() {
                     return (
                     <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3.5 px-5 font-bold text-slate-900">{b.id}</td>
-                      <td className="py-3.5 px-5 font-semibold text-slate-800">{b.guestName}</td>
+                      <td className="py-3.5 px-5 font-semibold text-slate-800 max-w-[180px] break-words line-clamp-2" title={b.guestName}>{b.guestName}</td>
                       <td className="py-3.5 px-5 text-slate-700">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{b.roomNumber ? `Room ${String(b.roomNumber).replace(/^#/, '')}` : `Room ${String(b.roomId).replace(/^#/, '')}`}</span>
@@ -394,8 +394,9 @@ export default function ReceptionistPage() {
                           </button>
                         )}
                       </td>
-                      <td className="py-3.5 px-5 text-slate-600">
-                        {b.checkInDate} → {b.checkOutDate}
+                      <td className="py-3.5 px-5 text-slate-600 whitespace-nowrap">
+                        <div>{b.checkInDate} →</div>
+                        <div>{b.checkOutDate} ({b.nights || 1}N)</div>
                       </td>
                       <td className="py-3.5 px-5">
                         <StatusBadge status={b.status} />
@@ -776,7 +777,7 @@ export default function ReceptionistPage() {
                     onClick={() => setSelectedBookingFolio(b)}
                     className="flex-1 btn-gold py-2 text-xs justify-center cursor-pointer"
                   >
-                    View Bill / Invoice
+                    Invoice
                   </button>
                 </div>
               </div>

@@ -72,15 +72,15 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       title={`Hotel Bill & Tax Invoice`}
-      subtitle={`Official settlement statement #${invoiceNo}`}
+      subtitle={`Invoice #${invoiceNo}`}
       maxWidth="2xl"
     >
       <div className="space-y-6">
         {/* Printable Folio Document */}
-        <div 
+        <div
           ref={invoiceRef}
           id="printable-invoice"
-          className="bg-white border-2 border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs text-slate-900 print:border-none print:shadow-none print:p-0 print:m-0"
+          className="bg-white border-2 border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs text-slate-900 print:border-none print:shadow-none print:p-0 print:m-0 print:[color-adjust:exact]"
         >
           {/* Header & Crest */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-slate-200 gap-4">
@@ -157,7 +157,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
               <thead>
                 <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                   <th className="py-2.5 px-3">Description</th>
-                  <th className="py-2.5 px-3 text-center">Qty / Nights</th>
+                  <th className="py-2.5 px-3 font-semibold text-center">Stay</th>
                   <th className="py-2.5 px-3 text-right">Unit Rate</th>
                   <th className="py-2.5 px-3 text-right">Amount (₹)</th>
                 </tr>
@@ -213,11 +213,13 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
               </tbody>
               <tfoot>
                 <tr className="bg-amber-50/60 font-bold text-slate-900 border-t-2 border-slate-200">
-                  <td colSpan={3} className="py-3 px-3 text-right uppercase tracking-wider text-xs">
-                    Grand Total Settlement:
-                  </td>
-                  <td className="py-3 px-3 text-right text-base font-display text-amber-900">
-                    {formatPrice(totalPrice, currency)}
+                  <td colSpan={4} className="py-3 px-3 text-center">
+                    <span className="uppercase tracking-wider text-xs font-bold text-slate-700 mr-2">
+                      Grand Total:
+                    </span>
+                    <span className="text-lg font-display text-amber-900 font-extrabold">
+                      {formatPrice(totalPrice, currency)}
+                    </span>
                   </td>
                 </tr>
               </tfoot>
@@ -238,13 +240,12 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
                 <p className="text-[11px] text-slate-500">
                   Method: {booking.paymentMethod || 'Online Payment'}
                 </p>
-                <p className="text-[10px] text-slate-400 font-mono">Auth Token: LX-AUTH-{booking.id}-OK</p>
               </div>
             </div>
 
             <div className="text-[11px] text-slate-400 sm:text-right">
               <p className="font-semibold text-slate-600">Authorized Signature & Seal</p>
-              <p className="font-display italic text-amber-700 font-bold text-sm">LuxeStay Hospitality Registrar</p>
+              <p className="font-display italic text-amber-700 font-bold text-sm">{company?.brandName || 'LuxeStay Palace'}</p>
             </div>
           </div>
         </div>
@@ -258,7 +259,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
               className="btn-gold py-2.5 px-5 text-xs inline-flex items-center justify-center gap-2 w-full sm:w-auto cursor-pointer"
             >
               <Printer size={15} />
-              Print / Save as PDF
+              Print
             </button>
             <button
               type="button"
