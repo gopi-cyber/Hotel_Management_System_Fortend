@@ -360,7 +360,7 @@ export function ReportModal({
         <body>
           <div class="action-bar no-print">
             <button class="btn btn-outline" onclick="window.close()">Close</button>
-            <button class="btn" onclick="window.print()">🖨️ Print Document</button>
+            <button class="btn" onclick="window.print()">Print Report</button>
           </div>
 
           <div class="page-container">

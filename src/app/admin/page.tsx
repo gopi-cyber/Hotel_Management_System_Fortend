@@ -786,7 +786,6 @@ export default function AdminPage() {
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
                     <th className="py-3.5 px-5 font-bold">Account User</th>
-                    <th className="py-3.5 px-5 font-bold">Username / Login ID</th>
                     <th className="py-3.5 px-5 font-bold">Contact Email</th>
                     <th className="py-3.5 px-5 font-bold">Current Privilege</th>
                     <th className="py-3.5 px-5 font-bold">Elevate / Modify Role</th>
@@ -811,9 +810,6 @@ export default function AdminPage() {
                               </span>
                             )}
                           </div>
-                        </td>
-                        <td className="py-3.5 px-5 text-slate-700 font-mono text-xs font-semibold">
-                          {u.username}
                         </td>
                         <td className="py-3.5 px-5 text-slate-600">
                           {u.email || '—'}
@@ -884,7 +880,7 @@ export default function AdminPage() {
                         </div>
                         <div>
                           <strong className="text-slate-900 block text-sm">{u.name || u.username}</strong>
-                          <span className="text-xs text-slate-500 font-mono">{u.username}</span>
+                          {u.email && <span className="text-xs text-slate-500">{u.email}</span>}
                         </div>
                       </div>
                       <span
