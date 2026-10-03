@@ -243,7 +243,7 @@ export default function AdminPage() {
   return (
     <PortalShell
       requiredRole="admin"
-      title="Executive Administration"
+      title="Admin Dashboard"
       navItems={navItems}
       activeNavId={activeTab}
       actions={

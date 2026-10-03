@@ -144,11 +144,23 @@ const roomSlice = createSlice({
                 }
                 room.lastInspectedAt = new Date().toISOString();
 
+                // If housekeeping is dirty or out_of_order or cleaning, automatically mark room status
+                if (room.housekeepingStatus === 'dirty') {
+                    if (room.status !== 'occupied') room.status = 'maintenance';
+                } else if (room.housekeepingStatus === 'out_of_order') {
+                    room.status = 'maintenance';
+                } else if (room.housekeepingStatus === 'cleaning_in_progress') {
+                    if (room.status !== 'occupied') room.status = 'maintenance';
+                } else if (room.housekeepingStatus === 'clean' || room.housekeepingStatus === 'inspected') {
+                    if (room.status === 'maintenance') room.status = 'available';
+                }
+
                 if (typeof window !== 'undefined') {
                     try {
                         const local = JSON.parse(localStorage.getItem('luxestay_room_housekeeping') || '{}');
                         local[room.id] = {
                             status: room.housekeepingStatus,
+                            roomStatus: room.status,
                             assignedHousekeeper: room.assignedHousekeeper,
                             lastInspectedAt: room.lastInspectedAt,
                         };
@@ -175,6 +187,7 @@ const roomSlice = createSlice({
                             state.items.forEach((r) => {
                                 if (parsed[r.id]) {
                                     r.housekeepingStatus = parsed[r.id].status;
+                                    if (parsed[r.id].roomStatus) r.status = parsed[r.id].roomStatus;
                                     if (parsed[r.id].assignedHousekeeper) r.assignedHousekeeper = parsed[r.id].assignedHousekeeper;
                                     if (parsed[r.id].lastInspectedAt) r.lastInspectedAt = parsed[r.id].lastInspectedAt;
                                 }

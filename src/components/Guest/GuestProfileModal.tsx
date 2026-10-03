@@ -176,16 +176,9 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
               <div className="flex-1 text-center sm:text-left space-y-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <h3 className="text-lg font-bold font-display text-white">{formData.name}</h3>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/40 uppercase tracking-wider flex items-center gap-1">
-                    <Crown size={11} className="text-amber-400" />
-                    <span>{formData.loyaltyTier}</span>
-                  </span>
                 </div>
                 <p className="text-xs text-amber-200/90 font-medium">
                   Loyalty Balance: <strong className="text-amber-300 font-display text-sm">{formData.loyaltyPoints.toLocaleString()} Points</strong>
-                </p>
-                <p className="text-xs text-slate-300">
-                  Member ID: #GST-8842 • Status: Active Luxury Resident
                 </p>
               </div>
             </div>

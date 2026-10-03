@@ -46,8 +46,8 @@ export interface CompanyProfile {
 }
 
 export const DEFAULT_COMPANY_PROFILE: CompanyProfile = {
-  adminName: 'Gopinath (Executive Admin)',
-  adminTitle: 'Managing Director & General Manager',
+  adminName: 'Gopinath',
+  adminTitle: 'Administrator',
   adminEmail: 'executive@luxestayhotel.com',
   adminPhone: '+91 98200 99881',
   adminAvatarUrl: '',

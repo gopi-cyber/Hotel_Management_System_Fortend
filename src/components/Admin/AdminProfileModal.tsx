@@ -148,14 +148,8 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 <div className="flex-1 text-center sm:text-left space-y-1">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <h3 className="text-lg font-bold font-display text-white">{formData.adminName}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30 uppercase tracking-wider">
-                      Executive Admin
-                    </span>
                   </div>
                   <p className="text-xs text-amber-200/90 font-medium">{formData.adminTitle}</p>
-                  <p className="text-xs text-slate-400 font-mono">
-                    Security Clearance: Level 4 Super-Admin • System ID: #ADM-001
-                  </p>
                 </div>
               </div>
 
@@ -176,7 +170,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Executive Title</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Role / Title</label>
                   <div className="relative">
                     <Award size={14} className="absolute left-3 top-3 text-slate-400" />
                     <input
@@ -431,11 +425,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
           )}
 
           {/* Action Bar */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-            <span className="text-xs text-slate-500 font-medium">
-              Changes apply instantly across invoices and receipts.
-            </span>
-
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-end">
             <div className="flex items-center gap-2">
               <button
                 type="button"

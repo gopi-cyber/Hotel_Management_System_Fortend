@@ -130,9 +130,6 @@ export default function LandingPage() {
             <a href="#suites" className="hover:text-amber-700 transition-colors">Suites & Villas</a>
             <a href="#experiences" className="hover:text-amber-700 transition-colors">Experiences</a>
             <a href="#story" className="hover:text-amber-700 transition-colors">Our Story</a>
-            <Link href="/login" className="hover:text-amber-700 transition-colors flex items-center gap-1.5">
-              <Lock size={15} /> Portals
-            </Link>
           </nav>
 
           {/* Action CTAs */}
@@ -200,7 +197,7 @@ export default function LandingPage() {
                 </Link>
               ) : (
                 <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-slate-100 text-amber-700 font-bold">
-                  Guest & Staff Portals
+                  Sign In
                 </Link>
               )}
             </div>
@@ -573,11 +570,11 @@ export default function LandingPage() {
 
             {/* Col 2 */}
             <div>
-              <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-4">Portals</h4>
+              <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-4">Account Access</h4>
               <ul className="space-y-2.5 text-xs font-semibold">
                 <li><Link href="/login" className="hover:text-amber-400 transition-colors">Guest Portal Login</Link></li>
                 <li><Link href="/receptionist" className="hover:text-amber-400 transition-colors">Front Desk Terminal</Link></li>
-                <li><Link href="/admin" className="hover:text-amber-400 transition-colors">Executive Administration</Link></li>
+                <li><Link href="/admin" className="hover:text-amber-400 transition-colors">Admin Console</Link></li>
                 <li><Link href="/register" className="hover:text-amber-400 transition-colors">Create Account</Link></li>
               </ul>
             </div>

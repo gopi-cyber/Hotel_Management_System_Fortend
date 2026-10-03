@@ -165,15 +165,9 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
               <div className="flex-1 text-center sm:text-left space-y-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <h3 className="text-lg font-bold font-display text-white">{formData.name}</h3>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 uppercase tracking-wider">
-                    On Duty Active
-                  </span>
                 </div>
                 <p className="text-xs text-amber-200/90 font-medium">
-                  {formData.department} • ID: #{formData.employeeId}
-                </p>
-                <p className="text-xs text-slate-400 font-mono">
-                  {formData.shift} • Station: Front Desk Counter A
+                  {formData.department}
                 </p>
               </div>
             </div>

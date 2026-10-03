@@ -156,7 +156,7 @@ export function PortalShell({
   }
 
   const roleLabels = {
-    admin: { name: 'Executive Administration', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+    admin: { name: 'Admin', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
     receptionist: { name: 'Front Desk Terminal', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
     guest: { name: 'Guest Residence', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
   };
