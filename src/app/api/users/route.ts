@@ -81,6 +81,36 @@ export async function POST(request: NextRequest) {
         : NextResponse.json({ error: 'Invalid username/email or password' }, { status: 401 });
     }
 
+    // ── OAuth Social Authentication (Google, Apple, GitHub) ──
+    if (body.action === 'oauth') {
+      const email = String(body.email || '').toLowerCase().trim();
+      if (!email) {
+        return NextResponse.json({ error: 'Email is required for authentication' }, { status: 400 });
+      }
+
+      let existing = fallbackData.users.find((u) => u.email.toLowerCase() === email);
+      if (existing) {
+        return NextResponse.json(publicUser(existing), { status: 200 });
+      }
+
+      const generatedUsername = (email.split('@')[0] || 'guest')
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .slice(0, 15) + '_' + Math.floor(100 + Math.random() * 900);
+
+      const newUser: FallbackUser = {
+        id: Date.now().toString(),
+        username: generatedUsername,
+        password: 'oauth_verified',
+        name: body.name || email.split('@')[0] || 'Honored Guest',
+        email: email,
+        phone: body.phone || '',
+        avatarUrl: body.avatarUrl || '',
+        role: 'guest'
+      };
+      fallbackData.users.push(newUser);
+      return NextResponse.json(publicUser(newUser), { status: 201 });
+    }
+
     // ── New User Registration (Strictly Guest Role Only) ──
     if (!body.username || !body.email || !body.password) {
       return NextResponse.json({ error: 'Username, email and password are required' }, { status: 400 });
