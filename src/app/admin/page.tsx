@@ -572,17 +572,6 @@ export default function AdminPage() {
                       <td className="py-3.5 px-5 text-right space-x-2">
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedStaff(member);
-                            setIsStaffModalOpen(true);
-                          }}
-                          className="p-1.5 text-slate-600 hover:text-amber-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Edit Staff"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => handleDeleteStaff(member.id)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           title="Delete Staff"
@@ -607,17 +596,7 @@ export default function AdminPage() {
                     </div>
                     <StatusBadge status={member.status} />
                   </div>
-                  <div className="pt-2 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedStaff(member);
-                        setIsStaffModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 rounded-lg"
-                    >
-                      Edit
-                    </button>
+                  <div className="pt-2 flex justify-end">
                     <button
                       type="button"
                       onClick={() => handleDeleteStaff(member.id)}
@@ -790,7 +769,6 @@ export default function AdminPage() {
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
                     <th className="py-3.5 px-5 font-bold">Account User</th>
                     <th className="py-3.5 px-5 font-bold">Contact Email</th>
-                    <th className="py-3.5 px-5 font-bold">Current Privilege</th>
                     <th className="py-3.5 px-5 font-bold">Role</th>
                     <th className="py-3.5 px-5 font-bold text-right">Actions</th>
                   </tr>
@@ -816,22 +794,6 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3.5 px-5 text-slate-600">
                           {u.email || '—'}
-                        </td>
-                        <td className="py-3.5 px-5">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                              role === 'admin'
-                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                : role === 'receptionist' || role === 'staff'
-                                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                                : 'bg-sky-100 text-sky-900 border border-sky-300'
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              role === 'admin' ? 'bg-amber-600' : role === 'receptionist' || role === 'staff' ? 'bg-emerald-600' : 'bg-sky-600'
-                            }`} />
-                            {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Staff' : role === 'guest' ? 'Guest' : role}
-                          </span>
                         </td>
                         <td className="py-3.5 px-5">
                           {isRootAdmin ? (
@@ -886,8 +848,8 @@ export default function AdminPage() {
                               className="text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 hover:border-amber-500 focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors shadow-xs capitalize"
                             >
                               <option value="guest">guest</option>
-                              <option value="receptionist">receptionist</option>
-                              {!['guest', 'receptionist'].includes(role) && (
+                              <option value="staff">staff</option>
+                              {!['guest', 'staff'].includes(role) && (
                                 <option value={role}>{role}</option>
                               )}
                               <option value="custom">+ Custom Role...</option>
@@ -930,21 +892,10 @@ export default function AdminPage() {
                           {u.email && <span className="text-xs text-slate-500">{u.email}</span>}
                         </div>
                       </div>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          role === 'admin'
-                            ? 'bg-amber-100 text-amber-900'
-                            : role === 'receptionist' || role === 'staff'
-                            ? 'bg-emerald-100 text-emerald-900'
-                            : 'bg-sky-100 text-sky-900'
-                        }`}
-                      >
-                        {role === 'admin' ? 'Admin' : role === 'receptionist' || role === 'staff' ? 'Staff' : role === 'guest' ? 'Guest' : role}
-                      </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                      <span className="text-xs text-slate-500 font-medium">Assign Role:</span>
+                      <span className="text-xs text-slate-500 font-medium">Role:</span>
                       <select
                         disabled={isRootAdmin}
                         value={role}
@@ -952,8 +903,8 @@ export default function AdminPage() {
                         className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 capitalize"
                       >
                         <option value="guest">guest</option>
-                        <option value="receptionist">receptionist</option>
-                        {!['guest', 'receptionist'].includes(role) && (
+                        <option value="staff">staff</option>
+                        {!['guest', 'staff'].includes(role) && (
                           <option value={role}>{role}</option>
                         )}
                       </select>
