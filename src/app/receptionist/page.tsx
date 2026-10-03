@@ -261,8 +261,8 @@ export default function ReceptionistPage() {
   return (
     <PortalShell
       requiredRole="receptionist"
-      title="Front Desk Terminal"
-      subtitle="Guest arrivals, quick check-in / check-out, room status, and billing."
+      title={user?.name || user?.username || 'Front Desk Staff'}
+      subtitle={user?.department ? `${user.department} Staff` : 'Staff'}
       navItems={navItems}
       activeNavId={activeTab}
     >
