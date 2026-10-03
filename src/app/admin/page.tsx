@@ -244,7 +244,6 @@ export default function AdminPage() {
     <PortalShell
       requiredRole="admin"
       title="Executive Administration"
-      subtitle="Hotel management console: inventory control, staff directory, guest reservations, and yield analytics."
       navItems={navItems}
       activeNavId={activeTab}
       actions={

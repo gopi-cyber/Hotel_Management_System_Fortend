@@ -433,7 +433,7 @@ export default function RegisterPage() {
                   <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    Complete Registration <ArrowRight size={16} />
+                    Sign Up <ArrowRight size={16} />
                   </>
                 )}
               </button>

@@ -152,7 +152,7 @@ export default function LoginPage() {
                   <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    Sign In to Portal <ArrowRight size={16} />
+                    Sign In <ArrowRight size={16} />
                   </>
                 )}
               </button>
