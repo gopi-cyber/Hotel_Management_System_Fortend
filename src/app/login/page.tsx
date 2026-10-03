@@ -117,12 +117,9 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Password
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-medium">Default: 123</span>
-                </div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Password
+                </label>
                 <div className="relative rounded-xl border border-slate-300 bg-white focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock size={18} />
