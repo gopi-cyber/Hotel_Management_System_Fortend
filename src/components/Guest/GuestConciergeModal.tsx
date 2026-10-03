@@ -218,7 +218,7 @@ export default function GuestConciergeModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="24/7 Royal Concierge & In-Room Service" maxWidth="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="24/7 Room Service & Guest Help" maxWidth="lg">
       <div className="space-y-6">
         {/* Banner */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white flex items-center justify-between border border-amber-500/30 shadow-md">
@@ -228,10 +228,10 @@ export default function GuestConciergeModal({
             </div>
             <div>
               <h3 className="font-serif text-lg font-bold text-amber-300">
-                In-Suite Concierge Dispatch
+                Room Service Orders
               </h3>
               <p className="text-xs text-slate-300">
-                Suite {roomNumber} • Guest {guestName} • 24/7 Direct Butler Line
+                Suite {roomNumber} • Guest {guestName} • 24/7 Hotel Staff Line
               </p>
             </div>
           </div>
@@ -244,10 +244,10 @@ export default function GuestConciergeModal({
         {/* Category Tabs */}
         <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
           {[
-            { id: 'all', label: 'All Offerings' },
-            { id: 'housekeeping', label: 'Housekeeping & Comfort' },
-            { id: 'dining', label: 'In-Room Fine Dining' },
-            { id: 'concierge', label: 'Concierge & Valet' },
+            { id: 'all', label: 'All Services' },
+            { id: 'dining', label: 'Food & Drinks' },
+            { id: 'housekeeping', label: 'Housekeeping' },
+            { id: 'concierge', label: 'Travel & Help' },
           ].map((cat) => (
             <button
               key={cat.id}

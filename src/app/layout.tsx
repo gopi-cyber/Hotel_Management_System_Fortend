@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "LuxeStay | Luxury Hotels & Residences",
-  description: "Exquisite stays, Michelin-inspired dining, and bespoke hospitality at LuxeStay Hotels & Residences.",
+  description: "Luxury hotel stays, gourmet restaurant dining, and 24/7 room service at LuxeStay Hotels.",
   keywords: ["hotel", "luxury resort", "suites", "hospitality", "reservations", "hotel management"],
   authors: [{ name: "LuxeStay Hospitality" }],
   applicationName: "LuxeStay",

@@ -265,7 +265,7 @@ export default function ReceptionistPage() {
     <PortalShell
       requiredRole="receptionist"
       title="Front Desk Terminal"
-      subtitle="Guest arrivals, express check-in / check-out, live suite rack, and folios."
+      subtitle="Guest arrivals, quick check-in / check-out, room status, and billing."
       navItems={navItems}
       activeNavId={activeTab}
     >
@@ -318,7 +318,7 @@ export default function ReceptionistPage() {
                 Guest Arrivals & Operations
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Perform instant check-in, key verification, or check-out folio settlement.
+                Perform quick check-in, key card assignment, or check-out billing.
               </p>
             </div>
 

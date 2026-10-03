@@ -316,7 +316,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
                 <span>Front Desk POS & Settlement Authority</span>
               </span>
               <p className="text-amber-800/80">
-                Staff account authorized to check-in guests, assign RFID room keys, process service requests, and print legal GST folios.
+                Staff account authorized to check-in guests, assign RFID room keys, process service requests, and print guest bills and invoices.
               </p>
             </div>
           </div>

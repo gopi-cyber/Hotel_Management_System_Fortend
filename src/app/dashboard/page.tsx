@@ -320,7 +320,7 @@ export default function GuestDashboard() {
     },
     {
       id: 'concierge',
-      label: 'In-Room Concierge',
+      label: 'Room Service & Help',
       icon: BellRing,
       onClick: () => (window.location.href = '/profile'),
     },
@@ -329,14 +329,14 @@ export default function GuestDashboard() {
   return (
     <PortalShell
       requiredRole="guest"
-      title={`Welcome, ${user?.name || user?.username || 'Honored Guest'}`}
-      subtitle="Manage your personal itinerary, explore private residences, and order on-demand room amenities."
+      title={`Welcome, ${user?.name || user?.username || 'Guest'}`}
+      subtitle="View your room bookings, explore available rooms, and order food or room services."
       navItems={navItems}
       activeNavId={activeTab}
       actions={
         <div className="flex items-center gap-2">
           <Link href="/profile" className="btn-gold text-xs py-2 px-4 inline-flex items-center gap-2">
-            <BellRing size={14} /> Request Concierge
+            <BellRing size={14} /> Room Service
           </Link>
         </div>
       }
@@ -406,7 +406,7 @@ export default function GuestDashboard() {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">24/7 In-Room Service</span>
-                    <h3 className="text-base font-bold font-display text-white">Dining & Concierge</h3>
+                    <h3 className="text-base font-bold font-display text-white">Food & Room Service</h3>
                     <p className="text-xs text-slate-300 mt-0.5">Order gourmet dining, pillows & housekeeping.</p>
                   </div>
                 </div>
@@ -502,7 +502,7 @@ export default function GuestDashboard() {
                         className="px-2.5 py-1.5 text-xs font-bold text-slate-800 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
                         title="Order In-Room Dining & Services"
                       >
-                        <Utensils size={13} className="text-amber-700" /> Concierge
+                        <Utensils size={13} className="text-amber-700" /> Room Service
                       </button>
                       <button
                         type="button"
@@ -728,7 +728,7 @@ export default function GuestDashboard() {
                         {room.name || room.type}
                       </h3>
                       <p className="text-xs text-slate-500 line-clamp-2 mt-1">
-                        {room.description || 'Spacious sanctuary with marble bathroom, panoramic terrace, and bespoke guest amenities.'}
+                        {room.description || 'Spacious room with modern bathroom, balcony view, and premium guest amenities.'}
                       </p>
                     </div>
 

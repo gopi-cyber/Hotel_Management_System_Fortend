@@ -70,7 +70,7 @@ export default function LoginPage() {
           {/* Luxury quote */}
           <div className="relative z-10 space-y-2">
             <p className="font-display text-xl italic font-normal text-amber-200 leading-snug">
-              &ldquo;An extraordinary benchmark in bespoke hospitality and seamless digital comfort.&rdquo;
+              &ldquo;Experience comfortable stays and smooth digital room service.&rdquo;
             </p>
             <p className="text-xs uppercase tracking-widest font-semibold text-slate-300">
               Forbes Luxury Hotel Guide 2026

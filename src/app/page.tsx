@@ -75,8 +75,8 @@ const experiences = [
   },
   {
     icon: ConciergeBell,
-    title: '24/7 Bespoke Butler Concierge',
-    desc: 'From private yacht charters to custom itineraries, every desire handled effortlessly.',
+    title: '24/7 Room Service & Support',
+    desc: 'From in-room dining to travel planning, our staff takes care of everything you need.',
   },
   {
     icon: Wifi,
@@ -267,7 +267,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="max-w-2xl mx-auto text-base sm:text-xl font-medium text-slate-200 leading-relaxed mb-10 drop-shadow-xs">
-            Immerse yourself in bespoke coastal villas, private infinity terraces, and Michelin-inspired culinary artistry.
+            Immerse yourself in luxury rooms, scenic private balconies, and exceptional restaurant dining.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -598,7 +598,7 @@ export default function LandingPage() {
               <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-4">Contact & Support</h4>
               <p className="text-xs text-slate-400 leading-relaxed mb-3">
                 LuxeStay Coastal Lagoon, Goa, India. <br />
-                Direct Concierge: +91 (800) 589-3782
+                Direct Phone: +91 (800) 589-3782
               </p>
               <Link href="/register" className="btn-gold text-xs py-2 px-4 inline-flex">
                 Book Reservation

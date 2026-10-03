@@ -182,7 +182,7 @@ export default function RegisterPage() {
 
           <div className="relative z-10 space-y-2">
             <p className="font-display text-xl italic font-normal text-amber-200 leading-snug">
-              &ldquo;Join our privileged circle of guests to unlock bespoke rates and private concierge access.&rdquo;
+              &ldquo;Join our guests to unlock member discounts and 24/7 room service.&rdquo;
             </p>
             <p className="text-xs uppercase tracking-widest font-semibold text-slate-300">
               LuxeStay Honors Membership

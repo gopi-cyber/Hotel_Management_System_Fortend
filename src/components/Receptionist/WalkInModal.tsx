@@ -124,7 +124,7 @@ export default function WalkInModal({
             </div>
           </div>
           <div className="text-right">
-            <span className="text-xs text-amber-900/80 block font-medium">Nightly Base Tariff</span>
+            <span className="text-xs text-amber-900/80 block font-medium">Price Per Night</span>
             <span className="text-lg font-bold font-display text-amber-950">
               ₹{roomPrice.toLocaleString()}
             </span>
@@ -270,7 +270,7 @@ export default function WalkInModal({
         {/* Live Bill Summary */}
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-1.5">
           <div className="flex justify-between text-slate-600">
-            <span>Room Base Tariff ({nights} Nights × ₹{roomPrice.toLocaleString()}):</span>
+            <span>Room Charges ({nights} Nights × ₹{roomPrice.toLocaleString()}):</span>
             <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-slate-600">

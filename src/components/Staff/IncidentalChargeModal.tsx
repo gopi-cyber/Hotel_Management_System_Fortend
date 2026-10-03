@@ -103,14 +103,14 @@ export default function IncidentalChargeModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Post Incidental Charge to Room Folio" maxWidth="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Extra Charge to Room Bill" maxWidth="md">
       <div className="space-y-5">
         {/* Folio Header Target */}
         <div className="p-3.5 rounded-xl bg-slate-900 text-white flex items-center justify-between border border-amber-500/30">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-amber-400">Room {booking.roomNumber || booking.roomId}</span>
-              <span className="text-[11px] text-slate-400">• Folio #{String(booking.id).slice(-6)}</span>
+              <span className="text-[11px] text-slate-400">• Bill #{String(booking.id).slice(-6)}</span>
             </div>
             <p className="text-sm font-serif font-bold text-white mt-0.5">{booking.guestName}</p>
           </div>
@@ -206,7 +206,7 @@ export default function IncidentalChargeModal({
           <div className="flex items-center justify-between pt-2">
             <span className="text-[11px] text-slate-500 flex items-center gap-1">
               <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-              Direct room charge to guest folio
+              Direct charge added to guest room bill
             </span>
             <div className="flex items-center gap-2">
               <button
