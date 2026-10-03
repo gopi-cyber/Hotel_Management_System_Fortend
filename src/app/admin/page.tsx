@@ -256,7 +256,7 @@ export default function AdminPage() {
             }}
             className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
           >
-            <Plus size={15} /> Add New Room
+            <Plus size={15} /> Add Room
           </button>
         ) : activeTab === 'staff' ? (
           <button
@@ -269,12 +269,7 @@ export default function AdminPage() {
           >
             <Plus size={15} /> Add Staff Member
           </button>
-        ) : activeTab === 'users' ? (
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs">
-            <ShieldCheck size={16} className="text-amber-600" />
-            <span>{allUsers.length} Registered Accounts</span>
-          </div>
-        ) : (
+        ) : activeTab === 'users' ? null : (
           <button
             type="button"
             onClick={() => {
@@ -895,8 +890,8 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3.5 px-5">
                           {isRootAdmin ? (
-                            <span className="text-xs text-slate-400 italic">
-                              Immutable Root
+                            <span className="text-xs text-slate-400 font-medium">
+                              Primary Account
                             </span>
                           ) : (
                             <select

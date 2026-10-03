@@ -88,7 +88,7 @@ export interface FallbackCheckIn {
 
 export const fallbackData = {
     users: [
-        { id: '1', username: 'admin', password: '123', name: 'Administrator', email: 'admin@luxestay.com', phone: '+1 555-0100', role: 'admin' },
+        { id: '1', username: 'admin', password: '123', name: 'Gopinath', email: 'admin@luxestay.com', phone: '+1 555-0100', role: 'admin' },
         { id: '2', username: 'staff', password: '123', name: 'Front Desk Staff', email: 'staff@luxestay.com', phone: '+1 555-0101', role: 'receptionist' },
         { id: '3', username: 'guest', password: '123', name: 'Alex Morgan', email: 'guest@luxestay.com', phone: '+1 555-0199', role: 'guest' }
     ] as FallbackUser[],

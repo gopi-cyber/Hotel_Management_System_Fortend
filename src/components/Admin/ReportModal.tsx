@@ -115,14 +115,41 @@ export function ReportModal({
 
     const totalPeriodRev = selectedData.reduce((acc, curr) => acc + curr.revenue, 0);
     const avgOcc = Math.round(selectedData.reduce((acc, curr) => acc + curr.occupancy, 0) / selectedData.length);
+    const peakPeriodRev = Math.max(...selectedData.map((d) => d.revenue));
+
+    // Construct SVG Bar Chart for print
+    const printSvgBars = selectedData
+      .map((item, index) => {
+        const barHeight = peakPeriodRev > 0 ? Math.round((item.revenue / peakPeriodRev) * 110) : 10;
+        const xPos = 40 + index * (520 / selectedData.length);
+        const yPos = 140 - barHeight;
+        const barWidth = Math.max(12, Math.min(32, Math.round(400 / selectedData.length)));
+        return `
+          <g>
+            <rect x="${xPos}" y="${yPos}" width="${barWidth}" height="${barHeight}" rx="4" fill="#0f172a" />
+            <text x="${xPos + barWidth / 2}" y="${yPos - 6}" font-size="9" font-weight="700" text-anchor="middle" fill="#475569">
+              ₹${(item.revenue / 1000).toFixed(0)}k
+            </text>
+            <text x="${xPos + barWidth / 2}" y="156" font-size="10" font-weight="600" text-anchor="middle" fill="#64748b">
+              ${item.day}
+            </text>
+          </g>
+        `;
+      })
+      .join('');
 
     const rows = selectedData
       .map(
         (item) => `
         <tr>
-          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">${item.day}</td>
-          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #0f172a;">${formatPrice(item.revenue, currency)}</td>
-          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 600;">${item.occupancy}%</td>
+          <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">${item.day}</td>
+          <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #0f172a;">${formatPrice(item.revenue, currency)}</td>
+          <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 600;">${item.occupancy}%</td>
+          <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b; font-size: 11px;">
+            <div style="background: #f1f5f9; border-radius: 9999px; height: 6px; width: 70px; display: inline-block; overflow: hidden; vertical-align: middle;">
+              <div style="background: #0f172a; height: 100%; width: ${item.occupancy}%;"></div>
+            </div>
+          </td>
         </tr>
       `
       )
@@ -136,20 +163,44 @@ export function ReportModal({
           <meta charset="utf-8" />
           <style>
             @media print {
-              body { padding: 0; }
-              @page { margin: 20mm 15mm; }
+              body { padding: 0; background: #fff !important; }
+              .no-print { display: none !important; }
+              @page { margin: 15mm 12mm; size: auto; }
             }
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              padding: 40px;
+              padding: 30px 40px;
               color: #0f172a;
               background: #ffffff;
               line-height: 1.5;
             }
+            .action-bar {
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-bottom: 24px;
+              padding-bottom: 16px;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            .btn {
+              background: #0f172a;
+              color: #ffffff;
+              border: none;
+              padding: 9px 18px;
+              border-radius: 8px;
+              font-size: 12px;
+              font-weight: 700;
+              cursor: pointer;
+            }
+            .btn-outline {
+              background: #ffffff;
+              color: #334155;
+              border: 1px solid #cbd5e1;
+            }
             .header {
               border-bottom: 2px solid #0f172a;
-              padding-bottom: 20px;
-              margin-bottom: 28px;
+              padding-bottom: 18px;
+              margin-bottom: 24px;
               display: flex;
               justify-content: space-between;
               align-items: flex-end;
@@ -161,9 +212,9 @@ export function ReportModal({
               color: #0f172a;
             }
             .brand-sub {
-              font-size: 13px;
+              font-size: 12px;
               color: #64748b;
-              margin-top: 4px;
+              margin-top: 3px;
             }
             .meta {
               text-align: right;
@@ -178,17 +229,16 @@ export function ReportModal({
               background: #f8fafc;
               border: 1px solid #e2e8f0;
               border-radius: 8px;
-              padding: 14px 20px;
-              margin-bottom: 24px;
+              padding: 12px 18px;
+              margin-bottom: 20px;
               display: flex;
               justify-content: space-between;
               align-items: center;
             }
             .report-name {
-              font-size: 16px;
+              font-size: 15px;
               font-weight: 700;
               color: #0f172a;
-              text-transform: uppercase;
               letter-spacing: 0.5px;
             }
             .report-range {
@@ -202,14 +252,14 @@ export function ReportModal({
             .kpis {
               display: grid;
               grid-template-columns: repeat(4, 1fr);
-              gap: 16px;
-              margin-bottom: 28px;
+              gap: 14px;
+              margin-bottom: 24px;
             }
             .kpi-card {
               border: 1px solid #e2e8f0;
               border-radius: 8px;
-              padding: 14px 16px;
-              background: #ffffff;
+              padding: 12px 14px;
+              background: #f8fafc;
             }
             .kpi-title {
               font-size: 10px;
@@ -217,40 +267,93 @@ export function ReportModal({
               letter-spacing: 0.5px;
               font-weight: 700;
               color: #64748b;
-              margin-bottom: 6px;
+              margin-bottom: 4px;
             }
             .kpi-value {
-              font-size: 20px;
+              font-size: 18px;
               font-weight: 800;
               color: #0f172a;
+            }
+            .chart-section {
+              border: 1px solid #e2e8f0;
+              border-radius: 10px;
+              padding: 16px;
+              margin-bottom: 24px;
+              background: #ffffff;
+            }
+            .section-title {
+              font-size: 13px;
+              font-weight: 700;
+              color: #0f172a;
+              margin-bottom: 12px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .grid-two {
+              display: grid;
+              grid-template-columns: 1.5fr 1fr;
+              gap: 18px;
+              margin-bottom: 24px;
             }
             table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 30px;
             }
             th {
               background: #0f172a;
               color: #ffffff;
-              padding: 12px 16px;
-              font-size: 12px;
+              padding: 10px 14px;
+              font-size: 11px;
               font-weight: 700;
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
             th:first-child { border-top-left-radius: 6px; text-align: left; }
             th:last-child { border-top-right-radius: 6px; }
+            .mini-table {
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .mini-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 12px;
+              font-size: 12px;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            .mini-row:last-child { border-bottom: none; }
             .footer-info {
               border-top: 1px solid #e2e8f0;
-              padding-top: 16px;
+              padding-top: 14px;
               display: flex;
               justify-content: space-between;
               font-size: 11px;
               color: #64748b;
             }
+            .signature-block {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 36px;
+              padding-top: 20px;
+            }
+            .sig-line {
+              width: 200px;
+              border-top: 1px solid #94a3b8;
+              text-align: center;
+              font-size: 11px;
+              color: #64748b;
+              padding-top: 6px;
+            }
           </style>
         </head>
         <body>
+          <div class="action-bar no-print">
+            <button class="btn btn-outline" onclick="window.close()">Close</button>
+            <button class="btn" onclick="window.print()">🖨️ Print Document</button>
+          </div>
+
           <div class="header">
             <div>
               <div class="brand">${companyProfile.brandName || 'LuxeStay Hotel'}</div>
@@ -259,7 +362,7 @@ export function ReportModal({
             <div class="meta">
               <div><strong>Prepared by:</strong> ${companyProfile.adminName || 'Gopinath'}</div>
               <div>${companyProfile.adminTitle || 'Managing Director & General Manager'}</div>
-              <div style="margin-top: 4px; color: #94a3b8;">Printed: ${new Date().toLocaleString()}</div>
+              <div style="margin-top: 4px; color: #94a3b8;">Generated: ${new Date().toLocaleString()}</div>
             </div>
           </div>
 
@@ -287,27 +390,101 @@ export function ReportModal({
             </div>
           </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Timeline / Interval</th>
-                <th style="text-align: right;">Revenue</th>
-                <th style="text-align: right;">Occupancy Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
+          <!-- Revenue Trend Chart -->
+          <div class="chart-section">
+            <div class="section-title">
+              <span>Revenue Trend Graph</span>
+              <span style="font-size: 11px; color: #64748b; font-weight: 500;">Peak: ${formatPrice(peakPeriodRev, currency)}</span>
+            </div>
+            <svg viewBox="0 0 580 170" style="width: 100%; height: 160px; overflow: visible;">
+              <line x1="30" y1="20" x2="570" y2="20" stroke="#f1f5f9" stroke-dasharray="4 4" />
+              <line x1="30" y1="80" x2="570" y2="80" stroke="#f1f5f9" stroke-dasharray="4 4" />
+              <line x1="30" y1="140" x2="570" y2="140" stroke="#cbd5e1" stroke-width="1.5" />
+              ${printSvgBars}
+            </svg>
+          </div>
 
-          <div class="footer-info">
+          <!-- Tables Grid -->
+          <div class="grid-two">
+            <!-- Timeline Performance Table -->
+            <div>
+              <div class="section-title">Timeline Performance Breakdown</div>
+              <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Timeline</th>
+                      <th style="text-align: right;">Revenue</th>
+                      <th style="text-align: right;">Occupancy</th>
+                      <th style="text-align: right;">Progress</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Category & Source Distribution -->
+            <div>
+              <div class="section-title">Revenue by Room Category</div>
+              <div class="mini-table" style="margin-bottom: 16px;">
+                <div class="mini-row">
+                  <span style="font-weight: 600;">Royal Penthouse</span>
+                  <span style="font-weight: 700; color: #0f172a;">35%</span>
+                </div>
+                <div class="mini-row">
+                  <span style="font-weight: 600;">Presidential Suite</span>
+                  <span style="font-weight: 700; color: #0f172a;">28%</span>
+                </div>
+                <div class="mini-row">
+                  <span style="font-weight: 600;">Deluxe Ocean Suite</span>
+                  <span style="font-weight: 700; color: #0f172a;">22%</span>
+                </div>
+                <div class="mini-row">
+                  <span style="font-weight: 600;">Executive Room</span>
+                  <span style="font-weight: 700; color: #0f172a;">15%</span>
+                </div>
+              </div>
+
+              <div class="section-title">Booking Origin Sources</div>
+              <div class="mini-table">
+                <div class="mini-row">
+                  <span style="font-weight: 600;">Direct Luxury Portal</span>
+                  <span style="font-weight: 700; color: #0f172a;">58%</span>
+                </div>
+                <div class="mini-row">
+                  <span style="font-weight: 600;">Corporate Partnerships</span>
+                  <span style="font-weight: 700; color: #0f172a;">24%</span>
+                </div>
+                <div class="mini-row">
+                  <span style="font-weight: 600;">VIP Consortia / Agents</span>
+                  <span style="font-weight: 700; color: #0f172a;">18%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="signature-block">
+            <div class="sig-line">
+              Prepared by: ${companyProfile.adminName || 'Gopinath'}
+            </div>
+            <div class="sig-line">
+              Internal Audit Verification
+            </div>
+          </div>
+
+          <div class="footer-info" style="margin-top: 30px;">
             <span>Confidential Executive Hotel Performance Record</span>
-            <span>Page 1 of 1</span>
+            <span>Official Management Report</span>
           </div>
 
           <script>
             window.onload = function() {
-              window.print();
+              setTimeout(() => {
+                window.print();
+              }, 400);
             };
           </script>
         </body>

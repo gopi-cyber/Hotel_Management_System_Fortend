@@ -115,7 +115,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
 
             <div className="sm:text-right space-y-0.5">
               <span className="inline-block px-3 py-1 bg-amber-50 border border-amber-300/60 rounded-full text-amber-800 text-[11px] font-bold uppercase tracking-wider">
-                Official Tax Invoice
+                Invoice
               </span>
               <p className="text-xs font-bold text-slate-900 mt-1">Invoice {invoiceNo}</p>
               <p className="text-[11px] text-slate-500">Date of Issue: {issueDate}</p>
@@ -250,10 +250,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <p className="text-xs text-slate-500 font-medium">
-            This invoice is compliant with Indian GST Laws and 5-Star Hospitality regulations.
-          </p>
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               type="button"

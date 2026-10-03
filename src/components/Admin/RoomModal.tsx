@@ -115,7 +115,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={room ? `Suite ${String(room.number || room.id).replace(/^#/, '')}` : 'Add New Room'}
+      title={room ? `Suite ${String(room.number || room.id).replace(/^#/, '')}` : 'Add Room'}
       maxWidth="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -179,21 +179,13 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
                 <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-400/30 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 z-10">
                   <Sparkles size={12} /> Live Preview
                 </div>
-                {imageSourceMode === 'upload' && (
-                  <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-4 text-center">
-                    <p className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-full shadow-md">
-                      Click or Drag New Image to Replace
-                    </p>
-                  </div>
-                )}
               </>
             ) : (
               <div className="h-full w-full flex flex-col items-center justify-center text-slate-500 p-4 text-center">
                 <ImageIcon size={36} className="text-slate-400 mb-2" />
                 <span className="text-xs font-bold text-slate-800">
-                  Click to Browse Photo or Drag & Drop Here
+                  Room Photo
                 </span>
-                <span className="text-[11px] text-slate-400 mt-1">Supports PNG, JPG, WebP up to 10MB</span>
               </div>
             )}
           </div>
@@ -212,7 +204,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
 
           {/* Conditional Controls by Tab */}
           {imageSourceMode === 'upload' && (
-            <div className="flex items-center justify-between pt-1">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -220,15 +212,6 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
               >
                 Choose Photo
               </button>
-              {image && (
-                <button
-                  type="button"
-                  onClick={() => setImage('')}
-                  className="text-xs text-rose-600 hover:text-rose-700 font-medium cursor-pointer"
-                >
-                  Clear Photo
-                </button>
-              )}
             </div>
           )}
 

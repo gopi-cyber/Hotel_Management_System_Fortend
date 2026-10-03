@@ -192,7 +192,7 @@ export default function LandingPage() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="py-2 border-b border-slate-100 text-amber-700 font-bold flex items-center justify-between"
                 >
-                  <span>Access {user.role.toUpperCase()} Portal</span>
+                  <span>{user.name || user.username}</span>
                   <ArrowRight size={15} />
                 </Link>
               ) : (
