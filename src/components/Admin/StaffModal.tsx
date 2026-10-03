@@ -14,21 +14,63 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Receptionist');
+  const [isCustomRole, setIsCustomRole] = useState(false);
+  const [customRoleText, setCustomRoleText] = useState('');
   const [shift, setShift] = useState<'Morning' | 'Afternoon' | 'Night'>('Morning');
   const [status, setStatus] = useState<'Active' | 'On Leave' | 'Inactive'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const predefinedRoles = [
+    'Receptionist',
+    'Front Office Manager',
+    'General Manager',
+    'Assistant Manager',
+    'Duty Manager',
+    'Concierge',
+    'Housekeeping Supervisor',
+    'Housekeeper / Room Attendant',
+    'Executive Chef',
+    'Sous Chef',
+    'Cook / Kitchen Staff',
+    'Food & Beverage Captain',
+    'Waiter / Waitress',
+    'Bartender / Mixologist',
+    'Valet & Bellhop',
+    'Door Attendant',
+    'Security Supervisor',
+    'Security Officer',
+    'Maintenance Engineer',
+    'Electrician',
+    'Plumber',
+    'Spa Therapist',
+    'Fitness Trainer',
+    'Finance & Accounts',
+    'IT Support',
+    'Event Coordinator',
+  ];
 
   useEffect(() => {
     if (staff) {
       setName(staff.name || '');
       setEmail(staff.email || '');
-      setRole(staff.role || 'Receptionist');
+      const existingRole = staff.role || 'Receptionist';
       setShift(staff.shift || 'Morning');
       setStatus(staff.status || 'Active');
+      if (predefinedRoles.includes(existingRole)) {
+        setRole(existingRole);
+        setIsCustomRole(false);
+        setCustomRoleText('');
+      } else {
+        setRole('custom');
+        setIsCustomRole(true);
+        setCustomRoleText(existingRole);
+      }
     } else {
       setName('');
       setEmail('');
       setRole('Receptionist');
+      setIsCustomRole(false);
+      setCustomRoleText('');
       setShift('Morning');
       setStatus('Active');
     }
@@ -36,13 +78,14 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const finalRole = isCustomRole ? customRoleText.trim() || 'Staff' : role;
     setIsSubmitting(true);
     try {
       await onSave({
         ...(staff ? { id: staff.id } : {}),
         name,
         email,
-        role,
+        role: finalRole,
         shift,
         status,
       });
@@ -92,43 +135,39 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
               Role / Designation
             </label>
-            <input
-              type="text"
-              list="hotel-roles-list"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="e.g. Concierge, Chef, Bartender..."
+            <select
+              value={isCustomRole ? 'custom' : role}
+              onChange={(e) => {
+                if (e.target.value === 'custom') {
+                  setIsCustomRole(true);
+                  setRole('custom');
+                } else {
+                  setIsCustomRole(false);
+                  setRole(e.target.value);
+                }
+              }}
               required
-              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
-            />
-            <datalist id="hotel-roles-list">
-              <option value="Receptionist" />
-              <option value="Front Office Manager" />
-              <option value="General Manager" />
-              <option value="Assistant Manager" />
-              <option value="Duty Manager" />
-              <option value="Concierge" />
-              <option value="Housekeeping Supervisor" />
-              <option value="Housekeeper / Room Attendant" />
-              <option value="Executive Chef" />
-              <option value="Sous Chef" />
-              <option value="Cook / Kitchen Staff" />
-              <option value="Food & Beverage Captain" />
-              <option value="Waiter / Waitress" />
-              <option value="Bartender / Mixologist" />
-              <option value="Valet & Bellhop" />
-              <option value="Door Attendant" />
-              <option value="Security Supervisor" />
-              <option value="Security Officer" />
-              <option value="Maintenance Engineer" />
-              <option value="Electrician" />
-              <option value="Plumber" />
-              <option value="Spa Therapist" />
-              <option value="Fitness Trainer" />
-              <option value="Finance & Accounts" />
-              <option value="IT Support" />
-              <option value="Event Coordinator" />
-            </datalist>
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 mb-2 cursor-pointer"
+            >
+              {predefinedRoles.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+              <option value="custom">+ Custom Role...</option>
+            </select>
+
+            {isCustomRole && (
+              <input
+                type="text"
+                value={customRoleText}
+                onChange={(e) => setCustomRoleText(e.target.value)}
+                placeholder="Type custom role or designation..."
+                required
+                autoFocus
+                className="w-full px-3 py-2 text-sm rounded-xl border border-amber-300 bg-amber-50/50 font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20"
+              />
+            )}
           </div>
 
           <div>

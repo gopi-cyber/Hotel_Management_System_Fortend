@@ -572,6 +572,17 @@ export default function AdminPage() {
                       <td className="py-3.5 px-5 text-right space-x-2">
                         <button
                           type="button"
+                          onClick={() => {
+                            setSelectedStaff(member);
+                            setIsStaffModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-600 hover:text-amber-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Staff"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleDeleteStaff(member.id)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           title="Delete Staff"
@@ -596,11 +607,21 @@ export default function AdminPage() {
                     </div>
                     <StatusBadge status={member.status} />
                   </div>
-                  <div className="pt-2 flex justify-end">
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedStaff(member);
+                        setIsStaffModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg"
+                    >
+                      Edit
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteStaff(member.id)}
-                      className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 rounded-lg"
+                      className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg"
                     >
                       Delete
                     </button>
