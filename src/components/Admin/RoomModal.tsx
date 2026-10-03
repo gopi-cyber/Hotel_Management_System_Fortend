@@ -336,7 +336,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
             disabled={isSubmitting}
             className="btn-gold py-2 px-5 text-xs inline-flex items-center gap-2 cursor-pointer"
           >
-            {isSubmitting ? 'Saving...' : room ? 'Update' : 'Add Room'}
+            {isSubmitting ? 'Saving...' : 'Save'}
           </button>
         </div>
       </form>

@@ -132,7 +132,7 @@ export function PortalShell({
     ],
     receptionist: [
       { id: 'checkin', label: 'Arrivals & Check-in', href: '/receptionist', icon: UserCheck },
-      { id: 'rooms', label: 'Live Room Rack', href: '/receptionist', icon: BedDouble },
+      { id: 'rooms', label: 'Room', href: '/receptionist', icon: BedDouble },
       { id: 'billing', label: 'Guest Folios', href: '/receptionist', icon: CreditCard },
     ],
     guest: [
@@ -222,8 +222,10 @@ export function PortalShell({
                 <p className="text-xs font-bold text-white truncate hover:text-amber-400 transition-colors">
                   {userDisplayName}
                 </p>
-                <p className="text-[10px] text-slate-400 capitalize truncate">
-                  Profile
+                <p className="text-[10px] text-slate-400 truncate">
+                  {user?.role === 'receptionist' || user?.role === 'staff'
+                    ? 'Front Desk & Guest Services'
+                    : 'Profile'}
                 </p>
               </div>
             </button>
@@ -313,8 +315,10 @@ export function PortalShell({
                   <p className="text-sm font-bold text-white">
                     {userDisplayName}
                   </p>
-                  <p className="text-xs text-slate-400 capitalize">
-                    {user?.role} • Profile
+                  <p className="text-xs text-slate-400 truncate">
+                    {user?.role === 'receptionist' || user?.role === 'staff'
+                      ? 'Front Desk & Guest Services'
+                      : `${user?.role} • Profile`}
                   </p>
                 </div>
               </button>

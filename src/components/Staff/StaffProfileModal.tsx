@@ -134,18 +134,6 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
             <Building size={16} />
             <span>Station & Property</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-              activeTab === 'settings'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Clock size={16} />
-            <span>Shift Controls</span>
-          </button>
         </div>
 
         {savedSuccess && (
@@ -199,16 +187,13 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Department</label>
-                <select
+                <input
+                  type="text"
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  placeholder="e.g. Front Desk & Guest Services"
                   className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="Front Desk & Guest Services">Front Desk & Guest Services</option>
-                  <option value="Concierge & VIP Relations">Concierge & VIP Relations</option>
-                  <option value="Reservations & Folio Billing">Reservations & Folio Billing</option>
-                  <option value="Night Operations & Audit">Night Operations & Audit</option>
-                </select>
+                />
               </div>
 
               <div>
@@ -263,7 +248,6 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
                       onChange={handleImageUpload}
                     />
                   </label>
-                  <span className="text-[11px] text-slate-500">Pick from computer/phone • Instant local load</span>
                 </div>
               </div>
             </div>
@@ -361,29 +345,23 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
         )}
 
         {/* Action Bar */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-          <span className="text-xs text-slate-500 font-medium">
-            Staff settings are synced to your current session.
-          </span>
+        <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          >
+            Close
+          </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn-gold px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer"
-            >
-              <Save size={14} />
-              <span>Save Staff Profile</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn-gold px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer"
+          >
+            <Save size={14} />
+            <span>Save</span>
+          </button>
         </div>
       </div>
     </Modal>

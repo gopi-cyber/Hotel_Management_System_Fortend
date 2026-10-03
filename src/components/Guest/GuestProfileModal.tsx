@@ -253,7 +253,6 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
                       onChange={handleImageUpload}
                     />
                   </label>
-                  <span className="text-[11px] text-slate-500">Pick from computer/phone • Instant local load</span>
                 </div>
               </div>
             </div>
@@ -394,7 +393,7 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
               className="btn-gold px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer"
             >
               <Save size={14} />
-              <span>Save Preferences</span>
+              <span>Save</span>
             </button>
           </div>
         </div>

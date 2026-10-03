@@ -237,7 +237,7 @@ export default function ReceptionistPage() {
     },
     {
       id: 'rooms',
-      label: 'Live Room Rack',
+      label: 'Room',
       icon: BedDouble,
       isActive: activeTab === 'rooms',
       onClick: () => setActiveTab('rooms'),
@@ -314,9 +314,6 @@ export default function ReceptionistPage() {
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
                 Guest Arrivals & Operations
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Perform quick check-in, key card assignment, or check-out billing.
-              </p>
             </div>
 
             <div className="relative w-full sm:w-72">
@@ -520,11 +517,8 @@ export default function ReceptionistPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
-                Live Inventory Room Rack
+                Room
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Color-coded room inventory, instant walk-in check-in, and housekeeping turnaround.
-              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -725,9 +719,6 @@ export default function ReceptionistPage() {
             <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
               Guest Billing & Invoices
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Audit room charges, hospitality GST, and process guest payments.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -794,9 +785,6 @@ export default function ReceptionistPage() {
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
                 Guest Requests & Concierge Dispatch
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Live dispatch requests submitted by staying guests for housekeeping, room service, and amenities.
-              </p>
             </div>
 
             <div className="relative w-full sm:w-72">

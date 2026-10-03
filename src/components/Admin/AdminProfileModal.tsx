@@ -216,7 +216,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                   <div className="flex flex-wrap items-center gap-3">
                     <label className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold cursor-pointer transition-colors shadow-xs">
                       <Upload size={14} className="text-amber-600" />
-                      <span>Choose Photo File</span>
+                      <span>Choose Crest / Photo</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -224,7 +224,6 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                         onChange={(e) => handleImageUpload(e, 'adminAvatarUrl')}
                       />
                     </label>
-                    <span className="text-[11px] text-slate-500">Pick from computer/phone • Instant local load</span>
                   </div>
                 </div>
               </div>

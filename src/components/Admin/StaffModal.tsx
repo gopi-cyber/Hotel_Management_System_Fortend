@@ -214,7 +214,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
             disabled={isSubmitting}
             className="btn-gold py-2 px-5 text-xs inline-flex items-center gap-2 cursor-pointer"
           >
-            {isSubmitting ? 'Saving...' : staff ? 'Update Staff' : 'Add Staff'}
+            {isSubmitting ? 'Saving...' : 'Save'}
           </button>
         </div>
       </form>

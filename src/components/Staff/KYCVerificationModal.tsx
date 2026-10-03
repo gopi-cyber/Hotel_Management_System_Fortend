@@ -260,7 +260,7 @@ export default function KYCVerificationModal({
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save Verification'}
+                  {isSaving ? 'Saving...' : 'Save'}
                 </>
               )}
             </button>
