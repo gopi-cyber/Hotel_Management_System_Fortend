@@ -254,10 +254,6 @@ export default function LandingPage() {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white py-20">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-widest mb-6">
-            <Sparkles size={16} /> World Luxury Hotel Awards 2026 Winner
-          </div>
-
           <h1 className="text-fluid-hero font-display font-medium tracking-tight text-white mb-6 drop-shadow-md">
             Where Serenity Meets <br />
             <span className="italic font-normal text-amber-200">Timeless Grandeur.</span>
