@@ -6,7 +6,7 @@
     "dev": "next dev",
     "server": "json-server --watch db.json --port 3001 --host 0.0.0.0",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p ${PORT:-3000}",
     "lint": "eslint"
   },
   "dependencies": {
