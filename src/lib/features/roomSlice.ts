@@ -17,6 +17,7 @@ export interface Room {
     capacity: number;
     image?: string;
     imageUrl?: string;
+    galleryImages?: string[] | string;
     description?: string;
     createdAt?: string;
 }
@@ -45,6 +46,11 @@ const normalizeRoom = (room: Record<string, unknown>): Room => ({
     capacity: Number(room.capacity ?? 1),
     image: String(room.image ?? room.imageUrl ?? ''),
     imageUrl: String(room.image ?? room.imageUrl ?? ''),
+    galleryImages: Array.isArray(room.galleryImages)
+        ? room.galleryImages.map(String)
+        : typeof room.galleryImages === 'string' && room.galleryImages.trim()
+            ? (room.galleryImages.startsWith('[') ? JSON.parse(room.galleryImages) : room.galleryImages.split(',').map((s: string) => s.trim()).filter(Boolean))
+            : [],
     description: String(room.description ?? ''),
     housekeepingStatus: (room.housekeepingStatus ? String(room.housekeepingStatus) : 'inspected') as HousekeepingStatus,
     assignedHousekeeper: room.assignedHousekeeper ? String(room.assignedHousekeeper) : undefined,

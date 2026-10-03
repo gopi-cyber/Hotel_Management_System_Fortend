@@ -27,16 +27,25 @@ import {
   Shield,
   PlusCircle,
   AlertTriangle,
+  LayoutDashboard,
+  Eye,
+  FileText,
+  TrendingUp,
+  Activity,
+  ListTodo,
 } from 'lucide-react';
+import Image from 'next/image';
 import PortalShell from '@/components/PortalShell';
 import StatCard from '@/components/ui/StatCard';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Modal from '@/components/ui/Modal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
+import ReportModal from '@/components/Admin/ReportModal';
 import { formatPrice } from '@/lib/features/settingsSlice';
 import WalkInModal from '@/components/Receptionist/WalkInModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
 import KYCVerificationModal from '@/components/Staff/KYCVerificationModal';
+import RoomGalleryModal from '@/components/Guest/RoomGalleryModal';
 
 export default function ReceptionistPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -46,7 +55,9 @@ export default function ReceptionistPage() {
   const services = useSelector((state: RootState) => state.services.items);
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
 
-  const [activeTab, setActiveTab] = useState<'checkin' | 'rooms' | 'billing' | 'requests'>('checkin');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'checkin' | 'rooms' | 'billing' | 'requests'>('dashboard');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<'financial' | 'growth'>('financial');
   const [searchQuery, setSearchQuery] = useState('');
   const [roomStatusFilter, setRoomStatusFilter] = useState('all');
   const [actionSuccess, setActionSuccess] = useState('');
@@ -56,6 +67,7 @@ export default function ReceptionistPage() {
   const [housekeepingWarning, setHousekeepingWarning] = useState<{ booking: Booking; room: Room } | null>(null);
   const [walkInRoom, setWalkInRoom] = useState<Room | null>(null);
   const [isWalkInOpen, setIsWalkInOpen] = useState(false);
+  const [galleryRoom, setGalleryRoom] = useState<Room | null>(null);
 
   useEffect(() => {
     dispatch(fetchRooms());
@@ -229,6 +241,13 @@ export default function ReceptionistPage() {
 
   const navItems = [
     {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      isActive: activeTab === 'dashboard',
+      onClick: () => setActiveTab('dashboard'),
+    },
+    {
       id: 'checkin',
       label: 'Arrivals & Check-in',
       icon: UserCheck,
@@ -275,36 +294,217 @@ export default function ReceptionistPage() {
       )}
 
       {/* KPI Summary Cards: auto-adapts to small laptops and large screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-        <StatCard
-          label="Available Suites"
-          value={availableCount}
-          icon={BedDouble}
-          change={`${Math.round((availableCount / Math.max(1, rooms.length)) * 100)}% Capacity`}
-          changeType="positive"
-        />
-        <StatCard
-          label="Occupied Suites"
-          value={occupiedCount}
-          icon={Users}
-          change={`${Math.round((occupiedCount / Math.max(1, rooms.length)) * 100)}% Full`}
-          changeType="neutral"
-        />
-        <StatCard
-          label="Active Guest Records"
-          value={activeBookingsCount}
-          icon={Calendar}
-          change="Today's Roster"
-          changeType="positive"
-        />
-        <StatCard
-          label="Total Paid Revenue"
-          value={formatPrice(totalRevenue, currency)}
-          icon={CreditCard}
-          change="YTD Operations"
-          changeType="positive"
-        />
-      </div>
+      {activeTab === 'dashboard' && (
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+                Dashboard
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Overview of daily operations, guest flow, service tasks, and property performance.
+              </p>
+            </div>
+
+            {/* Reports & Exports Quick Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setReportType('growth');
+                  setIsReportModalOpen(true);
+                }}
+                className="btn-outline py-2 px-3 text-xs font-bold inline-flex items-center gap-1.5 rounded-xl cursor-pointer"
+              >
+                <TrendingUp size={14} className="text-amber-500" /> Occupancy Report
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportType('financial');
+                  setIsReportModalOpen(true);
+                }}
+                className="btn-gold py-2 px-3.5 text-xs font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <FileText size={14} /> Revenue Report
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <StatCard
+              label="Available Suites"
+              value={availableCount}
+              icon={BedDouble}
+              change={`${Math.round((availableCount / Math.max(1, rooms.length)) * 100)}% Capacity`}
+              changeType="positive"
+            />
+            <StatCard
+              label="Occupied Suites"
+              value={occupiedCount}
+              icon={Users}
+              change={`${Math.round((occupiedCount / Math.max(1, rooms.length)) * 100)}% Full`}
+              changeType="neutral"
+            />
+            <StatCard
+              label="Active Guest Records"
+              value={activeBookingsCount}
+              icon={Calendar}
+              change="Today's Roster"
+              changeType="positive"
+            />
+            <StatCard
+              label="Total Paid Revenue"
+              value={formatPrice(totalRevenue, currency)}
+              icon={CreditCard}
+              change="YTD Operations"
+              changeType="positive"
+            />
+          </div>
+
+          {/* Quick Operations / Duty Hub */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-700/60">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold">
+                <Activity size={12} /> Live Duty Hub
+              </div>
+              <h3 className="text-base font-bold text-white">Daily Front Desk Workflow</h3>
+              <p className="text-xs text-slate-300">
+                {pendingRequestsCount > 0
+                  ? `${pendingRequestsCount} pending service request(s) require action.`
+                  : 'All guest requests currently resolved.'}{' '}
+                {rooms.filter((r) => r.housekeepingStatus === 'dirty').length > 0 &&
+                  `• ${rooms.filter((r) => r.housekeepingStatus === 'dirty').length} room(s) waiting for cleaning.`}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setWalkInRoom(null);
+                  setIsWalkInOpen(true);
+                }}
+                className="btn-gold py-2 px-3.5 text-xs font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Plus size={14} /> Walk-In Check In
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('requests')}
+                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <ListTodo size={14} /> Work Tasks ({pendingRequestsCount})
+              </button>
+            </div>
+          </div>
+
+          {/* Detailed 3-Column Work & Feed Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm">Recent Arrivals</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('checkin')}
+                  className="text-xs font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
+                >
+                  View All &rarr;
+                </button>
+              </div>
+              <div className="space-y-2">
+                {bookings.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-3 text-center">No arrivals recorded yet.</p>
+                ) : (
+                  bookings.slice(0, 4).map((b) => (
+                    <div key={b.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-slate-900">{b.guestName}</p>
+                        <p className="text-slate-500 text-[11px]">Room {b.roomNumber || `#${b.roomId}`}</p>
+                      </div>
+                      <StatusBadge status={b.status} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm">Room Status Overview</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('rooms')}
+                  className="text-xs font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
+                >
+                  View Rooms &rarr;
+                </button>
+              </div>
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between items-center p-2.5 bg-emerald-50 rounded-xl font-semibold text-emerald-900">
+                  <span>Available</span>
+                  <span className="font-bold">{availableCount} Rooms</span>
+                </div>
+                <div className="flex justify-between items-center p-2.5 bg-sky-50 rounded-xl font-semibold text-sky-900">
+                  <span>Occupied</span>
+                  <span className="font-bold">{occupiedCount} Rooms</span>
+                </div>
+                <div className="flex justify-between items-center p-2.5 bg-amber-50 rounded-xl font-semibold text-amber-900">
+                  <span>Needs Cleaning</span>
+                  <span className="font-bold">
+                    {rooms.filter((r) => r.housekeepingStatus === 'dirty' || r.housekeepingStatus === 'cleaning_in_progress').length} Rooms
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2.5 bg-rose-50 rounded-xl font-semibold text-rose-900">
+                  <span>Under Maintenance</span>
+                  <span className="font-bold">
+                    {rooms.filter((r) => r.status === 'maintenance').length} Rooms
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm">Service & Guest Tasks</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('requests')}
+                  className="text-xs font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
+                >
+                  Manage Tasks &rarr;
+                </button>
+              </div>
+              <div className="space-y-2">
+                {services.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-3 text-center">No service tasks open.</p>
+                ) : (
+                  services.slice(0, 4).map((s) => (
+                    <div key={s.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-bold text-slate-900">{s.serviceName || s.description}</p>
+                        <p className="text-slate-500 text-[11px]">Room {s.roomNumber || '—'}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <StatusBadge status={s.status} />
+                        {s.status !== 'completed' && (
+                          <button
+                            type="button"
+                            onClick={() => handleServiceStatus(s.id, 'completed')}
+                            className="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded cursor-pointer transition-colors"
+                            title="Mark Completed"
+                          >
+                            <CheckCircle2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ────────────────── VIEW 1: ARRIVALS & CHECK-IN QUEUE ────────────────── */}
       {activeTab === 'checkin' && (
@@ -550,8 +750,8 @@ export default function ReceptionistPage() {
             </div>
           </div>
 
-          {/* Interactive Room Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {/* Room Cards Grid — guest-style layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map((room) => {
               const isAvailable = room.status === 'available';
               const isOccupied = room.status === 'occupied';
@@ -570,140 +770,169 @@ export default function ReceptionistPage() {
               return (
                 <div
                   key={room.id}
-                  className={`p-4 rounded-2xl border flex flex-col justify-between transition-all space-y-3.5 shadow-2xs ${
-                    isAvailable
-                      ? 'bg-emerald-50/40 border-emerald-200/80 hover:border-emerald-400'
-                      : isOccupied
-                      ? 'bg-amber-50/40 border-amber-200/80 hover:border-amber-400'
-                      : isCleaning
-                      ? 'bg-sky-50/40 border-sky-200/80 hover:border-sky-400'
-                      : 'bg-rose-50/40 border-rose-200/80 hover:border-rose-400'
-                  }`}
+                  className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm flex flex-col justify-between hover:border-amber-400 transition-all duration-200"
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-display font-bold text-lg text-slate-900">
-                        {String(room.roomNumber || room.number || room.id).replace(/^#/, '')}
-                      </span>
-                      <StatusBadge status={room.status} />
-                    </div>
-
-                    <p className="text-xs font-bold text-slate-800 truncate">{room.name || room.type}</p>
-                    <p className="text-[11px] text-slate-500 font-medium">{room.type}</p>
-
-                    {activeBooking && (
-                      <div className="mt-2 p-2 bg-amber-100/60 rounded-xl border border-amber-200/80 text-[11px]">
-                        <span className="text-[10px] uppercase font-bold text-amber-800 block">Occupant:</span>
-                        <strong className="text-slate-900 truncate block">{activeBooking.guestName}</strong>
-                        <span className="text-slate-500 text-[10px]">Bill {activeBooking.id}</span>
+                  <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-100">
+                    {room.imageUrl ? (
+                      <Image
+                        src={room.imageUrl}
+                        alt={room.name || room.type || 'Suite'}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 350px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <BedDouble size={36} />
                       </div>
                     )}
-
-                    <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] font-bold">
-                      <span className="text-slate-900">{formatPrice(room.price || 0, currency)}</span>
-                      <span className="text-slate-500 capitalize">/ night</span>
+                    <div className="absolute top-3 left-3">
+                      <StatusBadge status={room.status} />
                     </div>
-
-                    {/* Housekeeping PMS State */}
-                    <div className="mt-2 p-1.5 rounded-lg bg-white/80 border border-slate-200/80 flex items-center justify-between text-[10px]">
-                      <span className="text-slate-500 font-semibold uppercase tracking-wider">Housekeeping</span>
-                      <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] capitalize ${
-                        (room.housekeepingStatus || 'inspected') === 'inspected'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : (room.housekeepingStatus || 'inspected') === 'clean'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : room.housekeepingStatus === 'cleaning_in_progress'
-                          ? 'bg-sky-100 text-sky-800'
-                          : room.housekeepingStatus === 'dirty'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}>
-                        {(room.housekeepingStatus || 'inspected').replace(/_/g, ' ')}
-                      </span>
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setGalleryRoom(room)}
+                        className="bg-slate-900/80 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm transition-colors flex items-center gap-1 cursor-pointer"
+                        title="View Visual Tour & 360° Angles"
+                      >
+                        <Eye size={12} />
+                        <span>Tour</span>
+                      </button>
+                      <div className="bg-slate-950/80 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-xs font-bold">
+                        {room.roomNumber ? `No. ${room.roomNumber}` : room.type}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Operational Action Controls */}
-                  <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
-                    {/* Quick Housekeeping Action */}
-                    {room.housekeepingStatus === 'dirty' && (
-                      <button
-                        type="button"
-                        onClick={() => handleSetHousekeeping(room.id, 'cleaning_in_progress')}
-                        className="w-full py-1 text-[10px] bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-lg flex items-center justify-center gap-1 font-bold border border-sky-200 transition-colors cursor-pointer"
-                      >
-                        <Clock size={11} /> Start Cleaning
-                      </button>
-                    )}
-                    {room.housekeepingStatus === 'cleaning_in_progress' && (
-                      <button
-                        type="button"
-                        onClick={() => handleSetHousekeeping(room.id, 'inspected')}
-                        className="w-full py-1 text-[10px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg flex items-center justify-center gap-1 font-bold border border-emerald-200 transition-colors cursor-pointer"
-                      >
-                        <Sparkles size={11} /> Mark Clean & Ready
-                      </button>
-                    )}
-                    {(room.housekeepingStatus === 'inspected' || room.housekeepingStatus === 'clean') && isAvailable && (
-                      <button
-                        type="button"
-                        onClick={() => handleSetHousekeeping(room.id, 'dirty')}
-                        className="w-full py-0.5 text-[9px] text-slate-400 hover:text-amber-700 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                      >
-                        Flag for Maid Refresh
-                      </button>
-                    )}
-                    {isAvailable && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setWalkInRoom(room);
-                            setIsWalkInOpen(true);
-                          }}
-                          className="btn-gold py-1.5 text-[11px] w-full justify-center font-bold shadow-xs cursor-pointer"
-                        >
-                          <UserCheck size={13} /> Walk-In Check In
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMaintenance(room)}
-                          className="w-full py-1 text-[10px] text-slate-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg flex items-center justify-center gap-1 font-semibold transition-colors cursor-pointer"
-                        >
-                          <Wrench size={11} /> Flag Maintenance
-                        </button>
-                      </>
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                        <span className="font-semibold">{room.type || 'Suite'}</span>
+                        <span className="flex items-center gap-1 text-slate-500">
+                          <Users size={12} />
+                          <span className="font-medium">{room.capacity || 2} Guest{(room.capacity || 2) > 1 ? 's' : ''}</span>
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold font-display text-slate-900 leading-snug">
+                        {room.name || room.type}
+                      </h3>
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                        {room.description || 'Spacious room with modern amenities.'}
+                      </p>
+
+                      {isOccupied && activeBooking && (
+                        <div className="mt-2 p-2 bg-amber-50/60 rounded-lg border border-amber-200/60 text-xs">
+                          <span className="font-bold text-amber-900">{activeBooking.guestName}</span>
+                          <span className="text-amber-700 ml-1.5">• Checked In</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Housekeeping Status */}
+                    {room.housekeepingStatus && (
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ${
+                          (room.housekeepingStatus === 'inspected' || room.housekeepingStatus === 'clean')
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : room.housekeepingStatus === 'cleaning_in_progress'
+                            ? 'bg-sky-100 text-sky-800'
+                            : room.housekeepingStatus === 'dirty'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {(room.housekeepingStatus || 'inspected').replace(/_/g, ' ')}
+                        </span>
+                      </div>
                     )}
 
-                    {isCleaning && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkCleaned(room)}
-                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                      >
-                        <Sparkles size={13} /> Mark Cleaned & Ready
-                      </button>
-                    )}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-slate-600 block">
+                          Per Night
+                        </span>
+                        <span className="text-lg font-bold text-slate-900 font-display">
+                          {formatPrice(Number(room.price) || 0, currency)}
+                        </span>
+                      </div>
 
-                    {isMaintenance && (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleMaintenance(room)}
-                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                      >
-                        <CheckCircle2 size={13} /> Clear Maintenance
-                      </button>
-                    )}
+                      <div className="flex items-center gap-2">
+                        {room.housekeepingStatus === 'dirty' && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetHousekeeping(room.id, 'cleaning_in_progress')}
+                            className="p-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-[10px] font-bold transition-colors cursor-pointer"
+                            title="Start Cleaning"
+                          >
+                            <Clock size={14} />
+                          </button>
+                        )}
+                        {room.housekeepingStatus === 'cleaning_in_progress' && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetHousekeeping(room.id, 'inspected')}
+                            className="p-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-[10px] font-bold transition-colors cursor-pointer"
+                            title="Mark Clean & Ready"
+                          >
+                            <Sparkles size={14} />
+                          </button>
+                        )}
 
-                    {isOccupied && activeBooking && (
-                      <button
-                        type="button"
-                        onClick={() => handleCheckOut(activeBooking)}
-                        className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        Express Check Out
-                      </button>
-                    )}
+                        {isAvailable && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWalkInRoom(room);
+                              setIsWalkInOpen(true);
+                            }}
+                            className="px-3 py-2 rounded-xl btn-gold text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                          >
+                            <UserCheck size={13} /> Check In
+                          </button>
+                        )}
+
+                        {isCleaning && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkCleaned(room)}
+                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                          >
+                            <Sparkles size={13} /> Mark Ready
+                          </button>
+                        )}
+
+                        {isMaintenance && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMaintenance(room)}
+                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                          >
+                            <CheckCircle2 size={13} /> Clear
+                          </button>
+                        )}
+
+                        {isOccupied && activeBooking && (
+                          <button
+                            type="button"
+                            onClick={() => handleCheckOut(activeBooking)}
+                            className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                          >
+                            Check Out
+                          </button>
+                        )}
+
+                        {isAvailable && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMaintenance(room)}
+                            className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-rose-700 hover:border-rose-400 bg-slate-50 transition-colors cursor-pointer"
+                            title="Flag Maintenance"
+                          >
+                            <Wrench size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -761,7 +990,7 @@ export default function ReceptionistPage() {
                     onClick={() => setSelectedIncidentalBooking(b)}
                     className="flex-1 py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    <PlusCircle size={13} /> + Incidental
+                    <PlusCircle size={13} /> + Charges
                   </button>
                   <button
                     type="button"
@@ -926,6 +1155,17 @@ export default function ReceptionistPage() {
         booking={selectedBookingFolio}
       />
 
+      {/* ────────────────── REPORTS & ANALYTICS MODAL ────────────────── */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        type={reportType}
+        totalRevenue={totalRevenue}
+        totalRooms={rooms.length}
+        occupiedRooms={occupiedCount}
+        totalBookings={bookings.length}
+      />
+
       {/* ────────────────── WALK-IN REGISTRATION MODAL ────────────────── */}
       <WalkInModal
         isOpen={isWalkInOpen}
@@ -1000,6 +1240,13 @@ export default function ReceptionistPage() {
           </div>
         </Modal>
       )}
+
+      {/* Visual Tour & 360 Gallery Modal for Staff / Receptionist */}
+      <RoomGalleryModal
+        isOpen={!!galleryRoom}
+        onClose={() => setGalleryRoom(null)}
+        room={galleryRoom}
+      />
     </PortalShell>
   );
 }

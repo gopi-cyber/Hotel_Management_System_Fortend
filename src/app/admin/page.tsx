@@ -29,16 +29,18 @@ import {
   Shield,
   Sparkles,
   Clock,
+  Eye,
 } from 'lucide-react';
 import PortalShell from '@/components/PortalShell';
 import StatCard from '@/components/ui/StatCard';
 import StatusBadge from '@/components/ui/StatusBadge';
 import RoomModal from '@/components/Admin/RoomModal';
+import RoomGalleryModal from '@/components/Guest/RoomGalleryModal';
 import StaffModal from '@/components/Admin/StaffModal';
 import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
-import { fetchAllUsers, updateUserRole, deleteUserAccount, User as UserAccount } from '@/lib/features/userSlice';
+import { fetchAllUsers, updateUserRole, deleteUserAccount, updateUserProfile, User as UserAccount } from '@/lib/features/userSlice';
 import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
 
 export default function AdminPage() {
@@ -49,14 +51,14 @@ export default function AdminPage() {
 
   // Modals state
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
-  const [customRoleUserId, setCustomRoleUserId] = useState<string | null>(null);
-  const [customRoleInput, setCustomRoleInput] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
   const [selectedIncidentalBooking, setSelectedIncidentalBooking] = useState<Booking | null>(null);
-
+  const [customRoleUserId, setCustomRoleUserId] = useState<string | null>(null);
+  const [customRoleInput, setCustomRoleInput] = useState('');
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [galleryTourRoom, setGalleryTourRoom] = useState<Room | null>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportType, setReportType] = useState<'financial' | 'growth'>('financial');
@@ -97,6 +99,9 @@ export default function AdminPage() {
           capacity: roomData.capacity || 2,
           amenities: roomData.amenities || ['Terrace'],
           description: roomData.description,
+          image: roomData.image || roomData.imageUrl,
+          imageUrl: roomData.imageUrl || roomData.image,
+          galleryImages: roomData.galleryImages,
         })
       );
       showToast('New suite registered successfully.');
@@ -114,6 +119,14 @@ export default function AdminPage() {
   const handleSaveStaff = async (staffData: Partial<Staff>) => {
     if (selectedStaff) {
       await dispatch(updateStaff({ ...selectedStaff, ...staffData } as Staff));
+      if (user?.id === selectedStaff.id || user?.name === selectedStaff.name) {
+        dispatch(updateUserProfile({
+          name: staffData.name,
+          email: staffData.email,
+          department: staffData.department,
+          shift: staffData.shift ? `${staffData.shift} Shift` : undefined,
+        }));
+      }
       showToast('Staff credentials updated.');
     } else {
       await dispatch(
@@ -121,6 +134,7 @@ export default function AdminPage() {
           name: staffData.name || '',
           email: staffData.email || '',
           role: staffData.role || 'Receptionist',
+          department: staffData.department || 'Front Desk & Guest Services',
           shift: staffData.shift || 'Morning',
           status: staffData.status || 'Active',
         })
@@ -433,6 +447,14 @@ export default function AdminPage() {
                       <td className="py-3.5 px-5 text-right space-x-2">
                         <button
                           type="button"
+                          onClick={() => setGalleryTourRoom(room)}
+                          className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                          title="Visual Tour & 360 Angles"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             setSelectedRoom(room);
                             setIsRoomModalOpen(true);
@@ -498,6 +520,13 @@ export default function AdminPage() {
                   </div>
 
                   <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setGalleryTourRoom(room)}
+                      className="px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 flex items-center gap-1"
+                    >
+                      <Eye size={13} /> Tour
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -709,10 +738,10 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedIncidentalBooking(b)}
-                            className="py-1 px-2 text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
-                            title="Post incidental charge"
+                            className="py-1 px-2.5 text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Post extra charge"
                           >
-                            <PlusCircle size={13} /> + Charge
+                            <PlusCircle size={13} /> + Charges
                           </button>
                         )}
                         <button
@@ -974,6 +1003,13 @@ export default function AdminPage() {
         isOpen={!!selectedIncidentalBooking}
         onClose={() => setSelectedIncidentalBooking(null)}
         booking={selectedIncidentalBooking}
+      />
+
+      {/* Visual Tour & 360 Angles Modal */}
+      <RoomGalleryModal
+        isOpen={!!galleryTourRoom}
+        onClose={() => setGalleryTourRoom(null)}
+        room={galleryTourRoom}
       />
     </PortalShell>
   );

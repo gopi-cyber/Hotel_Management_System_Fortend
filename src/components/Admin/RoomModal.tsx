@@ -39,6 +39,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
   const [status, setStatus] = useState<'available' | 'occupied' | 'maintenance'>('available');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState(sampleImages[0].url);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -50,6 +51,18 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
       setStatus(room.status || 'available');
       setDescription(room.description || '');
       setImage(room.image || room.imageUrl || sampleImages[0].url);
+      const rawGallery = room.galleryImages;
+      if (Array.isArray(rawGallery)) {
+        setGalleryImages(rawGallery);
+      } else if (typeof rawGallery === 'string' && rawGallery.trim()) {
+        try {
+          setGalleryImages(rawGallery.startsWith('[') ? JSON.parse(rawGallery) : rawGallery.split(',').map((s: string) => s.trim()).filter(Boolean));
+        } catch {
+          setGalleryImages([rawGallery]);
+        }
+      } else {
+        setGalleryImages([]);
+      }
     } else {
       setNumber('');
       setType('Deluxe Suite');
@@ -58,6 +71,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
       setStatus('available');
       setDescription('');
       setImage(sampleImages[0].url);
+      setGalleryImages([]);
     }
   }, [room, isOpen]);
 
@@ -77,6 +91,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
         description,
         image,
         imageUrl: image,
+        galleryImages,
         amenities: ['Terrace', 'Ocean View', 'Butler'],
       });
       onClose();
@@ -88,6 +103,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
   const [imageSourceMode, setImageSourceMode] = useState<'upload' | 'preset' | 'url'>('upload');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const angleFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -101,6 +117,20 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleAngleFilesUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        if (uploadEvent.target?.result) {
+          setGalleryImages((prev) => [...prev, uploadEvent.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -226,6 +256,64 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
                 placeholder="Paste direct image URL (https://...)"
                 className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 bg-slate-50 text-slate-900 outline-none focus:border-amber-600"
               />
+            </div>
+          )}
+        </div>
+
+        {/* Visual Tour Gallery Angles */}
+        <div className="space-y-2 pt-2 border-t border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Visual Tour Angles ({galleryImages.length} photos)
+              </label>
+              <p className="text-[11px] text-slate-500">
+                Images guests see when launching 360° / Visual Tour (bedroom, bathroom, balcony, living room).
+              </p>
+            </div>
+
+            {/* Hidden file input for angle photos */}
+            <input
+              ref={angleFileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                handleAngleFilesUpload(e.target.files);
+                e.target.value = '';
+              }}
+            />
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => angleFileInputRef.current?.click()}
+                className="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl cursor-pointer transition-colors flex items-center gap-1"
+              >
+                + Choose Photo
+              </button>
+            </div>
+          </div>
+
+          {galleryImages.length > 0 && (
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              {galleryImages.map((imgUrl, idx) => (
+                <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-video bg-slate-100">
+                  <Image src={imgUrl} alt={`Angle ${idx + 1}`} fill sizes="120px" className="object-cover" />
+                  <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                    Angle {idx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setGalleryImages((prev) => prev.filter((_, i) => i !== idx))}
+                    className="absolute top-1 right-1 bg-slate-900/80 hover:bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    title="Remove angle"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

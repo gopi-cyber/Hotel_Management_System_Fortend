@@ -254,7 +254,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
                           {charge.title}
                         </span>
                         <span className="text-[10px] text-amber-700 uppercase tracking-wider font-semibold">
-                          Incidental • {charge.category} • {new Date(charge.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                          Charges • {charge.category} • {new Date(charge.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-center font-medium">1</td>

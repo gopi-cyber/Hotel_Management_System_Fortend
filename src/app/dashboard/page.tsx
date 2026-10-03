@@ -124,27 +124,57 @@ export default function GuestDashboard() {
     }
   }, []);
 
-  const handleSendOtp = () => {
-    if (!phoneNumber || phoneNumber.trim().length < 8) {
-      setOtpNotice('Please enter a valid phone number.');
+  const handleSendOtp = async () => {
+    const cleanDigits = phoneNumber.replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length < 10) {
+      setOtpNotice('Please enter a valid 10-digit mobile number.');
       return;
     }
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setSentOtp(code);
-    setOtpNotice(`OTP Sent to ${phoneNumber}: ${code}`);
+    try {
+      const res = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send', phone: cleanDigits }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setOtpNotice(data.error || 'Failed to send OTP.');
+      } else {
+        setSentOtp(data.otp || '');
+        setOtpNotice(data.message || `OTP dispatched to +91 ${cleanDigits.slice(-10)}`);
+      }
+    } catch (_err) {
+      setOtpNotice('Network error dispatching OTP.');
+    }
   };
 
-  const handleVerifyOtp = () => {
-    if (phoneOtp.trim() === sentOtp && sentOtp.length === 6) {
-      setIsPhoneVerified(true);
-      setOtpNotice('');
-      setVerificationGateError('');
-      if (typeof window !== 'undefined') {
-        const saved = JSON.parse(localStorage.getItem('luxestay_guest_kyc') || '{}');
-        localStorage.setItem('luxestay_guest_kyc', JSON.stringify({ ...saved, isPhoneVerified: true, phoneNumber }));
+  const handleVerifyOtp = async () => {
+    const cleanDigits = phoneNumber.replace(/\D/g, '');
+    const code = phoneOtp.replace(/\D/g, '').trim();
+    if (!code || code.length !== 6) {
+      setOtpNotice('Please enter 6-digit verification code.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', phone: cleanDigits, code }),
+      });
+      const data = await res.json();
+      if (res.ok && data.verified) {
+        setIsPhoneVerified(true);
+        setOtpNotice('');
+        setVerificationGateError('');
+        if (typeof window !== 'undefined') {
+          const saved = JSON.parse(localStorage.getItem('luxestay_guest_kyc') || '{}');
+          localStorage.setItem('luxestay_guest_kyc', JSON.stringify({ ...saved, isPhoneVerified: true, phoneNumber: cleanDigits }));
+        }
+      } else {
+        setOtpNotice(data.error || 'Invalid code. Please enter the correct 6-digit code.');
       }
-    } else {
-      setOtpNotice('Invalid code. Please enter the 6-digit code shown.');
+    } catch (_err) {
+      setOtpNotice('Network error verifying OTP.');
     }
   };
 
@@ -329,7 +359,7 @@ export default function GuestDashboard() {
     <PortalShell
       requiredRole="guest"
       title={`Welcome, ${user?.name || user?.username || 'Guest'}`}
-      subtitle="View your room bookings, explore available rooms, and order food or room services."
+      subtitle=""
       navItems={navItems}
       activeNavId={activeTab}
       actions={
@@ -474,7 +504,7 @@ export default function GuestDashboard() {
                       </div>
                       {b.incidentalCharges && b.incidentalCharges.length > 0 && (
                         <div className="flex items-center justify-between text-amber-700 font-medium pt-1 border-t border-slate-200">
-                          <span>Room Incidentals ({b.incidentalCharges.length})</span>
+                          <span>Room Charges ({b.incidentalCharges.length})</span>
                           <span>+{formatPrice(b.incidentalCharges.reduce((sum, item) => sum + (Number(item.amount) || 0), 0), currency)}</span>
                         </div>
                       )}
@@ -856,12 +886,16 @@ export default function GuestDashboard() {
                   <div className="flex gap-2">
                     <input
                       type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={10}
                       value={phoneNumber}
                       onChange={(e) => {
-                        setPhoneNumber(e.target.value);
+                        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setPhoneNumber(digitsOnly);
                         setIsPhoneVerified(false);
                       }}
-                      placeholder="+91 98765 43210"
+                      placeholder="10-digit mobile number"
                       className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white"
                     />
                     <button
@@ -883,11 +917,13 @@ export default function GuestDashboard() {
                     <div className="flex gap-2 pt-1">
                       <input
                         type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         maxLength={6}
                         value={phoneOtp}
-                        onChange={(e) => setPhoneOtp(e.target.value)}
-                        placeholder="Enter 6-digit OTP"
-                        className="flex-1 px-3 py-2 text-xs font-medium tracking-widest text-center rounded-lg border border-slate-300 bg-white"
+                        onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="6-digit code"
+                        className="flex-1 px-3 py-2 text-xs font-mono font-bold tracking-widest rounded-lg border border-slate-300 bg-white"
                       />
                       <button
                         type="button"

@@ -17,6 +17,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
   const [isCustomRole, setIsCustomRole] = useState(false);
   const [customRoleText, setCustomRoleText] = useState('');
   const [shift, setShift] = useState<'Morning' | 'Afternoon' | 'Night'>('Morning');
+  const [department, setDepartment] = useState('Front Desk & Guest Services');
   const [status, setStatus] = useState<'Active' | 'On Leave' | 'Inactive'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,6 +56,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
       setEmail(staff.email || '');
       const existingRole = staff.role || 'Receptionist';
       setShift(staff.shift || 'Morning');
+      setDepartment(staff.department || 'Front Desk & Guest Services');
       setStatus(staff.status || 'Active');
       if (predefinedRoles.includes(existingRole)) {
         setRole(existingRole);
@@ -72,6 +74,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
       setIsCustomRole(false);
       setCustomRoleText('');
       setShift('Morning');
+      setDepartment('Front Desk & Guest Services');
       setStatus('Active');
     }
   }, [staff, isOpen]);
@@ -86,6 +89,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
         name,
         email,
         role: finalRole,
+        department,
         shift,
         status,
       });
@@ -126,6 +130,19 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="liam@luxestay.com"
+            className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Department
+          </label>
+          <input
+            type="text"
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            placeholder="e.g. Front Desk & Guest Services"
             className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
           />
         </div>

@@ -60,7 +60,8 @@ export async function POST(request: NextRequest) {
     status: body.status || 'available',
     description: body.description || '',
     amenities: body.amenities || 'WiFi, AC',
-    imageUrl: body.imageUrl || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800'
+    imageUrl: body.imageUrl || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
+    ...(body.galleryImages ? { galleryImages: body.galleryImages } : {})
   };
   fallbackData.rooms.push(newRoom);
   return NextResponse.json(newRoom, { status: 201 });

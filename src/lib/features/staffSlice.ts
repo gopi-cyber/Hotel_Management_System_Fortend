@@ -5,8 +5,10 @@ export interface Staff {
     name: string;
     email: string;
     role: string;
+    department?: string;
     shift: 'Morning' | 'Afternoon' | 'Night';
     status: 'Active' | 'On Leave' | 'Inactive';
+    phone?: string;
     createdAt?: string;
 }
 
@@ -97,6 +99,19 @@ const staffSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+        syncStaffProfile: (state, action: { payload: { name: string; email?: string; phone?: string; oldName?: string } }) => {
+            const { name, email, phone, oldName } = action.payload;
+            const staffIdx = state.items.findIndex((s) =>
+                (oldName && s.name.toLowerCase() === oldName.toLowerCase()) ||
+                (s.role?.toLowerCase().includes('reception') || s.role?.toLowerCase().includes('front desk')) ||
+                (email && s.email.toLowerCase() === email.toLowerCase())
+            );
+            if (staffIdx !== -1) {
+                state.items[staffIdx].name = name;
+                if (email) state.items[staffIdx].email = email;
+                if (phone) state.items[staffIdx].phone = phone;
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -126,5 +141,5 @@ const staffSlice = createSlice({
     },
 });
 
-export const { clearError } = staffSlice.actions;
+export const { clearError, syncStaffProfile } = staffSlice.actions;
 export default staffSlice.reducer;

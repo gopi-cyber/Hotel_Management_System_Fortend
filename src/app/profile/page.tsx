@@ -103,7 +103,7 @@ export default function ProfileConciergePage() {
     <PortalShell
       requiredRole="guest"
       title="Guest Concierge & Residence Profile"
-      subtitle="Request personalized in-suite amenities, butler service, and private dining."
+      subtitle=""
       navItems={navItems}
       activeNavId="concierge"
       actions={

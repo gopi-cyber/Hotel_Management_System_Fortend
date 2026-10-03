@@ -60,10 +60,23 @@ export default function RoomGalleryModal({
 
   if (!room) return null;
 
-  const images = [
-    { title: `${room.name} Master View`, url: room.imageUrl || GALLERY_ANGLES[0].url },
-    ...GALLERY_ANGLES.slice(1),
-  ];
+      // Extract any dynamic gallery images configured in admin
+      const rawGallery = room.galleryImages;
+      const customGalleryUrls = Array.isArray(rawGallery) 
+        ? rawGallery 
+        : typeof rawGallery === 'string' && rawGallery.trim()
+          ? (rawGallery.startsWith('[') ? JSON.parse(rawGallery) : rawGallery.split(',').map((s: string) => s.trim()).filter(Boolean))
+          : [];
+
+      const images = customGalleryUrls.length > 0
+        ? customGalleryUrls.map((url: string, idx: number) => ({
+            title: `${room.name} — View ${idx + 1}`,
+            url,
+          }))
+        : [
+            { title: `${room.name} Master View`, url: room.imageUrl || GALLERY_ANGLES[0].url },
+            ...GALLERY_ANGLES.slice(1),
+          ];
 
   const handlePrev = () => {
     setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -127,7 +140,7 @@ export default function RoomGalleryModal({
 
         {/* Thumbnail Carousel Strip */}
         <div className="grid grid-cols-4 gap-3">
-          {images.map((img, idx) => (
+          {images.map((img: { title: string; url: string }, idx: number) => (
             <button
               key={idx}
               type="button"

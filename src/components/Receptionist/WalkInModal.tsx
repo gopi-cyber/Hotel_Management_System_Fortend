@@ -162,10 +162,13 @@ export default function WalkInModal({
               </div>
               <input
                 type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={10}
                 required
                 value={guestPhone}
-                onChange={(e) => setGuestPhone(e.target.value)}
-                placeholder="+91 98765 43210"
+                onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="10-digit mobile number"
                 className="w-full pl-9 pr-3 py-2.5 text-slate-900 bg-transparent rounded-xl outline-none text-xs sm:text-sm font-medium"
               />
             </div>

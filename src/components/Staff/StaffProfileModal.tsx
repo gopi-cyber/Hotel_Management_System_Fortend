@@ -4,10 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/lib/store';
 import { updateUserProfile } from '@/lib/features/userSlice';
 import { toggleNightAudit } from '@/lib/features/settingsSlice';
+import { syncStaffProfile, updateStaff, Staff } from '@/lib/features/staffSlice';
 import Modal from '@/components/ui/Modal';
 import {
   UserCheck,
-  Building,
   ShieldCheck,
   Clock,
   Mail,
@@ -34,6 +34,7 @@ interface StaffProfileModalProps {
 export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModalProps) {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.user?.user);
+  const staffList = useSelector((state: RootState) => state.staff?.items || []);
   const company = useSelector((state: RootState) => state.settings?.companyProfile);
   const nightAudit = useSelector((state: RootState) => state.settings?.nightAudit || false);
 
@@ -47,7 +48,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
     employeeId: user?.employeeId || 'STF-104',
   });
 
-  const [activeTab, setActiveTab] = useState<'duty' | 'station' | 'settings'>('duty');
+  const [activeTab, setActiveTab] = useState<'duty' | 'settings'>('duty');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
   }, [isOpen]);
 
   const handleSave = () => {
+    const oldName = user?.name;
     dispatch(
       updateUserProfile({
         name: formData.name,
@@ -77,6 +79,34 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
         employeeId: formData.employeeId,
       })
     );
+
+    // Sync to admin staff roster
+    dispatch(
+      syncStaffProfile({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        oldName,
+      })
+    );
+
+    const matchedStaff = staffList.find(
+      (s: Staff) =>
+        (user?.id && String(s.id) === String(user.id)) ||
+        (oldName && s.name.toLowerCase() === oldName.toLowerCase()) ||
+        (s.role?.toLowerCase().includes('reception') || s.role?.toLowerCase().includes('front desk'))
+    );
+    if (matchedStaff) {
+      dispatch(
+        updateStaff({
+          ...matchedStaff,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+        })
+      );
+    }
+
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
@@ -122,18 +152,6 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
             <UserCheck size={16} />
             <span>Staff Credentials</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('station')}
-            className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-              activeTab === 'station'
-                ? 'border-amber-600 text-amber-700'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Building size={16} />
-            <span>Station & Property</span>
-          </button>
         </div>
 
         {savedSuccess && (
@@ -163,7 +181,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
             {/* Staff Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Staff Member Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Name</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -190,27 +208,25 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
                 <input
                   type="text"
                   value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  placeholder="e.g. Front Desk & Guest Services"
-                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                  readOnly
+                  placeholder="Set by Admin"
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-100 text-slate-600 cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Shift Schedule</label>
-                <select
+                <label className="block text-xs font-bold text-slate-700 mb-1">Schedule</label>
+                <input
+                  type="text"
                   value={formData.shift}
-                  onChange={(e) => setFormData({ ...formData, shift: e.target.value })}
-                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="Morning Shift (06:00 - 15:00)">Morning Shift (06:00 - 15:00)</option>
-                  <option value="Evening Shift (14:00 - 23:00)">Evening Shift (14:00 - 23:00)</option>
-                  <option value="Night Shift (22:00 - 07:00)">Night Shift (22:00 - 07:00)</option>
-                </select>
+                  readOnly
+                  placeholder="Set by Admin"
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-100 text-slate-600 cursor-not-allowed"
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Official Desk Email</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
                 <div className="relative">
                   <Mail size={14} className="absolute left-3 top-3 text-slate-400" />
                   <input
@@ -223,13 +239,17 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Intercom / Mobile Extension</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Mobile</label>
                 <div className="relative">
                   <Phone size={14} className="absolute left-3 top-3 text-slate-400" />
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                    placeholder="10-digit mobile number"
                     className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -254,51 +274,7 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
           </div>
         )}
 
-        {/* TAB 2: STATION & PROPERTY */}
-        {activeTab === 'station' && (
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-display font-bold">
-                  {company?.brandName?.[0] || 'L'}
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">{company?.brandName || 'LuxeStay Palace'}</h4>
-                  <p className="text-xs text-slate-500">{company?.address || 'Marine Drive, Mumbai'}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200 text-xs">
-                <div>
-                  <span className="text-slate-400 block font-medium">Assigned Duty Desk:</span>
-                  <span className="font-bold text-slate-800">Terminal 1 (Lobby Central)</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Walkie Channel:</span>
-                  <span className="font-bold text-amber-700">Channel 3 (Front Office)</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Duty Manager on Shift:</span>
-                  <span className="font-bold text-slate-800">Aditya Roy (Ext 901)</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Emergency Duty Hotline:</span>
-                  <span className="font-bold text-rose-700">{company?.emergencyPhone || '+91 98200 99999'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl border border-amber-200/80 bg-amber-50/60 text-xs space-y-1">
-              <span className="font-bold text-amber-900 flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-amber-700" />
-                <span>Front Desk POS & Settlement Authority</span>
-              </span>
-              <p className="text-amber-800/80">
-                Staff account authorized to check-in guests, assign RFID room keys, process service requests, and print guest bills and invoices.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* TAB 1: STAFF CREDENTIALS */}
 
         {/* TAB 3: SHIFT CONTROLS & PREFERENCES */}
         {activeTab === 'settings' && (

@@ -232,9 +232,13 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
                 <div className="relative">
                   <Phone size={14} className="absolute left-3 top-3 text-slate-400" />
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                    placeholder="10-digit mobile number"
                     className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
                   />
                 </div>

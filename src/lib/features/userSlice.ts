@@ -59,22 +59,6 @@ export const loginUser = createAsyncThunk('user/loginUser', async (credentials: 
     }
 });
 
-export const loginWithOAuth = createAsyncThunk('user/loginWithOAuth', async (oauthData: { email: string; name?: string; avatarUrl?: string; provider?: string }) => {
-    try {
-        const response = await axios.post(API_URL, { action: 'oauth', ...oauthData });
-        const authenticatedUser = { ...response.data, role: response.data.role.toLowerCase() };
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem('vortex_user', JSON.stringify(authenticatedUser));
-        }
-        return authenticatedUser;
-    } catch (err: unknown) {
-        if (axios.isAxiosError(err)) {
-            throw new Error(err.response?.data?.error || err.response?.data?.message || err.message || 'OAuth authentication failed');
-        }
-        throw new Error(err instanceof Error ? err.message : 'OAuth authentication failed');
-    }
-});
-
 export const fetchAllUsers = createAsyncThunk('user/fetchAllUsers', async () => {
     const response = await axios.get(API_URL);
     return response.data;
@@ -138,17 +122,6 @@ const userSlice = createSlice({
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.error = action.error.message || 'Login failed';
-            })
-            .addCase(loginWithOAuth.pending, (state) => {
-                state.error = null;
-            })
-            .addCase(loginWithOAuth.fulfilled, (state, action) => {
-                state.user = action.payload;
-                state.isAuthenticated = true;
-                state.error = null;
-            })
-            .addCase(loginWithOAuth.rejected, (state, action) => {
-                state.error = action.error.message || 'OAuth authentication failed';
             })
             .addCase(fetchAllUsers.fulfilled, (state, action) => {
                 state.allUsers = action.payload;

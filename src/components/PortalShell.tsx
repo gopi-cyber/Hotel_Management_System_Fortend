@@ -7,6 +7,7 @@ import { RootState, AppDispatch } from '@/lib/store';
 import HotelBrand from '@/components/ui/HotelBrand';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { logout, restoreSession, User as SessionUser } from '@/lib/features/userSlice';
+import { fetchStaff } from '@/lib/features/staffSlice';
 
 import AdminProfileModal from '@/components/Admin/AdminProfileModal';
 import StaffProfileModal from '@/components/Staff/StaffProfileModal';
@@ -92,6 +93,7 @@ export function PortalShell({
 
   useEffect(() => {
     setMounted(true);
+    dispatch(fetchStaff());
     if (!user) {
       const saved = typeof window !== 'undefined' ? sessionStorage.getItem('vortex_user') : null;
       if (saved) {
@@ -131,9 +133,11 @@ export function PortalShell({
       { id: 'reports', label: 'Reports', href: '/admin', icon: BarChart3 },
     ],
     receptionist: [
+      { id: 'dashboard', label: 'Dashboard', href: '/receptionist', icon: LayoutDashboard },
       { id: 'checkin', label: 'Arrivals & Check-in', href: '/receptionist', icon: UserCheck },
       { id: 'rooms', label: 'Room', href: '/receptionist', icon: BedDouble },
-      { id: 'billing', label: 'Guest Folios', href: '/receptionist', icon: CreditCard },
+      { id: 'requests', label: 'Guest Requests', href: '/receptionist', icon: Bell },
+      { id: 'billing', label: 'Bills & Payments', href: '/receptionist', icon: CreditCard },
     ],
     guest: [
       { id: 'stays', label: 'My Bookings', href: '/dashboard', icon: CalendarCheck },
@@ -157,7 +161,7 @@ export function PortalShell({
 
   const roleLabels = {
     admin: { name: 'Admin', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-    receptionist: { name: 'Front Desk Terminal', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+    receptionist: { name: 'Front Desk', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
     guest: { name: 'Guest Residence', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
   };
 

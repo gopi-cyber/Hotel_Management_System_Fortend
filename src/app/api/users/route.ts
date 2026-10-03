@@ -61,8 +61,9 @@ export async function POST(request: NextRequest) {
           const user = await response.json();
           return NextResponse.json(publicUser(user as FallbackUser));
         }
-        if (response.status === 401 || response.status === 404) {
-          return NextResponse.json({ error: 'Invalid username/email or password' }, { status: 401 });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          return NextResponse.json({ error: errData.error || 'Invalid credentials' }, { status: response.status });
         }
       } catch (_e) {
         // Backend offline - validate against development fallback.
@@ -79,36 +80,6 @@ export async function POST(request: NextRequest) {
       return user
         ? NextResponse.json(publicUser(user))
         : NextResponse.json({ error: 'Invalid username/email or password' }, { status: 401 });
-    }
-
-    // ── OAuth Social Authentication (Google, Apple, GitHub) ──
-    if (body.action === 'oauth') {
-      const email = String(body.email || '').toLowerCase().trim();
-      if (!email) {
-        return NextResponse.json({ error: 'Email is required for authentication' }, { status: 400 });
-      }
-
-      let existing = fallbackData.users.find((u) => u.email.toLowerCase() === email);
-      if (existing) {
-        return NextResponse.json(publicUser(existing), { status: 200 });
-      }
-
-      const generatedUsername = (email.split('@')[0] || 'guest')
-        .replace(/[^a-zA-Z0-9_]/g, '_')
-        .slice(0, 15) + '_' + Math.floor(100 + Math.random() * 900);
-
-      const newUser: FallbackUser = {
-        id: Date.now().toString(),
-        username: generatedUsername,
-        password: 'oauth_verified',
-        name: body.name || email.split('@')[0] || 'Honored Guest',
-        email: email,
-        phone: body.phone || '',
-        avatarUrl: body.avatarUrl || '',
-        role: 'guest'
-      };
-      fallbackData.users.push(newUser);
-      return NextResponse.json(publicUser(newUser), { status: 201 });
     }
 
     // ── New User Registration (Strictly Guest Role Only) ──
@@ -132,6 +103,9 @@ export async function POST(request: NextRequest) {
       if (response.ok) {
         const savedUser = await response.json();
         return NextResponse.json(publicUser(savedUser as FallbackUser), { status: 201 });
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        return NextResponse.json({ error: errData.error || 'Registration failed' }, { status: response.status });
       }
     } catch (_e) {
       // Backend offline - use fallback
