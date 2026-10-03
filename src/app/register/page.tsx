@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Hotel, User, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import HotelBrand from '@/components/ui/HotelBrand';
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -131,14 +132,7 @@ export default function RegisterPage() {
           <div className="absolute inset-0 photo-scrim" />
 
           <div className="relative z-10">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center">
-                <Hotel className="text-slate-950" size={20} />
-              </div>
-              <span className="font-display text-2xl font-bold tracking-tight text-white">
-                LuxeStay
-              </span>
-            </Link>
+            <HotelBrand href="/" iconSize={20} inverted={true} textClassName="font-display text-2xl font-bold tracking-tight text-white" />
           </div>
 
           <div className="relative z-10 space-y-2">
@@ -158,9 +152,6 @@ export default function RegisterPage() {
               <Link href="/" className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-amber-700 transition-colors inline-flex items-center gap-1">
                 ← Return to Home
               </Link>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                <ShieldCheck size={14} /> Account Registration
-              </div>
             </div>
 
             {/* Clean Direct Heading */}

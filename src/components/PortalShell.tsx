@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/lib/store';
+import HotelBrand from '@/components/ui/HotelBrand';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { logout, restoreSession, User as SessionUser } from '@/lib/features/userSlice';
 
 import AdminProfileModal from '@/components/Admin/AdminProfileModal';
@@ -169,27 +171,7 @@ export function PortalShell({
       <aside className="hidden lg:flex w-72 flex-col justify-between bg-[#0b0f17] text-white border-r border-slate-800/80 p-6 shrink-0 h-screen sticky top-0 print:hidden">
         <div>
           {/* Brand Crest */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-md overflow-hidden group-hover:scale-105 transition-transform shrink-0">
-              {companyProfile?.logoUrl ? (
-                <img
-                  src={companyProfile.logoUrl}
-                  alt={companyProfile.brandName || 'Hotel Logo'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Hotel className="text-amber-400" size={22} />
-              )}
-            </div>
-            <div className="truncate">
-              <span className="font-display text-xl font-bold tracking-tight text-white block leading-none truncate">
-                {companyProfile?.brandName || companyProfile?.companyName || 'LuxeStay'}
-              </span>
-              <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold mt-1 block truncate">
-                {companyProfile?.tagline || 'Hotels & Residences'}
-              </span>
-            </div>
-          </Link>
+          <HotelBrand href="/" inverted={true} textClassName="font-display text-xl font-bold tracking-tight text-white" />
 
           {/* Role Pill */}
           <div className="mt-6 mb-8">
@@ -243,19 +225,7 @@ export function PortalShell({
               className="flex items-center gap-3 truncate text-left transition-opacity cursor-pointer hover:opacity-85"
               title={`Click to view/edit ${profileModalTitle}`}
             >
-              <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-amber-400 text-sm border border-slate-700 shrink-0">
-                {hasAvatar ? (
-                  <img
-                    src={userAvatar}
-                    alt={userDisplayName || 'User'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="font-bold text-amber-400 text-sm font-display">
-                    {userInitial}
-                  </span>
-                )}
-              </div>
+              <UserAvatar name={userDisplayName} avatarUrl={hasAvatar ? userAvatar : ''} size="sm" />
               <div className="truncate">
                 <p className="text-xs font-bold text-white truncate hover:text-amber-400 transition-colors">
                   {userDisplayName}
@@ -279,22 +249,7 @@ export function PortalShell({
 
       {/* ────────────────── MOBILE / TABLET TOP APP BAR ────────────────── */}
       <header className="lg:hidden bg-[#0b0f17] text-white px-4 py-3.5 flex items-center justify-between border-b border-slate-800 sticky top-0 z-40 print:hidden">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center overflow-hidden shrink-0">
-            {companyProfile?.logoUrl ? (
-              <img
-                src={companyProfile.logoUrl}
-                alt="Logo"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Hotel className="text-amber-400" size={18} />
-            )}
-          </div>
-          <span className="font-display text-lg font-bold tracking-tight text-white truncate">
-            {companyProfile?.brandName || companyProfile?.companyName || 'LuxeStay'}
-          </span>
-        </Link>
+        <HotelBrand href="/" inverted={true} textClassName="font-display text-lg font-bold tracking-tight text-white" showTagline={false} />
 
         <button
           type="button"
@@ -363,19 +318,7 @@ export function PortalShell({
                 className="flex items-center gap-3 text-left cursor-pointer hover:opacity-85"
                 title={`Click to view/edit ${profileModalTitle}`}
               >
-                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-amber-400 text-xs border border-slate-700 shrink-0">
-                  {hasAvatar ? (
-                    <img
-                      src={userAvatar}
-                      alt={userDisplayName || 'User'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="font-bold text-amber-400 text-xs font-display">
-                      {userInitial}
-                    </span>
-                  )}
-                </div>
+                <UserAvatar name={userDisplayName} avatarUrl={hasAvatar ? userAvatar : ''} size="md" />
                 <div>
                   <p className="text-sm font-bold text-white">
                     {userDisplayName}

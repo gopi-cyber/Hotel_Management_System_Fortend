@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import HotelBrand from '@/components/ui/HotelBrand';
 
 const suites = [
   {
@@ -122,19 +123,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <Hotel className="text-slate-950" size={22} />
-            </div>
-            <div>
-              <span className="font-display text-2xl font-bold tracking-tight text-slate-950 block leading-none">
-                LuxeStay
-              </span>
-              <span className="text-[10px] uppercase tracking-widest text-amber-700 font-bold mt-1 block">
-                Hotels & Residences
-              </span>
-            </div>
-          </Link>
+          <HotelBrand href="/" iconSize={22} textClassName="font-display text-2xl font-bold tracking-tight text-slate-950" />
 
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
@@ -576,12 +565,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-800">
             {/* Col 1 */}
             <div className="space-y-4 md:col-span-1">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center">
-                  <Hotel className="text-slate-950" size={20} />
-                </div>
-                <span className="font-display text-2xl font-bold text-white">LuxeStay</span>
-              </div>
+              <HotelBrand href="/" iconSize={20} inverted={true} textClassName="font-display text-2xl font-bold text-white" />
               <p className="text-xs leading-relaxed text-slate-400">
                 A prestigious sanctuary of curated luxury, world-class dining, and personal hospitality.
               </p>

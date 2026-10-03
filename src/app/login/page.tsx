@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Hotel, User, Lock, ArrowRight, ShieldCheck, AlertCircle, KeyRound, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import HotelBrand from '@/components/ui/HotelBrand';
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
@@ -63,14 +64,7 @@ export default function LoginPage() {
 
           {/* Brand header */}
           <div className="relative z-10">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center">
-                <Hotel className="text-slate-950" size={20} />
-              </div>
-              <span className="font-display text-2xl font-bold tracking-tight text-white">
-                LuxeStay
-              </span>
-            </Link>
+            <HotelBrand href="/" iconSize={20} inverted={true} textClassName="font-display text-2xl font-bold tracking-tight text-white" />
           </div>
 
           {/* Luxury quote */}
@@ -92,19 +86,12 @@ export default function LoginPage() {
               <Link href="/" className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-amber-700 transition-colors inline-flex items-center gap-1">
                 ← Return to Home
               </Link>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200/80">
-                <ShieldCheck size={14} className="text-amber-700" />
-                <span>Role-Guarded Access</span>
-              </div>
             </div>
 
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight">
-                Sign In to LuxeStay
+                Sign In
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                Enter your registered credentials. Your authorized portal will load automatically.
-              </p>
             </div>
 
             {/* Form */}

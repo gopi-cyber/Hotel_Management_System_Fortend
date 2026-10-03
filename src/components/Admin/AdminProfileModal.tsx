@@ -26,6 +26,7 @@ import {
   Upload,
 } from 'lucide-react';
 import Image from 'next/image';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 interface AdminProfileModalProps {
   isOpen: boolean;
@@ -141,21 +142,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
               {/* Header Badge Card */}
               <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-5 rounded-2xl text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 border border-slate-800 shadow-md">
                 <div className="relative group shrink-0">
-                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-800 flex items-center justify-center">
-                    {formData.adminAvatarUrl ? (
-                      <Image
-                        src={formData.adminAvatarUrl}
-                        alt={formData.adminName}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="text-2xl font-bold text-amber-400 font-display">
-                        {(formData.adminName || 'A')[0].toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                  <UserAvatar name={formData.adminName} avatarUrl={formData.adminAvatarUrl} size="xl" />
                 </div>
 
                 <div className="flex-1 text-center sm:text-left space-y-1">
