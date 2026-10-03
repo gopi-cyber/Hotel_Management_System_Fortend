@@ -59,7 +59,74 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
   const nightlyBase = Math.round(roomBase / nights);
 
   const handlePrint = () => {
-    window.print();
+    const el = document.getElementById('printable-invoice');
+    if (!el) {
+      window.print();
+      return;
+    }
+
+    const printWin = window.open('', '_blank', 'width=850,height=950');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+
+    const contentHtml = el.innerHTML;
+    printWin.document.open();
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Invoice - ${company?.brandName || 'LuxeStay Palace'}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 10mm;
+            }
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              color: #0f172a;
+              background: #ffffff;
+              margin: 0;
+              padding: 12px;
+              font-size: 13px;
+              line-height: 1.45;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              padding: 8px 10px;
+            }
+            .btn-hidden, button, .print-hidden {
+              display: none !important;
+            }
+          </style>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-white p-4">
+          <div class="max-w-3xl mx-auto space-y-6">
+            ${contentHtml}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.onafterprint = function() { window.close(); };
+              }, 400);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
   };
 
   const invoiceNo = `LX-${String(booking.id).padStart(5, '0')}`;

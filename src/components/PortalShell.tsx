@@ -173,16 +173,8 @@ export function PortalShell({
           {/* Brand Crest */}
           <HotelBrand href="/" inverted={true} textClassName="font-display text-xl font-bold tracking-tight text-white" />
 
-          {/* Role Pill */}
-          <div className="mt-6 mb-8">
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${roleLabels[requiredRole].color}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {roleLabels[requiredRole].name}
-            </span>
-          </div>
-
           {/* Nav Items */}
-          <nav className="space-y-1.5" aria-label="Portal Navigation">
+          <nav className="space-y-1.5 mt-8" aria-label="Portal Navigation">
             {currentNavs.map((item) => {
               const Icon = item.icon;
               const isSelected = activeNavId ? activeNavId === item.id : item.isActive;
@@ -266,9 +258,7 @@ export function PortalShell({
         <div className="lg:hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end">
           <div className="bg-[#0b0f17] text-white p-6 rounded-t-3xl border-t border-slate-800 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="text-xs uppercase tracking-widest text-amber-400 font-bold">
-                {roleLabels[requiredRole].name}
-              </span>
+              <HotelBrand href="/" inverted={true} textClassName="font-display text-base font-bold text-white" showTagline={false} />
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}

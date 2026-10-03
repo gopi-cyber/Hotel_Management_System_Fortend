@@ -808,8 +808,8 @@ export default function AdminPage() {
                           <div>
                             <span className="block font-medium">{u.name || u.username}</span>
                             {isRootAdmin && (
-                              <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">
-                                Primary Root Admin
+                              <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-semibold border border-amber-200">
+                                Primary Admin
                               </span>
                             )}
                           </div>
@@ -887,8 +887,7 @@ export default function AdminPage() {
                             >
                               <option value="guest">guest</option>
                               <option value="receptionist">receptionist</option>
-                              <option value="admin">admin</option>
-                              {!['guest', 'receptionist', 'admin'].includes(role) && (
+                              {!['guest', 'receptionist'].includes(role) && (
                                 <option value={role}>{role}</option>
                               )}
                               <option value="custom">+ Custom Role...</option>
@@ -954,8 +953,7 @@ export default function AdminPage() {
                       >
                         <option value="guest">guest</option>
                         <option value="receptionist">receptionist</option>
-                        <option value="admin">admin</option>
-                        {!['guest', 'receptionist', 'admin'].includes(role) && (
+                        {!['guest', 'receptionist'].includes(role) && (
                           <option value={role}>{role}</option>
                         )}
                       </select>
