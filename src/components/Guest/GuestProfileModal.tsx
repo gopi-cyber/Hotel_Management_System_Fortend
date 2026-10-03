@@ -372,7 +372,7 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
             </div>
 
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1">
-              <span className="font-bold text-slate-900">Hospitality Concierge Assistance</span>
+              <span className="font-bold text-slate-900">Hotel Guest Support</span>
               <p className="text-slate-600">
                 Your emergency contact details are kept strictly private under the LuxeStay Hospitality Trust Guarantee and accessed only in medical or flight rerouting emergencies.
               </p>

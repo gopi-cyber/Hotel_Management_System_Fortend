@@ -254,7 +254,7 @@ export default function ReceptionistPage() {
     },
     {
       id: 'billing',
-      label: 'Folios & Billing',
+      label: 'Bills & Payments',
       icon: CreditCard,
       isActive: activeTab === 'billing',
       onClick: () => setActiveTab('billing'),
@@ -301,7 +301,7 @@ export default function ReceptionistPage() {
           changeType="positive"
         />
         <StatCard
-          label="Settled Folio Revenue"
+          label="Total Paid Revenue"
           value={formatPrice(totalRevenue, currency)}
           icon={CreditCard}
           change="YTD Operations"
@@ -475,7 +475,7 @@ export default function ReceptionistPage() {
                       <span>{b.checkInDate} → {b.checkOutDate}</span>
                     </div>
                     <div className="flex justify-between font-bold text-slate-900 pt-1">
-                      <span>Folio Total:</span>
+                      <span>Total Bill:</span>
                       <span>{formatPrice(Number(b.totalPrice) || 0, currency)}</span>
                     </div>
                   </div>
@@ -603,7 +603,7 @@ export default function ReceptionistPage() {
                       <div className="mt-2 p-2 bg-amber-100/60 rounded-xl border border-amber-200/80 text-[11px]">
                         <span className="text-[10px] uppercase font-bold text-amber-800 block">Occupant:</span>
                         <strong className="text-slate-900 truncate block">{activeBooking.guestName}</strong>
-                        <span className="text-slate-500 text-[10px]">Folio #{activeBooking.id}</span>
+                        <span className="text-slate-500 text-[10px]">Bill #{activeBooking.id}</span>
                       </div>
                     )}
 
@@ -725,7 +725,7 @@ export default function ReceptionistPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900">
-              Guest Billing & Folio Settlement
+              Guest Billing & Invoices
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
               Audit room charges, hospitality GST, and process guest payments.
@@ -740,7 +740,7 @@ export default function ReceptionistPage() {
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-600 uppercase">Folio #{b.id}</span>
+                    <span className="text-xs font-bold text-slate-600 uppercase">Bill #{b.id}</span>
                     <StatusBadge status={b.status} />
                   </div>
                   <h3 className="font-display text-lg font-bold text-slate-900">{b.guestName}</h3>
@@ -754,12 +754,12 @@ export default function ReceptionistPage() {
                   </div>
                   {b.incidentalCharges && b.incidentalCharges.length > 0 && (
                     <div className="flex justify-between text-amber-700 font-medium">
-                      <span>Posted Incidentals ({b.incidentalCharges.length}):</span>
+                      <span>Extra Charges ({b.incidentalCharges.length}):</span>
                       <span>+{formatPrice(b.incidentalCharges.reduce((sum, item) => sum + Number(item.amount || 0), 0), currency)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-slate-600">
-                    <span>Folio Balance:</span>
+                    <span>Total Bill:</span>
                     <strong className="text-slate-900 font-display text-sm">
                       {formatPrice(Number(b.totalPrice) || 0, currency)}
                     </strong>
@@ -779,7 +779,7 @@ export default function ReceptionistPage() {
                     onClick={() => setSelectedBookingFolio(b)}
                     className="flex-1 btn-gold py-2 text-xs justify-center cursor-pointer"
                   >
-                    Inspect Folio
+                    View Bill / Invoice
                   </button>
                 </div>
               </div>

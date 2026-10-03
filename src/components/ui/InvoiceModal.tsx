@@ -71,7 +71,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Hotel Folio & Tax Invoice`}
+      title={`Hotel Bill & Tax Invoice`}
       subtitle={`Official settlement statement #${invoiceNo}`}
       maxWidth="2xl"
     >
@@ -166,7 +166,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
                 <tr>
                   <td className="py-3 px-3">
                     <span className="font-bold text-slate-900 block">
-                      {booking.roomType || 'Luxury Suite Stay Tariff'}
+                      {booking.roomType || 'Room Stay Charges'}
                     </span>
                     <span className="text-[11px] text-slate-500">
                       Complimentary high-speed WiFi, breakfast & butler concierge
@@ -236,7 +236,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
                   <CheckCircle size={14} />
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Method: {booking.paymentMethod || 'Online Gateway / Verified Folio'}
+                  Method: {booking.paymentMethod || 'Online Payment'}
                 </p>
                 <p className="text-[10px] text-slate-400 font-mono">Auth Token: LX-AUTH-{booking.id}-OK</p>
               </div>

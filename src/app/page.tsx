@@ -595,7 +595,7 @@ export default function LandingPage() {
 
             {/* Col 4 */}
             <div>
-              <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-4">Concierge & Inquiries</h4>
+              <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-4">Contact & Support</h4>
               <p className="text-xs text-slate-400 leading-relaxed mb-3">
                 LuxeStay Coastal Lagoon, Goa, India. <br />
                 Direct Concierge: +91 (800) 589-3782

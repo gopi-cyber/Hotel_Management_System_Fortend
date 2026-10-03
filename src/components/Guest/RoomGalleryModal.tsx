@@ -170,7 +170,7 @@ export default function RoomGalleryModal({
           </div>
 
           <div className="sm:text-right shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-500 block">Nightly Tariff</span>
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">Price Per Night</span>
             <span className="font-display text-2xl font-bold text-slate-900 block">
               {formatPrice(room.price || 0, currency)}
             </span>

@@ -318,7 +318,7 @@ export default function AdminPage() {
           onClick={() => setActiveTab('inventory')}
         />
         <StatCard
-          label="Gross Lodging Folio"
+          label="Total Revenue"
           value={formatPrice(totalRevenue, currency)}
           icon={CreditCard}
           change="Audited YTD"
@@ -669,9 +669,9 @@ export default function AdminPage() {
                     <th className="py-3.5 px-5 font-bold">Assigned Suite</th>
                     <th className="py-3.5 px-5 font-bold">Guest ID / KYC</th>
                     <th className="py-3.5 px-5 font-bold">Stay Schedule</th>
-                    <th className="py-3.5 px-5 font-bold">Total Folio</th>
+                    <th className="py-3.5 px-5 font-bold">Total Bill</th>
                     <th className="py-3.5 px-5 font-bold">Status</th>
-                    <th className="py-3.5 px-5 font-bold text-right">Folio Action</th>
+                    <th className="py-3.5 px-5 font-bold text-right">Invoice</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -723,7 +723,7 @@ export default function AdminPage() {
                           onClick={() => setSelectedFolioBooking(b)}
                           className="btn-gold py-1.5 px-3 text-xs"
                         >
-                          Inspect Folio
+                          View Bill / Invoice
                         </button>
                       </td>
                     </tr>
@@ -753,7 +753,7 @@ export default function AdminPage() {
                       onClick={() => setSelectedFolioBooking(b)}
                       className="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg inline-flex items-center gap-1.5 border border-amber-200 cursor-pointer"
                     >
-                      <FileText size={12} /> Inspect Invoice Folio
+                      <FileText size={12} /> View Bill / Invoice
                     </button>
                   </div>
                 </div>

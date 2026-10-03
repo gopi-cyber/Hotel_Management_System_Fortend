@@ -485,7 +485,7 @@ export default function GuestDashboard() {
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] uppercase tracking-wider text-slate-600 block">
-                        Total Folio
+                        Total Bill
                       </span>
                       <span className="text-lg font-bold text-slate-900 font-display">
                         {formatPrice(Number(b.totalPrice) || 0, currency)}
@@ -518,10 +518,10 @@ export default function GuestDashboard() {
                       <button
                         type="button"
                         onClick={() => setSelectedFolioBooking(b)}
-                        className="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
-                        title="View & Print Official Hotel Folio"
+                        className="py-1.5 px-3 rounded-lg border border-slate-200 hover:border-amber-400 bg-white hover:bg-amber-50/50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="View & Print Official Hotel Invoice"
                       >
-                        <FileText size={13} className="text-amber-700" /> Folio
+                        <FileText size={13} className="text-amber-700" /> Bill / Invoice
                       </button>
                     </div>
                   </div>
@@ -831,7 +831,7 @@ export default function GuestDashboard() {
                     <span>₹{tax.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
-                    <span>Total Folio:</span>
+                    <span>Total Bill:</span>
                     <span className="text-lg font-display text-amber-800">₹{total.toLocaleString()}</span>
                   </div>
                 </div>

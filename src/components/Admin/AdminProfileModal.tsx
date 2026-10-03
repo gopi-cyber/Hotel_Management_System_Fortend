@@ -322,7 +322,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">GSTIN Tax Registration</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">GST Number</label>
                   <input
                     type="text"
                     value={formData.gstin}
@@ -333,7 +333,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">CIN (Corporate ID)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Company Registration Number</label>
                   <input
                     type="text"
                     value={formData.cin}
@@ -344,7 +344,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Registered Corporate Address</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hotel Address</label>
                   <div className="relative">
                     <MapPin size={14} className="absolute left-3 top-3 text-slate-400" />
                     <input
@@ -365,7 +365,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Concierge Inquiries Email</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
                   <input
                     type="email"
                     value={formData.contactEmail}
@@ -376,7 +376,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Concierge Toll-Free Helpline</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Help Desk Phone</label>
                   <input
                     type="text"
                     value={formData.conciergePhone}
@@ -387,7 +387,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Duty Manager Hotline (24/7)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Emergency Phone (24/7)</label>
                   <input
                     type="text"
                     value={formData.emergencyPhone}
@@ -398,18 +398,17 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Hotel Star Classification</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Hotel Star Rating</label>
                   <input
                     type="text"
                     value={formData.starRating}
                     onChange={(e) => handleChange('starRating', e.target.value)}
                     className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
-                    required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Default Check-In Time</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Check-in Time</label>
                   <input
                     type="text"
                     value={formData.checkInTime}
@@ -419,7 +418,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Default Check-Out Time</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Check-out Time</label>
                   <input
                     type="text"
                     value={formData.checkOutTime}
