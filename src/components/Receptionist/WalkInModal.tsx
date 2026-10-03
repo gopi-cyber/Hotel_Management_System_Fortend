@@ -117,7 +117,7 @@ export default function WalkInModal({
               >
                 {availableRooms.map((r) => (
                   <option key={r.id} value={r.id}>
-                    Suite #{r.number || r.roomNumber} — {r.type} (₹{(r.price || 0).toLocaleString()}/night)
+                    Room {String(r.number || r.roomNumber).replace(/^#/, '')} — {r.type} (₹{(r.price || 0).toLocaleString()}/night)
                   </option>
                 ))}
               </select>

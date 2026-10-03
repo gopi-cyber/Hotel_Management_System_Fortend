@@ -231,7 +231,7 @@ export function PortalShell({
                   {userDisplayName}
                 </p>
                 <p className="text-[10px] text-slate-400 capitalize truncate">
-                  {user?.role} • Profile
+                  Profile
                 </p>
               </div>
             </button>
@@ -239,7 +239,7 @@ export function PortalShell({
               type="button"
               onClick={handleLogout}
               className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
-              title="Sign out of portal"
+              title="Sign out"
             >
               <LogOut size={16} />
             </button>

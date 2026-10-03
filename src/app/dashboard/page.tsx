@@ -307,7 +307,6 @@ export default function GuestDashboard() {
       id: 'stays',
       label: 'My Reservations',
       icon: Calendar,
-      badge: myBookings.length,
       isActive: activeTab === 'stays',
       onClick: () => setActiveTab('stays'),
     },
@@ -434,7 +433,7 @@ export default function GuestDashboard() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                        Stay Reference #{b.id}
+                        Stay Reference {b.id}
                       </span>
                       <StatusBadge status={b.status} />
                     </div>

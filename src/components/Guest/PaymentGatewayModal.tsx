@@ -128,7 +128,7 @@ export default function PaymentGatewayModal({
           ? 'Encrypted Card Settlement'
           : 'Guaranteed Reservation Guarantee'
       }
-      subtitle={`Total Settlement: ${formatPrice(totalAmount, currency)} for Suite #${room.roomNumber || room.number || room.id}`}
+      subtitle={`Total Settlement: ${formatPrice(totalAmount, currency)} for Room ${String(room.roomNumber || room.number || room.id).replace(/^#/, '')}`}
       maxWidth="md"
     >
       <div className="space-y-5">

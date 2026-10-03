@@ -93,10 +93,9 @@ export default function ProfileConciergePage() {
     },
     {
       id: 'concierge',
-      label: 'In-Room Concierge',
+      label: 'Room Service & Orders',
       icon: BellRing,
       isActive: true,
-      badge: services.length,
     },
   ];
 
@@ -156,7 +155,7 @@ export default function ProfileConciergePage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="font-display text-xl font-bold text-slate-900">
-                    Suite #{activeBooking.roomNumber || activeBooking.roomId}
+                    Room {String(activeBooking.roomNumber || activeBooking.roomId).replace(/^#/, '')}
                   </h4>
                   <StatusBadge status={activeBooking.status} />
                 </div>
@@ -227,7 +226,7 @@ export default function ProfileConciergePage() {
                       <p className="text-xs text-slate-600">{item.description}</p>
                     </div>
                     <div className="text-left sm:text-right shrink-0">
-                      <span className="text-[11px] text-slate-400 block">Room #{item.roomId || 'General'}</span>
+                      <span className="text-[11px] text-slate-400 block">Room {String(item.roomId || 'General').replace(/^#/, '')}</span>
                     </div>
                   </div>
                 ))}

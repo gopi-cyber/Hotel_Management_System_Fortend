@@ -188,7 +188,7 @@ export default function DigitalKeyModal({
         {/* In-Suite Quick Amenities Controls */}
         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-            Suite # {displayRoom} Smart Controls
+            Room {String(displayRoom).replace(/^#/, '')} Smart Controls
           </span>
 
           <div className="grid grid-cols-2 gap-3">

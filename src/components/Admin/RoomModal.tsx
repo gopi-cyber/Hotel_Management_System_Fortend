@@ -115,8 +115,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={room ? `Edit Suite #${room.number || room.id}` : 'Add New Luxury Suite'}
-      subtitle="Configure suite specifications, rates, photography, and operational status."
+      title={room ? `Suite ${String(room.number || room.id).replace(/^#/, '')}` : 'Add New Room'}
       maxWidth="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -124,7 +123,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-              Suite Photography
+              Room Photo
             </label>
             <div className="flex bg-slate-100 p-0.5 rounded-lg text-[11px] font-bold">
               <button
@@ -138,21 +137,12 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
               </button>
               <button
                 type="button"
-                onClick={() => setImageSourceMode('preset')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
-                  imageSourceMode === 'preset' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
-                }`}
-              >
-                Presets
-              </button>
-              <button
-                type="button"
                 onClick={() => setImageSourceMode('url')}
                 className={`px-2.5 py-1 rounded-md transition-colors ${
                   imageSourceMode === 'url' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                 }`}
               >
-                Web URL
+                Direct Image Link
               </button>
             </div>
           </div>
@@ -228,7 +218,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
                 onClick={() => fileInputRef.current?.click()}
                 className="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl cursor-pointer transition-colors"
               >
-                Choose Photo from Computer / Phone
+                Choose Photo
               </button>
               {image && (
                 <button
@@ -242,33 +232,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
             </div>
           )}
 
-          {imageSourceMode === 'preset' && (
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                Select Luxury Preset:
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {sampleImages.map((s) => {
-                  const isSelected = image === s.url;
-                  return (
-                    <button
-                      key={s.name}
-                      type="button"
-                      onClick={() => setImage(s.url)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-left truncate border transition-all cursor-pointer flex items-center justify-between ${
-                        isSelected
-                          ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-xs'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <span className="truncate">{s.name}</span>
-                      {isSelected && <Check size={12} className="shrink-0 ml-1" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {imageSourceMode === 'upload' && null}
 
           {imageSourceMode === 'url' && (
             <div className="pt-1">
@@ -287,14 +251,14 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Suite Number
+              Room Number
             </label>
             <input
               type="text"
               value={number}
-              onChange={(e) => setNumber(e.target.value)}
+              onChange={(e) => setNumber(e.target.value.replace(/^#/, ''))}
               required
-              placeholder="e.g. 501"
+              placeholder="e.g. 101"
               className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
             />
           </div>
@@ -389,7 +353,7 @@ export function RoomModal({ isOpen, onClose, onSave, room }: RoomModalProps) {
             disabled={isSubmitting}
             className="btn-gold py-2 px-5 text-xs inline-flex items-center gap-2 cursor-pointer"
           >
-            {isSubmitting ? 'Saving...' : room ? 'Update Suite' : 'Create Suite'}
+            {isSubmitting ? 'Saving...' : room ? 'Update' : 'Add Room'}
           </button>
         </div>
       </form>

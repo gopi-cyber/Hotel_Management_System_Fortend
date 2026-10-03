@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
-import { formatPrice } from '@/lib/features/settingsSlice';
+import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
 import Modal from '@/components/ui/Modal';
 import {
   TrendingUp,
@@ -37,7 +37,10 @@ export function ReportModal({
   totalBookings,
 }: ReportModalProps) {
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
-  const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
+  const companyProfile = useSelector((state: RootState) => state.settings?.companyProfile || DEFAULT_COMPANY_PROFILE);
+  const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'yearly' | 'custom'>('weekly');
+  const [customStartDate, setCustomStartDate] = useState('2026-09-01');
+  const [customEndDate, setCustomEndDate] = useState('2026-09-30');
   const [activeTab, setActiveTab] = useState<'revenue' | 'channels'>('revenue');
 
   const occupancyRate = Math.round((occupiedRooms / Math.max(1, totalRooms)) * 100);
@@ -72,23 +75,54 @@ export function ReportModal({
     { day: 'Q4', revenue: 1450000, occupancy: 95 },
   ];
 
-  const activeData = timeframe === 'weekly' ? dataWeekly : timeframe === 'monthly' ? dataMonthly : dataYearly;
+  // Custom period dataset
+  const dataCustom = [
+    { day: 'Day 1-7', revenue: 125000, occupancy: 78 },
+    { day: 'Day 8-14', revenue: 142000, occupancy: 84 },
+    { day: 'Day 15-21', revenue: 168000, occupancy: 89 },
+    { day: 'Day 22-30', revenue: 195000, occupancy: 92 },
+  ];
+
+  const activeData =
+    timeframe === 'weekly'
+      ? dataWeekly
+      : timeframe === 'monthly'
+      ? dataMonthly
+      : timeframe === 'yearly'
+      ? dataYearly
+      : dataCustom;
   const maxRevenue = Math.max(...activeData.map((d) => d.revenue));
 
-  const handlePrint = (range: 'weekly' | 'monthly' | 'yearly') => {
+  const handlePrint = (range: 'weekly' | 'monthly' | 'yearly' | 'custom') => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       window.print();
       return;
     }
-    const reportTitle = `${range.toUpperCase()} HOTEL REVENUE REPORT`;
-    const rows = (range === 'weekly' ? dataWeekly : range === 'monthly' ? dataMonthly : dataYearly)
+    const reportPeriodText =
+      range === 'custom'
+        ? `Custom Range (${customStartDate} to ${customEndDate})`
+        : `${range.charAt(0).toUpperCase() + range.slice(1)} Performance`;
+    const reportTitle = `${reportPeriodText.toUpperCase()} REPORT`;
+    const selectedData =
+      range === 'weekly'
+        ? dataWeekly
+        : range === 'monthly'
+        ? dataMonthly
+        : range === 'yearly'
+        ? dataYearly
+        : dataCustom;
+
+    const totalPeriodRev = selectedData.reduce((acc, curr) => acc + curr.revenue, 0);
+    const avgOcc = Math.round(selectedData.reduce((acc, curr) => acc + curr.occupancy, 0) / selectedData.length);
+
+    const rows = selectedData
       .map(
         (item) => `
         <tr>
-          <td style="padding: 10px; border: 1px solid #ddd;">${item.day}</td>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">${formatPrice(item.revenue, currency)}</td>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${item.occupancy}%</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">${item.day}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #0f172a;">${formatPrice(item.revenue, currency)}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 600;">${item.occupancy}%</td>
         </tr>
       `
       )
@@ -98,49 +132,179 @@ export function ReportModal({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${reportTitle}</title>
+          <title>${reportTitle} - ${companyProfile.brandName || 'LuxeStay Hotel'}</title>
+          <meta charset="utf-8" />
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #1e293b; }
-            h1 { font-size: 20px; margin-bottom: 4px; color: #0f172a; }
-            p { font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px; }
-            .kpis { display: flex; gap: 20px; margin-bottom: 24px; }
-            .card { flex: 1; padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
-            .card-title { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
-            .card-val { font-size: 18px; font-weight: bold; color: #0f172a; margin-top: 4px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th { background: #f1f5f9; padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 12px; }
-            td { font-size: 13px; }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 20mm 15mm; }
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              padding: 40px;
+              color: #0f172a;
+              background: #ffffff;
+              line-height: 1.5;
+            }
+            .header {
+              border-bottom: 2px solid #0f172a;
+              padding-bottom: 20px;
+              margin-bottom: 28px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+            }
+            .brand {
+              font-size: 24px;
+              font-weight: 800;
+              letter-spacing: -0.5px;
+              color: #0f172a;
+            }
+            .brand-sub {
+              font-size: 13px;
+              color: #64748b;
+              margin-top: 4px;
+            }
+            .meta {
+              text-align: right;
+              font-size: 12px;
+              color: #475569;
+            }
+            .meta strong {
+              color: #0f172a;
+              font-size: 13px;
+            }
+            .report-title-banner {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 14px 20px;
+              margin-bottom: 24px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .report-name {
+              font-size: 16px;
+              font-weight: 700;
+              color: #0f172a;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .report-range {
+              font-size: 12px;
+              font-weight: 600;
+              color: #b45309;
+              background: #fef3c7;
+              padding: 4px 10px;
+              border-radius: 9999px;
+            }
+            .kpis {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 16px;
+              margin-bottom: 28px;
+            }
+            .kpi-card {
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 14px 16px;
+              background: #ffffff;
+            }
+            .kpi-title {
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              font-weight: 700;
+              color: #64748b;
+              margin-bottom: 6px;
+            }
+            .kpi-value {
+              font-size: 20px;
+              font-weight: 800;
+              color: #0f172a;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+            }
+            th {
+              background: #0f172a;
+              color: #ffffff;
+              padding: 12px 16px;
+              font-size: 12px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            th:first-child { border-top-left-radius: 6px; text-align: left; }
+            th:last-child { border-top-right-radius: 6px; }
+            .footer-info {
+              border-top: 1px solid #e2e8f0;
+              padding-top: 16px;
+              display: flex;
+              justify-content: space-between;
+              font-size: 11px;
+              color: #64748b;
+            }
           </style>
         </head>
         <body>
-          <h1>${reportTitle}</h1>
-          <p>Generated on ${new Date().toLocaleDateString()} • Hotel Management System</p>
-          <div class="kpis">
-            <div class="card">
-              <div class="card-title">Total Revenue</div>
-              <div class="card-val">${formatPrice(safeRevenue, currency)}</div>
+          <div class="header">
+            <div>
+              <div class="brand">${companyProfile.brandName || 'LuxeStay Hotel'}</div>
+              <div class="brand-sub">${companyProfile.address || 'Colaba, Mumbai, India'}</div>
             </div>
-            <div class="card">
-              <div class="card-title">Occupancy Rate</div>
-              <div class="card-val">${occupancyRate}%</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Total Bookings</div>
-              <div class="card-val">${totalBookings}</div>
+            <div class="meta">
+              <div><strong>Prepared by:</strong> ${companyProfile.adminName || 'Gopinath'}</div>
+              <div>${companyProfile.adminTitle || 'Managing Director & General Manager'}</div>
+              <div style="margin-top: 4px; color: #94a3b8;">Printed: ${new Date().toLocaleString()}</div>
             </div>
           </div>
+
+          <div class="report-title-banner">
+            <span class="report-name">${reportTitle}</span>
+            <span class="report-range">${reportPeriodText}</span>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi-card">
+              <div class="kpi-title">Period Revenue</div>
+              <div class="kpi-value">${formatPrice(totalPeriodRev, currency)}</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Average Daily Rate</div>
+              <div class="kpi-value">${formatPrice(adr, currency)}</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Avg Occupancy</div>
+              <div class="kpi-value">${avgOcc}%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Revenue / Room</div>
+              <div class="kpi-value">${formatPrice(revPar, currency)}</div>
+            </div>
+          </div>
+
           <table>
             <thead>
               <tr>
-                <th>Period / Label</th>
+                <th>Timeline / Interval</th>
                 <th style="text-align: right;">Revenue</th>
-                <th style="text-align: right;">Occupancy</th>
+                <th style="text-align: right;">Occupancy Rate</th>
               </tr>
             </thead>
             <tbody>
               ${rows}
             </tbody>
           </table>
+
+          <div class="footer-info">
+            <span>Confidential Executive Hotel Performance Record</span>
+            <span>Page 1 of 1</span>
+          </div>
+
           <script>
             window.onload = function() {
               window.print();
@@ -249,12 +413,12 @@ export function ReportModal({
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              <PieChart size={13} /> Channel & Tier Breakdown
+              <PieChart size={13} /> Room Types & Booking Sources
             </button>
           </div>
 
           {activeTab === 'revenue' && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px] font-bold">
                 <button
                   type="button"
@@ -283,7 +447,34 @@ export function ReportModal({
                 >
                   Yearly
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setTimeframe('custom')}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    timeframe === 'custom' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-500'
+                  }`}
+                >
+                  Custom Range
+                </button>
               </div>
+
+              {timeframe === 'custom' && (
+                <div className="flex items-center gap-1.5 text-xs bg-slate-100 px-2 py-1 rounded-lg">
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="bg-transparent border-0 text-[11px] font-medium text-slate-700 outline-none"
+                  />
+                  <span className="text-slate-400">to</span>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="bg-transparent border-0 text-[11px] font-medium text-slate-700 outline-none"
+                  />
+                </div>
+              )}
 
               {/* Print Button */}
               <button
@@ -293,7 +484,7 @@ export function ReportModal({
                 title={`Print ${timeframe} report`}
               >
                 <Printer size={13} className="text-amber-700" />
-                <span>Print {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}</span>
+                <span>Print {timeframe === 'custom' ? 'Custom' : timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}</span>
               </button>
             </div>
           )}
@@ -425,7 +616,7 @@ export function ReportModal({
             {/* Category Yield Breakdown */}
             <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Layers size={13} className="text-amber-600" /> Suite Tier Revenue Share
+                <Layers size={13} className="text-amber-600" /> Revenue by Room Type
               </h4>
 
               <div className="space-y-3 pt-1">
@@ -461,10 +652,10 @@ export function ReportModal({
               </div>
             </div>
 
-            {/* Booking Channel Distribution */}
+            {/* Booking Source Distribution */}
             <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Users size={13} className="text-amber-600" /> Channel Origination
+                <Users size={13} className="text-amber-600" /> Booking Sources (Direct vs OTA)
               </h4>
 
               <div className="space-y-3 pt-1">

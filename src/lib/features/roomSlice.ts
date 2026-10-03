@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-export type HousekeepingStatus = 'inspected' | 'clean' | 'dirty' | 'cleaning_in_progress' | 'out_of_order';
+export type HousekeepingStatus = 'inspected' | 'clean' | 'dirty' | 'cleaning_in_progress' | 'out_of_order' | string;
 
 export interface Room {
     id: string;

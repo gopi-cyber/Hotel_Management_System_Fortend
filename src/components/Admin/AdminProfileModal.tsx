@@ -441,7 +441,7 @@ export default function AdminProfileModal({ isOpen, onClose }: AdminProfileModal
                 className="btn-gold px-5 py-2 text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 <Save size={14} />
-                <span>Save Profile & Logo</span>
+                <span>Save</span>
               </button>
             </div>
           </div>

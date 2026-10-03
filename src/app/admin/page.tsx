@@ -39,7 +39,7 @@ import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, User as UserAccount } from '@/lib/features/userSlice';
-import { formatPrice } from '@/lib/features/settingsSlice';
+import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
 
 export default function AdminPage() {
   type TabType = 'inventory' | 'staff' | 'reservations' | 'users' | 'reports';
@@ -49,6 +49,8 @@ export default function AdminPage() {
 
   // Modals state
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [customHousekeepingRoomId, setCustomHousekeepingRoomId] = useState<string | null>(null);
+  const [customHousekeepingInput, setCustomHousekeepingInput] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [selectedFolioBooking, setSelectedFolioBooking] = useState<Booking | null>(null);
   const [selectedIncidentalBooking, setSelectedIncidentalBooking] = useState<Booking | null>(null);
@@ -66,6 +68,7 @@ export default function AdminPage() {
   const staff = useSelector((state: RootState) => state.staff.items);
   const bookings = useSelector((state: RootState) => state.bookings.items);
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
+  const companyProfile = useSelector((state: RootState) => state.settings?.companyProfile || DEFAULT_COMPANY_PROFILE);
 
   useEffect(() => {
     dispatch(fetchRooms());
@@ -200,7 +203,6 @@ export default function AdminPage() {
       id: 'inventory',
       label: 'Suites & Rooms',
       icon: BedDouble,
-      badge: rooms.length,
       isActive: activeTab === 'inventory',
       onClick: () => setActiveTab('inventory'),
     },
@@ -208,7 +210,6 @@ export default function AdminPage() {
       id: 'staff',
       label: 'Staff',
       icon: Users,
-      badge: staff.length,
       isActive: activeTab === 'staff',
       onClick: () => setActiveTab('staff'),
     },
@@ -216,7 +217,6 @@ export default function AdminPage() {
       id: 'reservations',
       label: 'Guest Records',
       icon: CalendarCheck,
-      badge: bookings.length,
       isActive: activeTab === 'reservations',
       onClick: () => setActiveTab('reservations'),
     },
@@ -224,7 +224,6 @@ export default function AdminPage() {
       id: 'users',
       label: 'Access & Roles',
       icon: ShieldCheck,
-      badge: allUsers.length,
       isActive: activeTab === 'users',
       onClick: () => setActiveTab('users'),
     },
@@ -243,7 +242,8 @@ export default function AdminPage() {
   return (
     <PortalShell
       requiredRole="admin"
-      title="Admin Dashboard"
+      title={companyProfile.adminName || 'Gopinath'}
+      subtitle={companyProfile.adminTitle || 'Managing Director & General Manager'}
       navItems={navItems}
       activeNavId={activeTab}
       actions={
@@ -256,7 +256,7 @@ export default function AdminPage() {
             }}
             className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
           >
-            <Plus size={15} /> Add New Suite
+            <Plus size={15} /> Add New Room
           </button>
         ) : activeTab === 'staff' ? (
           <button
@@ -400,36 +400,89 @@ export default function AdminPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-5 font-bold text-slate-900">#{room.number || room.roomNumber || room.id}</td>
+                      <td className="py-3.5 px-5 font-bold text-slate-900">{String(room.number || room.roomNumber || room.id).replace(/^#/, '')}</td>
                       <td className="py-3.5 px-5 font-semibold text-slate-800">{room.type}</td>
                       <td className="py-3.5 px-5 text-slate-900 font-bold">
                         {formatPrice(room.price || 0, currency)}
                       </td>
                       <td className="py-3.5 px-5 text-slate-600">{room.capacity || 2} Guests</td>
                       <td className="py-3.5 px-5">
-                        <select
-                          value={room.housekeepingStatus || 'inspected'}
-                          onChange={(e) => {
-                            dispatch(updateHousekeepingStatus({ roomId: room.id, housekeepingStatus: e.target.value as any }));
-                            setToastMsg(`Suite #${room.number || room.roomNumber || room.id} housekeeping set to ${e.target.value.replace(/_/g, ' ')}`);
-                            setTimeout(() => setToastMsg(''), 2500);
-                          }}
-                          className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors outline-none cursor-pointer capitalize ${
-                            (room.housekeepingStatus || 'inspected') === 'inspected' || (room.housekeepingStatus || 'inspected') === 'clean'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : room.housekeepingStatus === 'cleaning_in_progress'
-                              ? 'bg-sky-50 text-sky-800 border-sky-200'
-                              : room.housekeepingStatus === 'dirty'
-                              ? 'bg-amber-50 text-amber-800 border-amber-200'
-                              : 'bg-rose-50 text-rose-800 border-rose-200'
-                          }`}
-                        >
-                          <option value="inspected">Inspected & Ready</option>
-                          <option value="clean">Clean</option>
-                          <option value="cleaning_in_progress">Cleaning In Progress</option>
-                          <option value="dirty">Needs Cleaning</option>
-                          <option value="out_of_order">Out of Order</option>
-                        </select>
+                        {customHousekeepingRoomId === room.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={customHousekeepingInput}
+                              onChange={(e) => setCustomHousekeepingInput(e.target.value)}
+                              placeholder="e.g. Sanitizing"
+                              className="text-xs px-2 py-1 border border-slate-300 rounded-lg outline-none w-28 font-medium text-slate-800"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (customHousekeepingInput.trim()) {
+                                  dispatch(
+                                    updateHousekeepingStatus({
+                                      roomId: room.id,
+                                      housekeepingStatus: customHousekeepingInput.trim().toLowerCase().replace(/\s+/g, '_'),
+                                    })
+                                  );
+                                  setToastMsg(`Room ${String(room.number || room.roomNumber || room.id).replace(/^#/, '')} housekeeping updated`);
+                                  setTimeout(() => setToastMsg(''), 2500);
+                                }
+                                setCustomHousekeepingRoomId(null);
+                                setCustomHousekeepingInput('');
+                              }}
+                              className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCustomHousekeepingRoomId(null);
+                                setCustomHousekeepingInput('');
+                              }}
+                              className="px-1.5 py-1 text-slate-400 hover:text-slate-600 text-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <select
+                            value={room.housekeepingStatus || 'inspected'}
+                            onChange={(e) => {
+                              if (e.target.value === 'custom') {
+                                setCustomHousekeepingRoomId(room.id);
+                                setCustomHousekeepingInput('');
+                                return;
+                              }
+                              dispatch(updateHousekeepingStatus({ roomId: room.id, housekeepingStatus: e.target.value as any }));
+                              setToastMsg(`Room ${String(room.number || room.roomNumber || room.id).replace(/^#/, '')} housekeeping set to ${e.target.value.replace(/_/g, ' ')}`);
+                              setTimeout(() => setToastMsg(''), 2500);
+                            }}
+                            className={`text-xs font-bold rounded-lg px-2 py-1 border transition-colors outline-none cursor-pointer capitalize ${
+                              (room.housekeepingStatus || 'inspected') === 'inspected' || (room.housekeepingStatus || 'inspected') === 'clean'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : room.housekeepingStatus === 'cleaning_in_progress'
+                                ? 'bg-sky-50 text-sky-800 border-sky-200'
+                                : room.housekeepingStatus === 'dirty'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : room.housekeepingStatus === 'out_of_order'
+                                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                                : 'bg-purple-50 text-purple-800 border-purple-200'
+                            }`}
+                          >
+                            <option value="inspected">Inspected & Ready</option>
+                            <option value="cleaning_in_progress">Cleaning In Progress</option>
+                            <option value="dirty">Needs Cleaning</option>
+                            <option value="out_of_order">Out of Order</option>
+                            {room.housekeepingStatus && !['inspected', 'clean', 'cleaning_in_progress', 'dirty', 'out_of_order'].includes(room.housekeepingStatus) && (
+                              <option value={room.housekeepingStatus}>{room.housekeepingStatus.replace(/_/g, ' ')}</option>
+                            )}
+                            <option value="custom">+ Custom Option</option>
+                          </select>
+                        )}
                       </td>
                       <td className="py-3.5 px-5">
                         <StatusBadge status={room.status} />
@@ -489,7 +542,7 @@ export default function AdminPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-slate-900">Suite #{room.number || room.roomNumber || room.id}</span>
+                      <span className="font-bold text-slate-900">Room {String(room.number || room.roomNumber || room.id).replace(/^#/, '')}</span>
                       <span className="text-xs text-slate-500 block">{room.type}</span>
                     </div>
                     <span className="font-bold text-slate-900 font-display text-base">
@@ -677,9 +730,9 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {filteredBookings.map((b) => (
                     <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-5 font-bold text-slate-900">#{b.id}</td>
+                      <td className="py-3.5 px-5 font-bold text-slate-900">{b.id}</td>
                       <td className="py-3.5 px-5 font-semibold text-slate-800">{b.guestName}</td>
-                      <td className="py-3.5 px-5 text-slate-700">Suite #{b.roomNumber || b.roomId}</td>
+                      <td className="py-3.5 px-5 text-slate-700">Room {String(b.roomNumber || b.roomId).replace(/^#/, '')}</td>
                       <td className="py-3.5 px-5">
                         {b.kyc?.verified ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
@@ -739,7 +792,7 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="font-bold text-slate-900 block">{b.guestName}</span>
-                      <span className="text-xs text-slate-500">Suite #{b.roomNumber || b.roomId}</span>
+                      <span className="text-xs text-slate-500">Room {String(b.roomNumber || b.roomId).replace(/^#/, '')}</span>
                     </div>
                     <StatusBadge status={b.status} />
                   </div>

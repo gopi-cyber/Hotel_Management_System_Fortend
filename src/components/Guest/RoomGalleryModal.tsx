@@ -102,7 +102,7 @@ export default function RoomGalleryModal({
               </p>
             </div>
             <span className="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-amber-300 text-xs font-bold border border-amber-500/30">
-              #{room.roomNumber || room.id}
+              Room {String(room.roomNumber || room.id).replace(/^#/, '')}
             </span>
           </div>
 

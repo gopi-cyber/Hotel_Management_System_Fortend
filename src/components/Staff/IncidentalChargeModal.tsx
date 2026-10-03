@@ -110,7 +110,7 @@ export default function IncidentalChargeModal({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-amber-400">Room {booking.roomNumber || booking.roomId}</span>
-              <span className="text-[11px] text-slate-400">• Bill #{String(booking.id).slice(-6)}</span>
+              <span className="text-[11px] text-slate-400">• Bill {String(booking.id).slice(-6)}</span>
             </div>
             <p className="text-sm font-serif font-bold text-white mt-0.5">{booking.guestName}</p>
           </div>

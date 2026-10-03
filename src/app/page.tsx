@@ -140,7 +140,7 @@ export default function LandingPage() {
                   href={portalHref}
                   className="px-4 py-2.5 text-sm font-bold text-slate-800 hover:text-amber-700 transition-colors inline-flex items-center gap-1.5"
                 >
-                  <LayoutDashboard size={15} /> My Portal ({user.role})
+                  <LayoutDashboard size={15} /> {user.name || user.username}
                 </Link>
                 <button
                   type="button"
@@ -209,7 +209,7 @@ export default function LandingPage() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full btn-gold justify-center text-xs font-bold py-3"
                   >
-                    Open Portal Dashboard <ArrowRight size={14} />
+                    Go to Dashboard <ArrowRight size={14} />
                   </Link>
                   <button
                     type="button"
@@ -271,12 +271,6 @@ export default function LandingPage() {
             <a href="#suites" className="btn-gold text-sm px-8 py-3.5">
               Explore Our Suites <ArrowRight size={16} />
             </a>
-            <Link
-              href="/login"
-              className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/40 text-sm font-bold px-7 py-3.5 rounded-full transition-all"
-            >
-              Access Portal
-            </Link>
           </div>
         </div>
       </section>
@@ -572,7 +566,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white text-xs font-bold uppercase tracking-wider mb-4">Account Access</h4>
               <ul className="space-y-2.5 text-xs font-semibold">
-                <li><Link href="/login" className="hover:text-amber-400 transition-colors">Guest Portal Login</Link></li>
+                <li><Link href="/login" className="hover:text-amber-400 transition-colors">Sign In</Link></li>
                 <li><Link href="/receptionist" className="hover:text-amber-400 transition-colors">Front Desk Terminal</Link></li>
                 <li><Link href="/admin" className="hover:text-amber-400 transition-colors">Admin Console</Link></li>
                 <li><Link href="/register" className="hover:text-amber-400 transition-colors">Create Account</Link></li>

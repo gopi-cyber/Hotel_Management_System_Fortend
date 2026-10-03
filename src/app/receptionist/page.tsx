@@ -102,13 +102,13 @@ export default function ReceptionistPage() {
       await dispatch(updateRoom({ ...targetRoom, status: 'occupied' }));
     }
 
-    setActionSuccess(`Walk-In registered! ${data.guestName} checked into Suite #${data.roomNumber}.`);
+    setActionSuccess(`Walk-In registered! ${data.guestName} checked into Room ${String(data.roomNumber).replace(/^#/, '')}.`);
     setTimeout(() => setActionSuccess(''), 4000);
   };
 
   const handleMarkCleaned = async (room: Room) => {
     await dispatch(updateRoom({ ...room, status: 'available' }));
-    setActionSuccess(`Suite #${room.roomNumber || room.number || room.id} marked Cleaned & Ready.`);
+    setActionSuccess(`Room ${String(room.roomNumber || room.number || room.id).replace(/^#/, '')} marked Cleaned & Ready.`);
     setTimeout(() => setActionSuccess(''), 3000);
   };
 
@@ -117,8 +117,8 @@ export default function ReceptionistPage() {
     await dispatch(updateRoom({ ...room, status: newStatus }));
     setActionSuccess(
       newStatus === 'maintenance'
-        ? `Suite #${room.roomNumber || room.number || room.id} locked for maintenance.`
-        : `Suite #${room.roomNumber || room.number || room.id} maintenance cleared & returned to available inventory.`
+        ? `Room ${String(room.roomNumber || room.number || room.id).replace(/^#/, '')} locked for maintenance.`
+        : `Room ${String(room.roomNumber || room.number || room.id).replace(/^#/, '')} maintenance cleared & returned to available inventory.`
     );
     setTimeout(() => setActionSuccess(''), 3000);
   };
@@ -232,7 +232,6 @@ export default function ReceptionistPage() {
       id: 'checkin',
       label: 'Arrivals & Check-in',
       icon: UserCheck,
-      badge: activeBookingsCount,
       isActive: activeTab === 'checkin',
       onClick: () => setActiveTab('checkin'),
     },
@@ -240,7 +239,6 @@ export default function ReceptionistPage() {
       id: 'rooms',
       label: 'Live Room Rack',
       icon: BedDouble,
-      badge: `${occupiedCount}/${rooms.length}`,
       isActive: activeTab === 'rooms',
       onClick: () => setActiveTab('rooms'),
     },
@@ -248,7 +246,6 @@ export default function ReceptionistPage() {
       id: 'requests',
       label: 'Guest Requests',
       icon: BellRing,
-      badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
       isActive: activeTab === 'requests',
       onClick: () => setActiveTab('requests'),
     },
@@ -357,11 +354,11 @@ export default function ReceptionistPage() {
                     const hkStatus = assignedRoom?.housekeepingStatus || 'inspected';
                     return (
                     <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-5 font-bold text-slate-900">#{b.id}</td>
+                      <td className="py-3.5 px-5 font-bold text-slate-900">{b.id}</td>
                       <td className="py-3.5 px-5 font-semibold text-slate-800">{b.guestName}</td>
                       <td className="py-3.5 px-5 text-slate-700">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{b.roomNumber ? `Suite ${b.roomNumber}` : `Room #${b.roomId}`}</span>
+                          <span className="font-semibold">{b.roomNumber ? `Room ${String(b.roomNumber).replace(/^#/, '')}` : `Room ${String(b.roomId).replace(/^#/, '')}`}</span>
                           <span
                             title={`Housekeeping: ${hkStatus.replace(/_/g, ' ')}`}
                             className={`w-2 h-2 rounded-full shrink-0 ${
@@ -591,7 +588,7 @@ export default function ReceptionistPage() {
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-display font-bold text-lg text-slate-900">
-                        #{room.roomNumber || room.number || `R-${room.id}`}
+                        {String(room.roomNumber || room.number || room.id).replace(/^#/, '')}
                       </span>
                       <StatusBadge status={room.status} />
                     </div>
@@ -603,7 +600,7 @@ export default function ReceptionistPage() {
                       <div className="mt-2 p-2 bg-amber-100/60 rounded-xl border border-amber-200/80 text-[11px]">
                         <span className="text-[10px] uppercase font-bold text-amber-800 block">Occupant:</span>
                         <strong className="text-slate-900 truncate block">{activeBooking.guestName}</strong>
-                        <span className="text-slate-500 text-[10px]">Bill #{activeBooking.id}</span>
+                        <span className="text-slate-500 text-[10px]">Bill {activeBooking.id}</span>
                       </div>
                     )}
 
@@ -740,7 +737,7 @@ export default function ReceptionistPage() {
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-600 uppercase">Bill #{b.id}</span>
+                    <span className="text-xs font-bold text-slate-600 uppercase">Bill {b.id}</span>
                     <StatusBadge status={b.status} />
                   </div>
                   <h3 className="font-display text-lg font-bold text-slate-900">{b.guestName}</h3>
@@ -844,7 +841,7 @@ export default function ReceptionistPage() {
                         <tr key={srv.id} className="hover:bg-slate-50/70 transition-colors">
                           <td className="py-3.5 px-5">
                             <span className="font-bold text-slate-900 bg-amber-50 text-amber-900 px-2.5 py-1 rounded-lg border border-amber-200 text-xs">
-                              Suite #{srv.roomId || '101'}
+                              Room {String(srv.roomId || '101').replace(/^#/, '')}
                             </span>
                           </td>
                           <td className="py-3.5 px-5 font-bold text-slate-900">
@@ -894,7 +891,7 @@ export default function ReceptionistPage() {
                   <div key={srv.id} className="p-4 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs bg-amber-50 text-amber-900 px-2 py-0.5 rounded border border-amber-200">
-                        Suite #{srv.roomId || '101'}
+                        Room {String(srv.roomId || '101').replace(/^#/, '')}
                       </span>
                       <StatusBadge status={srv.status} />
                     </div>
@@ -978,7 +975,7 @@ export default function ReceptionistPage() {
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-amber-900">
-                  Suite #{housekeepingWarning.room.roomNumber || housekeepingWarning.room.number} is Not Ready
+                  Room {String(housekeepingWarning.room.roomNumber || housekeepingWarning.room.number).replace(/^#/, '')} is Not Ready
                 </h4>
                 <p className="text-xs text-amber-700 mt-1">
                   Current Housekeeping state:{' '}

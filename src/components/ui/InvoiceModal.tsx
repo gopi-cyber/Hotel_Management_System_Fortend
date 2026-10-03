@@ -117,7 +117,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
               <span className="inline-block px-3 py-1 bg-amber-50 border border-amber-300/60 rounded-full text-amber-800 text-[11px] font-bold uppercase tracking-wider">
                 Official Tax Invoice
               </span>
-              <p className="text-xs font-bold text-slate-900 mt-1">Invoice #{invoiceNo}</p>
+              <p className="text-xs font-bold text-slate-900 mt-1">Invoice {invoiceNo}</p>
               <p className="text-[11px] text-slate-500">Date of Issue: {issueDate}</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function InvoiceModal({ isOpen, onClose, booking }: InvoiceModalProps) {
                 Stay Itinerary
               </span>
               <p className="font-bold text-slate-900">
-                Suite: {booking.roomType || 'Deluxe Luxury Suite'} ({booking.roomNumber ? `Suite #${booking.roomNumber}` : `#${booking.roomId}`})
+                Suite: {booking.roomType || 'Deluxe Luxury Suite'} ({booking.roomNumber ? `Room ${String(booking.roomNumber).replace(/^#/, '')}` : `Room ${String(booking.roomId).replace(/^#/, '')}`})
               </p>
               <p className="text-slate-600">
                 Check-in: <strong>{booking.checkInDate}</strong>
