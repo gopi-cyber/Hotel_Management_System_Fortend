@@ -102,7 +102,6 @@ export default function WalkInModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Front Desk Walk-In Check-In"
-      subtitle="Register an immediate arrival and issue room keys on the spot."
       maxWidth="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
