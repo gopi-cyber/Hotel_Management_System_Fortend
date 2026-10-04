@@ -102,9 +102,6 @@ export default function PhoneInput({
 
       {/* Numeric Mobile Input */}
       <div className="relative flex-1 flex items-center min-w-0">
-        <div className="pl-3 text-slate-400 pointer-events-none shrink-0">
-          <Phone size={15} />
-        </div>
         <input
           type="tel"
           inputMode="numeric"
@@ -113,7 +110,7 @@ export default function PhoneInput({
           onChange={handlePhoneInput}
           disabled={disabled}
           placeholder={placeholder}
-          className="w-full pl-2.5 pr-3 py-2.5 text-slate-900 bg-transparent rounded-r-xl outline-none font-medium text-sm tracking-wide"
+          className="w-full px-3 py-2.5 text-slate-900 bg-transparent rounded-r-xl outline-none font-medium text-sm tracking-wide"
         />
       </div>
     </div>

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '@/lib/features/userSlice';
 import { AppDispatch, RootState } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { Hotel, User, Lock, Mail, Phone, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2, X, KeyRound } from 'lucide-react';
+import { Hotel, User, Lock, Mail, Phone, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HotelBrand from '@/components/ui/HotelBrand';
@@ -27,84 +27,16 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  // Mobile OTP Verification State
-  const [otpCode, setOtpCode] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { error } = useSelector((state: RootState) => state.user || { error: null });
 
-  const handleSendOtp = async () => {
-    setOtpError('');
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (!cleanPhone || cleanPhone.length < 8) {
-      setOtpError('Please enter a valid mobile number first.');
-      return;
-    }
-    setIsSendingOtp(true);
-    try {
-      const fullPhone = `${countryCode}${cleanPhone}`;
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', phone: fullPhone, rawPhone: cleanPhone, countryCode }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setOtpError(data.error || 'Failed to send OTP.');
-      } else {
-        setGeneratedOtp(data.otp || '');
-        setIsOtpSent(true);
-        setOtpCode('');
-      }
-    } catch (_err) {
-      setOtpError('Network error connecting to OTP verification gateway.');
-    } finally {
-      setIsSendingOtp(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    setOtpError('');
-    const cleanPhone = phone.replace(/\D/g, '');
-    const code = otpCode.replace(/\D/g, '').trim();
-    if (!code || code.length !== 6) {
-      setOtpError('Please enter the 6-digit OTP code.');
-      return;
-    }
-    try {
-      const fullPhone = `${countryCode}${cleanPhone}`;
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', phone: fullPhone, rawPhone: cleanPhone, code }),
-      });
-      const data = await res.json();
-      if (res.ok && data.verified) {
-        setIsPhoneVerified(true);
-        setOtpError('');
-      } else {
-        setOtpError(data.error || 'Invalid OTP code. Please try again.');
-      }
-    } catch (_err) {
-      setOtpError('Network error verifying OTP code.');
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isPhoneVerified) {
-      setOtpError('Please verify your mobile number with OTP before completing registration.');
-      return;
-    }
     setIsSubmitting(true);
 
-    const fullPhone = `${countryCode} ${phone}`;
+    const fullPhone = phone ? `${countryCode} ${phone}` : '';
     const result = await dispatch(
       registerUser({
         username,
@@ -224,102 +156,18 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Mobile Number & OTP Verification */}
-              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2.5">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Mobile Number
-                    </label>
-                    {isPhoneVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                        <CheckCircle2 size={12} /> Verified
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-amber-700 font-semibold">
-                        Verification Required
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <PhoneInput
-                        countryCode={countryCode}
-                        onCountryCodeChange={(code) => {
-                          setCountryCode(code);
-                          setIsPhoneVerified(false);
-                          setIsOtpSent(false);
-                          setGeneratedOtp('');
-                        }}
-                        phone={phone}
-                        onPhoneChange={(val) => {
-                          setPhone(val);
-                          if (isPhoneVerified) setIsPhoneVerified(false);
-                          setIsOtpSent(false);
-                          setGeneratedOtp('');
-                          setOtpError('');
-                        }}
-                        disabled={isPhoneVerified}
-                        placeholder="e.g. 9876543210"
-                      />
-                    </div>
-                    {!isPhoneVerified && (
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={isSendingOtp}
-                        className="px-3.5 py-2.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
-                      >
-                        {isSendingOtp ? 'Sending...' : isOtpSent ? 'Resend OTP' : 'Send OTP'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* OTP Input section when OTP is sent & not yet verified */}
-                {isOtpSent && !isPhoneVerified && (
-                  <div className="pt-2 border-t border-slate-200/80">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[11px] text-slate-600 font-medium">
-                        Verification code for {countryCode} {phone}
-                      </span>
-                      {generatedOtp && (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-amber-900 font-mono bg-amber-100/90 border border-amber-300 px-2.5 py-1 rounded-md shadow-xs animate-pulse">
-                          <span>SMS Code:</span>
-                          <strong className="text-sm font-black tracking-widest text-slate-900">{generatedOtp}</strong>
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1 rounded-xl border border-slate-300 bg-white focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                          <KeyRound size={16} />
-                        </div>
-                        <input
-                          type="text"
-                          maxLength={6}
-                          value={otpCode}
-                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                          placeholder="6-digit OTP"
-                          className="w-full pl-9 pr-3.5 py-2 text-slate-900 bg-transparent rounded-xl outline-none font-mono font-bold text-sm tracking-widest"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleVerifyOtp}
-                        className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 cursor-pointer transition-colors"
-                      >
-                        Verify OTP
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {otpError && (
-                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
-                    <AlertCircle size={12} className="shrink-0" /> {otpError}
-                  </p>
-                )}
+              {/* Mobile Number */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Mobile Number
+                </label>
+                <PhoneInput
+                  countryCode={countryCode}
+                  onCountryCodeChange={setCountryCode}
+                  phone={phone}
+                  onPhoneChange={setPhone}
+                  placeholder="90258 21441"
+                />
               </div>
 
               <div>
@@ -357,8 +205,8 @@ export default function RegisterPage() {
 
               <button
                 type="submit"
-                disabled={isSubmitting || !isPhoneVerified}
-                className="w-full btn-gold py-3 text-sm font-bold justify-center mt-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+                className="w-full btn-gold py-3 text-sm font-bold justify-center mt-2 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
