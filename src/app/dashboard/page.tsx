@@ -799,7 +799,7 @@ export default function GuestDashboard() {
                     <span>₹{subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-600">
-                    <span>Hospitality GST (12%):</span>
+                    <span>GST 12%:</span>
                     <span>₹{tax.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">

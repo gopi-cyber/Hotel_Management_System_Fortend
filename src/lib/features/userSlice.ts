@@ -35,12 +35,20 @@ interface UserState {
 const API_URL = ENDPOINTS.USERS;
 
 export const registerUser = createAsyncThunk('user/registerUser', async (userData: Omit<User, 'id'>) => {
-    const checkResponse = await axios.get(`${API_URL}?username=${userData.username}`);
-    if (checkResponse.data.length > 0) {
-        throw new Error('This username is already taken. Please choose another one.');
+    try {
+        const checkResponse = await axios.get(`${API_URL}?username=${encodeURIComponent(userData.username)}`);
+        if (checkResponse.data && checkResponse.data.length > 0) {
+            throw new Error('This username is already taken. Please choose another one.');
+        }
+        const response = await axios.post(API_URL, userData);
+        return response.data;
+    } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+            const serverMsg = err.response?.data?.error || err.response?.data?.message;
+            if (serverMsg) throw new Error(serverMsg);
+        }
+        throw err;
     }
-    const response = await axios.post(API_URL, userData);
-    return response.data;
 });
 
 export const loginUser = createAsyncThunk('user/loginUser', async (credentials: { username: string, password?: string }) => {

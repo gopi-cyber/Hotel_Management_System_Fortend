@@ -270,7 +270,7 @@ export default function WalkInModal({
             <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-slate-600">
-            <span>Hospitality GST (12%):</span>
+            <span>GST 12%:</span>
             <span className="font-semibold text-slate-900">₹{gst.toLocaleString()}</span>
           </div>
           <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
