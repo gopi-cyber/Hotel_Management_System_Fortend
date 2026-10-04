@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { Room } from '@/lib/features/roomSlice';
 import { User, Phone, Mail, CreditCard, Shield, Clock, BedDouble, CheckCircle2 } from 'lucide-react';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 interface WalkInModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export default function WalkInModal({
   const [selectedRoomId, setSelectedRoomId] = useState<string>('');
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [guestEmail, setGuestEmail] = useState('');
   const [idType, setIdType] = useState('Aadhaar Card');
   const [idNumber, setIdNumber] = useState('');
@@ -67,9 +69,10 @@ export default function WalkInModal({
     setIsSubmitting(true);
 
     try {
+      const fullPhone = `${countryCode} ${guestPhone}`;
       await onConfirm({
         guestName,
-        guestPhone,
+        guestPhone: fullPhone,
         guestEmail,
         idType,
         idNumber,
@@ -156,22 +159,13 @@ export default function WalkInModal({
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
               Mobile Contact *
             </label>
-            <div className="relative rounded-xl border border-slate-300 bg-white focus-within:border-amber-600 focus-within:ring-1 focus-within:ring-amber-500/20">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Phone size={16} />
-              </div>
-              <input
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={10}
-                required
-                value={guestPhone}
-                onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder="10-digit mobile number"
-                className="w-full pl-9 pr-3 py-2.5 text-slate-900 bg-transparent rounded-xl outline-none text-xs sm:text-sm font-medium"
-              />
-            </div>
+            <PhoneInput
+              countryCode={countryCode}
+              onCountryCodeChange={setCountryCode}
+              phone={guestPhone}
+              onPhoneChange={setGuestPhone}
+              placeholder="e.g. 9876543210"
+            />
           </div>
 
           <div>

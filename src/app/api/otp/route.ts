@@ -18,11 +18,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const action = body.action || 'send';
     const rawPhone = String(body.phone || '');
+    const countryCode = String(body.countryCode || '+91');
     const phone = cleanPhone(rawPhone);
 
-    if (!phone || phone.length < 10) {
+    if (!phone || phone.length < 8) {
       return NextResponse.json(
-        { error: 'Valid 10-digit mobile number is required' },
+        { error: 'Valid mobile number is required' },
         { status: 400 }
       );
     }
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         phone,
-        message: `OTP successfully generated and dispatched to +91 ${phone.slice(-10)}`,
+        message: `OTP successfully generated for ${countryCode} ${rawPhone.replace(countryCode, '')}`,
         expiresInSeconds: 300,
         // Provided for verifiable simulation and testing
         otp: code,

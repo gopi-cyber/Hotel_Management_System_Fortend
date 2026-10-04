@@ -23,6 +23,7 @@ import {
   Upload,
 } from 'lucide-react';
 import UserAvatar from '@/components/ui/UserAvatar';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 interface GuestProfileModalProps {
   isOpen: boolean;
@@ -229,19 +230,20 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Direct Mobile / WhatsApp</label>
-                <div className="relative">
-                  <Phone size={14} className="absolute left-3 top-3 text-slate-400" />
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={10}
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                    placeholder="10-digit mobile number"
-                    className="w-full pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                <PhoneInput
+                  countryCode="+91"
+                  onCountryCodeChange={(code) => {
+                    const clean = formData.phone.replace(/\D/g, '');
+                    setFormData({ ...formData, phone: `${code} ${clean}` });
+                  }}
+                  phone={formData.phone.replace(/^\+\d+\s*/, '')}
+                  onPhoneChange={(val) => {
+                    const prefixMatch = formData.phone.match(/^(\+\d+)/);
+                    const prefix = prefixMatch ? prefixMatch[1] : '+91';
+                    setFormData({ ...formData, phone: `${prefix} ${val}` });
+                  }}
+                  placeholder="e.g. 9876543210"
+                />
               </div>
 
               <div className="sm:col-span-2">

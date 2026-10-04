@@ -8,6 +8,7 @@ import { Hotel, User, Lock, Mail, Phone, ArrowRight, ShieldCheck, AlertCircle, C
 import Link from 'next/link';
 import Image from 'next/image';
 import HotelBrand from '@/components/ui/HotelBrand';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 // Removed Apple login
 
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -40,16 +42,17 @@ export default function RegisterPage() {
   const handleSendOtp = async () => {
     setOtpError('');
     const cleanPhone = phone.replace(/\D/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setOtpError('Please enter a valid 10-digit mobile number first.');
+    if (!cleanPhone || cleanPhone.length < 8) {
+      setOtpError('Please enter a valid mobile number first.');
       return;
     }
     setIsSendingOtp(true);
     try {
+      const fullPhone = `${countryCode}${cleanPhone}`;
       const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', phone: cleanPhone }),
+        body: JSON.stringify({ action: 'send', phone: fullPhone, rawPhone: cleanPhone, countryCode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -75,10 +78,11 @@ export default function RegisterPage() {
       return;
     }
     try {
+      const fullPhone = `${countryCode}${cleanPhone}`;
       const res = await fetch('/api/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', phone: cleanPhone, code }),
+        body: JSON.stringify({ action: 'verify', phone: fullPhone, rawPhone: cleanPhone, code }),
       });
       const data = await res.json();
       if (res.ok && data.verified) {
@@ -100,12 +104,13 @@ export default function RegisterPage() {
     }
     setIsSubmitting(true);
 
+    const fullPhone = `${countryCode} ${phone}`;
     const result = await dispatch(
       registerUser({
         username,
         name: name || username,
         email,
-        phone,
+        phone: fullPhone,
         password,
         role: 'guest',
       })
@@ -237,24 +242,25 @@ export default function RegisterPage() {
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <div className="relative flex-1 rounded-xl border border-slate-300 bg-white focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Phone size={16} />
-                      </div>
-                      <input
-                        type="tel"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={phone}
-                        onChange={(e) => {
-                          const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
-                          setPhone(digitsOnly);
+                    <div className="flex-1">
+                      <PhoneInput
+                        countryCode={countryCode}
+                        onCountryCodeChange={(code) => {
+                          setCountryCode(code);
+                          setIsPhoneVerified(false);
+                          setIsOtpSent(false);
+                          setGeneratedOtp('');
+                        }}
+                        phone={phone}
+                        onPhoneChange={(val) => {
+                          setPhone(val);
                           if (isPhoneVerified) setIsPhoneVerified(false);
+                          setIsOtpSent(false);
+                          setGeneratedOtp('');
+                          setOtpError('');
                         }}
                         disabled={isPhoneVerified}
-                        required
-                        placeholder="10-digit mobile number"
-                        className="w-full pl-9 pr-3.5 py-2.5 text-slate-900 bg-transparent rounded-xl outline-none font-medium text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                        placeholder="e.g. 9876543210"
                       />
                     </div>
                     {!isPhoneVerified && (
@@ -275,11 +281,12 @@ export default function RegisterPage() {
                   <div className="pt-2 border-t border-slate-200/80">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[11px] text-slate-600 font-medium">
-                        Enter 6-digit OTP sent to {phone}
+                        Verification code for {countryCode} {phone}
                       </span>
                       {generatedOtp && (
-                        <span className="text-[10px] text-amber-700 font-mono bg-amber-100/70 px-1.5 py-0.5 rounded">
-                          OTP: <b>{generatedOtp}</b>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-amber-900 font-mono bg-amber-100/90 border border-amber-300 px-2.5 py-1 rounded-md shadow-xs animate-pulse">
+                          <span>SMS Code:</span>
+                          <strong className="text-sm font-black tracking-widest text-slate-900">{generatedOtp}</strong>
                         </span>
                       )}
                     </div>
