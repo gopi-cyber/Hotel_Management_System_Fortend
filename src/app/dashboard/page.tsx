@@ -42,6 +42,7 @@ import DigitalKeyModal from '@/components/Guest/DigitalKeyModal';
 import RoomGalleryModal from '@/components/Guest/RoomGalleryModal';
 import GuestConciergeModal from '@/components/Guest/GuestConciergeModal';
 import PaymentGatewayModal from '@/components/Guest/PaymentGatewayModal';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 export default function GuestDashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -89,12 +90,11 @@ export default function GuestDashboard() {
   const [bookingError, setBookingError] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Guest KYC & Real Phone Verification State
-  const [phoneNumber, setPhoneNumber] = useState(user?.phone || '+91 98765 43210');
-  const [phoneOtp, setPhoneOtp] = useState('');
-  const [sentOtp, setSentOtp] = useState('');
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [otpNotice, setOtpNotice] = useState('');
+  // Guest KYC & Phone State
+  const [phoneCountryCode, setPhoneCountryCode] = useState('+91');
+  const [phoneNumber, setPhoneNumber] = useState(
+    (user?.phone || '9876543210').replace(/^\+\d+\s*/, '')
+  );
 
   const [idDocType, setIdDocType] = useState('Aadhaar Card');
   const [idNumber, setIdNumber] = useState('');
@@ -109,10 +109,7 @@ export default function GuestDashboard() {
       if (savedKyc) {
         try {
           const parsed = JSON.parse(savedKyc);
-          if (parsed.isPhoneVerified) {
-            setIsPhoneVerified(true);
-            if (parsed.phoneNumber) setPhoneNumber(parsed.phoneNumber);
-          }
+          if (parsed.phoneNumber) setPhoneNumber(parsed.phoneNumber.replace(/^\+\d+\s*/, ''));
           if (parsed.isKycVerified) {
             setIsKycVerified(true);
             if (parsed.idDocType) setIdDocType(parsed.idDocType);
@@ -123,60 +120,6 @@ export default function GuestDashboard() {
       }
     }
   }, []);
-
-  const handleSendOtp = async () => {
-    const cleanDigits = phoneNumber.replace(/\D/g, '');
-    if (!cleanDigits || cleanDigits.length < 10) {
-      setOtpNotice('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-    try {
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', phone: cleanDigits }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setOtpNotice(data.error || 'Failed to send OTP.');
-      } else {
-        setSentOtp(data.otp || '');
-        setOtpNotice(data.message || `OTP dispatched to +91 ${cleanDigits.slice(-10)}`);
-      }
-    } catch (_err) {
-      setOtpNotice('Network error dispatching OTP.');
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    const cleanDigits = phoneNumber.replace(/\D/g, '');
-    const code = phoneOtp.replace(/\D/g, '').trim();
-    if (!code || code.length !== 6) {
-      setOtpNotice('Please enter 6-digit verification code.');
-      return;
-    }
-    try {
-      const res = await fetch('/api/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', phone: cleanDigits, code }),
-      });
-      const data = await res.json();
-      if (res.ok && data.verified) {
-        setIsPhoneVerified(true);
-        setOtpNotice('');
-        setVerificationGateError('');
-        if (typeof window !== 'undefined') {
-          const saved = JSON.parse(localStorage.getItem('luxestay_guest_kyc') || '{}');
-          localStorage.setItem('luxestay_guest_kyc', JSON.stringify({ ...saved, isPhoneVerified: true, phoneNumber: cleanDigits }));
-        }
-      } else {
-        setOtpNotice(data.error || 'Invalid code. Please enter the correct 6-digit code.');
-      }
-    } catch (_err) {
-      setOtpNotice('Network error verifying OTP.');
-    }
-  };
 
   const handleVerifyKyc = () => {
     setKycError('');
@@ -255,7 +198,7 @@ export default function GuestDashboard() {
           roomId: selectedRoom.id,
           userId: user.id,
           guestName: idFullName || user.name || user.username,
-          guestPhone: phoneNumber,
+          guestPhone: `${phoneCountryCode} ${phoneNumber}`,
           checkInDate,
           checkOutDate,
           totalPrice,
@@ -867,90 +810,18 @@ export default function GuestDashboard() {
               );
             })()}
 
-            {/* 1. Real Phone Number Verification */}
-            <div className="space-y-2 pt-2 border-t border-slate-200">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <Phone size={14} className="text-amber-600" />
-                  Phone Verification
-                </label>
-                {isPhoneVerified && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    <CheckCircle2 size={12} /> Verified
-                  </span>
-                )}
-              </div>
-
-              {!isPhoneVerified ? (
-                <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="flex gap-2">
-                    <input
-                      type="tel"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={10}
-                      value={phoneNumber}
-                      onChange={(e) => {
-                        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setPhoneNumber(digitsOnly);
-                        setIsPhoneVerified(false);
-                      }}
-                      placeholder="10-digit mobile number"
-                      className="flex-1 px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
-                      className="px-3 py-2 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors shrink-0"
-                    >
-                      Send OTP
-                    </button>
-                  </div>
-
-                  {otpNotice && (
-                    <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 font-medium">
-                      {otpNotice}
-                    </div>
-                  )}
-
-                  {sentOtp && (
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={6}
-                        value={phoneOtp}
-                        onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        placeholder="6-digit code"
-                        className="flex-1 px-3 py-2 text-xs font-mono font-bold tracking-widest rounded-lg border border-slate-300 bg-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleVerifyOtp}
-                        className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors shrink-0"
-                      >
-                        Verify OTP
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs">
-                  <span className="font-semibold text-emerald-900">{phoneNumber}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsPhoneVerified(false);
-                      setSentOtp('');
-                      setPhoneOtp('');
-                    }}
-                    className="text-[11px] font-bold text-slate-500 hover:text-slate-800 underline"
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
+            {/* 1. Guest Contact Phone */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-200">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Contact Mobile Number
+              </label>
+              <PhoneInput
+                countryCode={phoneCountryCode}
+                onCountryCodeChange={setPhoneCountryCode}
+                phone={phoneNumber}
+                onPhoneChange={setPhoneNumber}
+                placeholder="90258 21441"
+              />
             </div>
 
             {/* 2. Mandatory Guest KYC Verification */}
@@ -1115,8 +986,8 @@ export default function GuestDashboard() {
                 type="button"
                 disabled={isConfirming}
                 onClick={() => {
-                  if (!isPhoneVerified || !isKycVerified) {
-                    setVerificationGateError('Please complete Phone Verification & Government ID KYC before proceeding.');
+                  if (!isKycVerified) {
+                    setVerificationGateError('Please complete Government ID KYC before proceeding.');
                     return;
                   }
                   setVerificationGateError('');
