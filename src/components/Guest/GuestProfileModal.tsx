@@ -355,11 +355,19 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Emergency Contact Phone</label>
-                <input
-                  type="text"
-                  value={formData.emergencyContactPhone}
-                  onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
-                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-amber-500"
+                <PhoneInput
+                  countryCode={formData.emergencyContactPhone.match(/^(\+\d+)/)?.[1] || '+91'}
+                  onCountryCodeChange={(code) => {
+                    const clean = formData.emergencyContactPhone.replace(/^\+\d+\s*/, '');
+                    setFormData({ ...formData, emergencyContactPhone: `${code} ${clean}` });
+                  }}
+                  phone={formData.emergencyContactPhone.replace(/^\+\d+\s*/, '')}
+                  onPhoneChange={(val) => {
+                    const prefixMatch = formData.emergencyContactPhone.match(/^(\+\d+)/);
+                    const prefix = prefixMatch ? prefixMatch[1] : '+91';
+                    setFormData({ ...formData, emergencyContactPhone: `${prefix} ${val}` });
+                  }}
+                  placeholder="98111 22334"
                 />
               </div>
             </div>
@@ -374,11 +382,7 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
         )}
 
         {/* Action Bar */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-          <span className="text-xs text-slate-500 font-medium">
-            Saved to your personal stay record.
-          </span>
-
+        <div className="pt-4 border-t border-slate-200 flex items-center justify-end">
           <div className="flex items-center gap-2">
             <button
               type="button"
