@@ -73,6 +73,25 @@ export default function ReceptionistPage() {
     dispatch(fetchRooms());
     dispatch(fetchBookings());
     dispatch(fetchServices());
+
+    // Refresh every 5s so state stays in sync across staff & guest actions
+    const interval = setInterval(() => {
+      dispatch(fetchRooms());
+      dispatch(fetchBookings());
+      dispatch(fetchServices());
+    }, 5000);
+
+    const onFocus = () => {
+      dispatch(fetchRooms());
+      dispatch(fetchBookings());
+      dispatch(fetchServices());
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [dispatch]);
 
   const handleWalkInBooking = async (data: {
@@ -113,6 +132,8 @@ export default function ReceptionistPage() {
     if (targetRoom) {
       await dispatch(updateRoom({ ...targetRoom, status: 'occupied' }));
     }
+    dispatch(fetchRooms());
+    dispatch(fetchBookings());
 
     setActionSuccess(`Walk-In registered! ${data.guestName} checked into Room ${String(data.roomNumber).replace(/^#/, '')}.`);
     setTimeout(() => setActionSuccess(''), 4000);
@@ -164,6 +185,8 @@ export default function ReceptionistPage() {
     if (room && room.status !== 'occupied') {
       await dispatch(updateRoom({ ...room, status: 'occupied' }));
     }
+    dispatch(fetchRooms());
+    dispatch(fetchBookings());
     setHousekeepingWarning(null);
     setActionSuccess(`Guest ${booking.guestName} successfully checked in.`);
     setTimeout(() => setActionSuccess(''), 3000);
@@ -171,11 +194,15 @@ export default function ReceptionistPage() {
 
   const handleCheckOut = async (booking: Booking) => {
     await dispatch(updateBooking({ ...booking, status: 'checked_out' }));
-    const room = rooms.find((r) => r.id === booking.roomId);
+    const room = rooms.find(
+      (r) => String(r.id) === String(booking.roomId) || String(r.roomNumber || r.number) === String(booking.roomNumber)
+    );
     if (room) {
       await dispatch(updateRoom({ ...room, status: 'available' }));
       dispatch(updateHousekeepingStatus({ roomId: room.id, housekeepingStatus: 'dirty' }));
     }
+    dispatch(fetchRooms());
+    dispatch(fetchBookings());
     setActionSuccess(`Guest ${booking.guestName} checked out. Room flagged as dirty for housekeeping.`);
     setTimeout(() => setActionSuccess(''), 3000);
   };
@@ -217,7 +244,16 @@ export default function ReceptionistPage() {
       const matchSearch =
         (r.name || r.type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (r.roomNumber && r.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchStatus = roomStatusFilter === 'all' || r.status.toLowerCase() === roomStatusFilter.toLowerCase();
+      let matchStatus = true;
+      if (roomStatusFilter === 'available') {
+        matchStatus = r.status.toLowerCase() === 'available';
+      } else if (roomStatusFilter === 'occupied') {
+        matchStatus = r.status.toLowerCase() === 'occupied';
+      } else if (roomStatusFilter === 'cleaning') {
+        matchStatus = r.housekeepingStatus === 'dirty' || r.housekeepingStatus === 'cleaning_in_progress';
+      } else if (roomStatusFilter === 'maintenance') {
+        matchStatus = r.status.toLowerCase() === 'maintenance';
+      }
       return matchSearch && matchStatus;
     });
   }, [rooms, searchQuery, roomStatusFilter]);
@@ -245,21 +281,33 @@ export default function ReceptionistPage() {
       label: 'Dashboard',
       icon: LayoutDashboard,
       isActive: activeTab === 'dashboard',
-      onClick: () => setActiveTab('dashboard'),
+      onClick: () => {
+        dispatch(fetchRooms());
+        dispatch(fetchBookings());
+        setActiveTab('dashboard');
+      },
     },
     {
       id: 'checkin',
       label: 'Arrivals & Check-in',
       icon: UserCheck,
       isActive: activeTab === 'checkin',
-      onClick: () => setActiveTab('checkin'),
+      onClick: () => {
+        dispatch(fetchRooms());
+        dispatch(fetchBookings());
+        setActiveTab('checkin');
+      },
     },
     {
       id: 'rooms',
       label: 'Room',
       icon: BedDouble,
       isActive: activeTab === 'rooms',
-      onClick: () => setActiveTab('rooms'),
+      onClick: () => {
+        dispatch(fetchRooms());
+        dispatch(fetchBookings());
+        setActiveTab('rooms');
+      },
     },
     {
       id: 'requests',
@@ -433,7 +481,11 @@ export default function ReceptionistPage() {
                 <h3 className="font-bold text-slate-900 text-sm">Room Status Overview</h3>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('rooms')}
+                  onClick={() => {
+                    dispatch(fetchRooms());
+                    dispatch(fetchBookings());
+                    setActiveTab('rooms');
+                  }}
                   className="text-xs font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
                 >
                   View Rooms &rarr;
@@ -821,9 +873,9 @@ export default function ReceptionistPage() {
                         {room.description || 'Spacious room with modern amenities.'}
                       </p>
 
-                      {isOccupied && activeBooking && (
+                      {isOccupied && (
                         <div className="mt-2 p-2 bg-amber-50/60 rounded-lg border border-amber-200/60 text-xs">
-                          <span className="font-bold text-amber-900">{activeBooking.guestName}</span>
+                          <span className="font-bold text-amber-900">{activeBooking?.guestName || 'Occupied Guest'}</span>
                           <span className="text-amber-700 ml-1.5">• Checked In</span>
                         </div>
                       )}
@@ -911,10 +963,16 @@ export default function ReceptionistPage() {
                           </button>
                         )}
 
-                        {isOccupied && activeBooking && (
+                        {isOccupied && (
                           <button
                             type="button"
-                            onClick={() => handleCheckOut(activeBooking)}
+                            onClick={() => {
+                              if (activeBooking) {
+                                handleCheckOut(activeBooking);
+                              } else {
+                                handleMarkCleaned(room);
+                              }
+                            }}
                             className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                           >
                             Check Out

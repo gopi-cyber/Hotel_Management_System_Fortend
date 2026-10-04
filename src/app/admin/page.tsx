@@ -77,6 +77,22 @@ export default function AdminPage() {
     dispatch(fetchStaff());
     dispatch(fetchBookings());
     dispatch(fetchAllUsers());
+
+    const interval = setInterval(() => {
+      dispatch(fetchRooms());
+      dispatch(fetchBookings());
+    }, 5000);
+
+    const onFocus = () => {
+      dispatch(fetchRooms());
+      dispatch(fetchBookings());
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [dispatch]);
 
   const showToast = (msg: string) => {

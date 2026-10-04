@@ -152,6 +152,22 @@ export default function GuestDashboard() {
     if (user?.id) {
       dispatch(fetchRooms());
       dispatch(fetchUserBookings(user.id));
+
+      const interval = setInterval(() => {
+        dispatch(fetchRooms());
+        dispatch(fetchUserBookings(user.id));
+      }, 5000);
+
+      const onFocus = () => {
+        dispatch(fetchRooms());
+        dispatch(fetchUserBookings(user.id));
+      };
+      window.addEventListener('focus', onFocus);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', onFocus);
+      };
     }
   }, [dispatch, user]);
 
@@ -241,6 +257,7 @@ export default function GuestDashboard() {
         await dispatch(fetchUserBookings(user.id));
         // Update room status to occupied in state
         await dispatch(updateRoom({ ...selectedRoom, status: 'occupied' }));
+        dispatch(fetchRooms());
         setActiveTab('stays');
         setTimeout(() => setBookingSuccess(''), 6000);
       } else {

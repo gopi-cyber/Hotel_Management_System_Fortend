@@ -193,7 +193,10 @@ const roomSlice = createSlice({
                             state.items.forEach((r) => {
                                 if (parsed[r.id]) {
                                     r.housekeepingStatus = parsed[r.id].status;
-                                    if (parsed[r.id].roomStatus) r.status = parsed[r.id].roomStatus;
+                                    // Only preserve local maintenance if room is not occupied in DB
+                                    if (parsed[r.id].roomStatus && r.status !== 'occupied') {
+                                        r.status = parsed[r.id].roomStatus;
+                                    }
                                     if (parsed[r.id].assignedHousekeeper) r.assignedHousekeeper = parsed[r.id].assignedHousekeeper;
                                     if (parsed[r.id].lastInspectedAt) r.lastInspectedAt = parsed[r.id].lastInspectedAt;
                                 }
