@@ -37,10 +37,16 @@ export async function POST(request: NextRequest) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const backendPayload = {
+      ...body,
+      kycVerified: body.kyc?.verified ?? false,
+      kycDocType: body.kyc?.documentType ?? null,
+      kycDocNumber: body.kyc?.documentNumber ?? null,
+    };
     const response = await fetch(`${BACKEND_ENDPOINTS.BOOKINGS}?userId=${userId}&roomId=${roomId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(backendPayload),
       signal: controller.signal
     });
     clearTimeout(timeoutId);

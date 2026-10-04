@@ -198,6 +198,7 @@ export default function GuestDashboard() {
           roomId: selectedRoom.id,
           userId: user.id,
           guestName: idFullName || user.name || user.username,
+          guestEmail: user.email || '',
           guestPhone: `${phoneCountryCode} ${phoneNumber}`,
           checkInDate,
           checkOutDate,
@@ -215,6 +216,23 @@ export default function GuestDashboard() {
       });
 
       if (response.ok) {
+        const createdBooking = await response.json().catch(() => null);
+        if (createdBooking?.id && typeof window !== 'undefined') {
+          try {
+            const local = JSON.parse(localStorage.getItem('luxestay_booking_extras') || '{}');
+            local[createdBooking.id] = {
+              incidentals: [],
+              kyc: {
+                verified: true,
+                documentType: idDocType,
+                documentNumber: idNumber ? `${idNumber.slice(0, 3)}••••${idNumber.slice(-3)}` : '•••• 9012',
+                verifiedAt: new Date().toISOString(),
+              },
+              totalPrice,
+            };
+            localStorage.setItem('luxestay_booking_extras', JSON.stringify(local));
+          } catch {}
+        }
         setBookingSuccess(
           `Your reservation for ${selectedRoom.name || selectedRoom.type} has been confirmed via ${chosenMethodLabel}!`
         );
@@ -761,7 +779,6 @@ export default function GuestDashboard() {
           isOpen={isBookingModalOpen}
           onClose={() => setIsBookingModalOpen(false)}
           title="Confirm Suite Reservation"
-          subtitle={`Review details for ${selectedRoom.name || selectedRoom.type}`}
         >
           <div className="space-y-4">
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-2.5 text-xs">

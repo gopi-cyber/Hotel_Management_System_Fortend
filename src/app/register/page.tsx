@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -34,6 +35,22 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError('');
+
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      return;
+    }
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[@$!%*?&_#^~()+\-=\[\]{}|;:'",.<>\/?]/.test(password);
+
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      setPasswordError('Password must have uppercase, lowercase, number, and special character.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const fullPhone = phone ? `${countryCode} ${phone}` : '';
@@ -187,6 +204,12 @@ export default function RegisterPage() {
                     className="w-full pl-9 pr-3.5 py-2.5 text-slate-900 bg-transparent rounded-xl outline-none font-medium text-sm"
                   />
                 </div>
+                {passwordError && (
+                  <p className="mt-1 text-xs text-rose-600 font-semibold">{passwordError}</p>
+                )}
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Must be 6+ chars with uppercase, lowercase, number, and special character.
+                </p>
               </div>
 
               {error && (

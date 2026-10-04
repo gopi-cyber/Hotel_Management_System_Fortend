@@ -66,7 +66,12 @@ const normalizeBooking = (booking: Record<string, unknown>): Booking => ({
     checkedInTime: booking.checkedInTime ? String(booking.checkedInTime) : undefined,
     checkedOutTime: booking.checkedOutTime ? String(booking.checkedOutTime) : undefined,
     incidentalCharges: Array.isArray(booking.incidentalCharges) ? (booking.incidentalCharges as IncidentalCharge[]) : [],
-    kyc: (booking.kyc as KYCData) || undefined,
+    kyc: (booking.kyc as KYCData) || (booking.kycVerified ? {
+        verified: true,
+        documentType: (booking.kycDocType as KYCData['documentType']) || 'Aadhaar Card',
+        documentNumber: String(booking.kycDocNumber || '•••• 9012'),
+        verifiedAt: String(booking.createdAt || new Date().toISOString())
+    } : undefined),
 });
 
 // API Thunks
@@ -226,6 +231,21 @@ const bookingSlice = createSlice({
             .addCase(fetchUserBookings.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 state.items = action.payload;
+                if (typeof window !== 'undefined') {
+                    try {
+                        const local = localStorage.getItem('luxestay_booking_extras');
+                        if (local) {
+                            const parsed = JSON.parse(local);
+                            state.items.forEach((b) => {
+                                if (parsed[b.id]) {
+                                    if (parsed[b.id].incidentals) b.incidentalCharges = parsed[b.id].incidentals;
+                                    if (parsed[b.id].kyc) b.kyc = parsed[b.id].kyc;
+                                    if (parsed[b.id].totalPrice) b.totalPrice = parsed[b.id].totalPrice;
+                                }
+                            });
+                        }
+                    } catch {}
+                }
             })
             .addCase(addBooking.fulfilled, (state, action) => {
                 state.items.push(action.payload);
