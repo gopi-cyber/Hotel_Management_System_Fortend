@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
-    const response = await fetch(`${BACKEND_ENDPOINTS.SERVICES}/${id}/status`, {
+    const response = await fetch(`${BACKEND_ENDPOINTS.SERVICES}/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, assignedStaff }),

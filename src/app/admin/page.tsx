@@ -214,6 +214,7 @@ export default function AdminPage() {
           email: staffData.email || '',
           role: staffData.role || 'Receptionist',
           department: staffData.department || 'Front Desk & Guest Services',
+          salary: staffData.salary !== undefined ? Number(staffData.salary) : 0,
           shift: staffData.shift || 'Morning',
           status: staffData.status || 'Active',
         })
@@ -757,6 +758,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-5 font-bold">Staff Member</th>
                     <th className="py-3.5 px-5 font-bold">Role / Department</th>
                     <th className="py-3.5 px-5 font-bold">Shift Schedule</th>
+                    <th className="py-3.5 px-5 font-bold">Salary</th>
                     <th className="py-3.5 px-5 font-bold">Status</th>
                     <th className="py-3.5 px-5 font-bold text-right">Actions</th>
                   </tr>
@@ -770,6 +772,9 @@ export default function AdminPage() {
                       </td>
                       <td className="py-3.5 px-5 text-slate-800 font-semibold">{member.role}</td>
                       <td className="py-3.5 px-5 text-slate-600">{member.shift} Shift</td>
+                      <td className="py-3.5 px-5 text-slate-700 font-semibold">
+                        {member.salary ? formatPrice(member.salary, currency) : '—'}
+                      </td>
                       <td className="py-3.5 px-5">
                         <StatusBadge status={member.status} />
                       </td>
@@ -807,7 +812,9 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <strong className="text-slate-900 block">{member.name}</strong>
-                      <span className="text-xs text-slate-500">{member.role} · {member.shift} Shift</span>
+                      <span className="text-xs text-slate-500">
+                        {member.role} · {member.shift} Shift {member.salary ? `· ${formatPrice(member.salary, currency)}` : ''}
+                      </span>
                     </div>
                     <StatusBadge status={member.status} />
                   </div>

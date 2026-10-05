@@ -16,6 +16,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
   const [role, setRole] = useState('Receptionist');
   const [isCustomRole, setIsCustomRole] = useState(false);
   const [customRoleText, setCustomRoleText] = useState('');
+  const [salary, setSalary] = useState<number | ''>('');
   const [shift, setShift] = useState<'Morning' | 'Afternoon' | 'Night'>('Morning');
   const [department, setDepartment] = useState('Front Desk & Guest Services');
   const [status, setStatus] = useState<'Active' | 'On Leave' | 'Inactive'>('Active');
@@ -54,6 +55,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
     if (staff) {
       setName(staff.name || '');
       setEmail(staff.email || '');
+      setSalary(staff.salary !== undefined && staff.salary !== null ? staff.salary : '');
       const existingRole = staff.role || 'Receptionist';
       setShift(staff.shift || 'Morning');
       setDepartment(staff.department || 'Front Desk & Guest Services');
@@ -70,6 +72,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
     } else {
       setName('');
       setEmail('');
+      setSalary('');
       setRole('Receptionist');
       setIsCustomRole(false);
       setCustomRoleText('');
@@ -90,6 +93,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
         email,
         role: finalRole,
         department,
+        salary: salary === '' ? 0 : Number(salary),
         shift,
         status,
       });
@@ -147,7 +151,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
               Role / Designation
@@ -164,7 +168,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
                 }
               }}
               required
-              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 mb-2 cursor-pointer"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 cursor-pointer"
             >
               {predefinedRoles.map((r) => (
                 <option key={r} value={r}>
@@ -173,20 +177,42 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
               ))}
               <option value="custom">+ Custom Role...</option>
             </select>
-
-            {isCustomRole && (
-              <input
-                type="text"
-                value={customRoleText}
-                onChange={(e) => setCustomRoleText(e.target.value)}
-                placeholder="Type custom role or designation..."
-                required
-                autoFocus
-                className="w-full px-3 py-2 text-sm rounded-xl border border-amber-300 bg-amber-50/50 font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20"
-              />
-            )}
           </div>
 
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              Monthly Salary
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="500"
+              value={salary}
+              onChange={(e) => setSalary(e.target.value === '' ? '' : Number(e.target.value))}
+              placeholder="e.g. 45000"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+            />
+          </div>
+        </div>
+
+        {isCustomRole && (
+          <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200">
+            <label className="block text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">
+              Custom Role Title
+            </label>
+            <input
+              type="text"
+              value={customRoleText}
+              onChange={(e) => setCustomRoleText(e.target.value)}
+              placeholder="Enter custom role or designation name..."
+              required
+              autoFocus
+              className="w-full px-3 py-2 text-sm rounded-xl border border-amber-300 bg-white font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20"
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
               Shift
@@ -194,7 +220,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
             <select
               value={shift}
               onChange={(e) => setShift(e.target.value as Staff['shift'])}
-              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 cursor-pointer"
             >
               <option value="Morning">Morning</option>
               <option value="Afternoon">Afternoon</option>
@@ -209,7 +235,7 @@ export function StaffModal({ isOpen, onClose, onSave, staff }: StaffModalProps) 
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as Staff['status'])}
-              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-900 cursor-pointer"
             >
               <option value="Active">Active</option>
               <option value="On Leave">On Leave</option>

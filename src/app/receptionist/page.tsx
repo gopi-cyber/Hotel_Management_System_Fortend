@@ -160,7 +160,8 @@ export default function ReceptionistPage() {
   const handleServiceStatus = async (id: string, status: string) => {
     dispatch(updateLocalServiceStatus({ id, status: status as 'pending' | 'in_progress' | 'completed' }));
     try {
-      await dispatch(updateService({ id, status }));
+      await dispatch(updateService({ id, status })).unwrap();
+      dispatch(fetchServices());
     } catch {
       // Local Redux update applied
     }

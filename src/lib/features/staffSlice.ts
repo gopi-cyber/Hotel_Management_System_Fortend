@@ -7,6 +7,7 @@ export interface Staff {
     role: string;
     department?: string;
     shift: 'Morning' | 'Afternoon' | 'Night';
+    salary?: number;
     status: 'Active' | 'On Leave' | 'Inactive';
     phone?: string;
     createdAt?: string;
