@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/lib/store';
 import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
@@ -43,10 +43,44 @@ export function ReportModal({
   const [customEndDate, setCustomEndDate] = useState('2026-09-30');
   const [activeTab, setActiveTab] = useState<'revenue' | 'channels'>('revenue');
 
-  const occupancyRate = Math.round((occupiedRooms / Math.max(1, totalRooms)) * 100);
-  const safeRevenue = Math.max(totalRevenue, 185000);
-  const adr = totalBookings > 0 ? Math.round(safeRevenue / totalBookings) : 32000;
-  const revPar = Math.round((adr * occupancyRate) / 100) || Math.round(safeRevenue / Math.max(1, totalRooms));
+  const [analytics, setAnalytics] = useState<{
+    totalRevenue?: number;
+    occupancyRate?: number;
+    adr?: number;
+    revPar?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch('/api/reports')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.totalBookings !== undefined) {
+            setAnalytics(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
+  const occupancyRate =
+    analytics?.occupancyRate !== undefined
+      ? analytics.occupancyRate
+      : Math.round((occupiedRooms / Math.max(1, totalRooms)) * 100);
+  const safeRevenue =
+    analytics?.totalRevenue !== undefined && analytics.totalRevenue > 0
+      ? analytics.totalRevenue
+      : Math.max(totalRevenue, 185000);
+  const adr =
+    analytics?.adr !== undefined && analytics.adr > 0
+      ? analytics.adr
+      : totalBookings > 0
+      ? Math.round(safeRevenue / totalBookings)
+      : 32000;
+  const revPar =
+    analytics?.revPar !== undefined && analytics.revPar > 0
+      ? analytics.revPar
+      : Math.round((adr * occupancyRate) / 100) || Math.round(safeRevenue / Math.max(1, totalRooms));
 
   // Weekly dataset (Mon - Sun)
   const dataWeekly = [

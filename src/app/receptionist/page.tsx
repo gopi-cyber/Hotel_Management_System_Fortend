@@ -5,6 +5,7 @@ import { fetchRooms, Room, updateRoom, updateHousekeepingStatus, HousekeepingSta
 import { fetchBookings, updateBooking, addBooking, Booking } from '@/lib/features/bookingSlice';
 import { fetchServices, updateService, updateLocalServiceStatus } from '@/lib/features/serviceSlice';
 import { RootState, AppDispatch } from '@/lib/store';
+import { Toast } from '@/components/ui/Toast';
 import {
   CheckCircle,
   CreditCard,
@@ -181,6 +182,21 @@ export default function ReceptionistPage() {
       setHousekeepingWarning({ booking, room });
       return;
     }
+    // Call backend checkin arrive endpoint to record in check_in_records
+    try {
+      await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          idType: 'Passport',
+          idNumber: 'ID-' + booking.id,
+          keyCardNumber: 'KEY-' + (booking.roomNumber || (room ? room.roomNumber || room.number : '101'))
+        })
+      });
+    } catch (_err) {
+      // Continue even if offline
+    }
     await dispatch(updateBooking({ ...booking, status: 'checked_in' }));
     if (room && room.status !== 'occupied') {
       await dispatch(updateRoom({ ...room, status: 'occupied' }));
@@ -193,6 +209,19 @@ export default function ReceptionistPage() {
   };
 
   const handleCheckOut = async (booking: Booking) => {
+    // Call backend checkin depart endpoint to record check-out in check_in_records
+    try {
+      await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'depart',
+          bookingId: booking.id
+        })
+      });
+    } catch (_err) {
+      // Continue even if offline
+    }
     await dispatch(updateBooking({ ...booking, status: 'checked_out' }));
     const room = rooms.find(
       (r) => String(r.id) === String(booking.roomId) || String(r.roomNumber || r.number) === String(booking.roomNumber)
@@ -333,13 +362,8 @@ export default function ReceptionistPage() {
       navItems={navItems}
       activeNavId={activeTab}
     >
-      {/* Action Notification */}
-      {actionSuccess && (
-        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-3">
-          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
-          <span>{actionSuccess}</span>
-        </div>
-      )}
+      {/* Floating Bottom Toast Notification */}
+      <Toast message={actionSuccess} type="success" onClose={() => setActionSuccess('')} />
 
       {/* KPI Summary Cards: auto-adapts to small laptops and large screens */}
       {activeTab === 'dashboard' && (

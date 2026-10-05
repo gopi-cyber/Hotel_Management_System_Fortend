@@ -5,7 +5,7 @@ import { fallbackData } from '@/lib/serverFallback';
 export async function GET() {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(BACKEND_ENDPOINTS.CHECKIN, { cache: 'no-store', signal: controller.signal });
     clearTimeout(timeoutId);
 
@@ -22,11 +22,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  const isDepart = body.action === 'depart';
+  const targetUrl = isDepart ? `${BACKEND_ENDPOINTS.CHECKIN}/depart` : `${BACKEND_ENDPOINTS.CHECKIN}/arrive`;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const response = await fetch(`${BACKEND_ENDPOINTS.CHECKIN}/process`, {
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

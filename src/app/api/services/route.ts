@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const url = userId ? `${BACKEND_ENDPOINTS.SERVICES}?userId=${userId}` : BACKEND_ENDPOINTS.SERVICES;
     const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
     clearTimeout(timeoutId);
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${BACKEND_ENDPOINTS.SERVICES}?userId=${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${BACKEND_ENDPOINTS.SERVICES}/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

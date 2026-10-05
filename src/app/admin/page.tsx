@@ -42,6 +42,8 @@ import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
 import { Modal } from '@/components/ui/Modal';
+import ConfirmDeleteModal from '@/components/ui/ConfirmDeleteModal';
+import { Toast } from '@/components/ui/Toast';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, updateUserProfile, User as UserAccount } from '@/lib/features/userSlice';
 import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
 
@@ -50,6 +52,18 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
 
   // Modals state
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
@@ -137,9 +151,10 @@ export default function AdminPage() {
     };
   }, [dispatch]);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3000);
+    setToastType(type);
+    setTimeout(() => setToastMsg(''), 4000);
   };
 
   // Room handlers
@@ -166,11 +181,17 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteRoom = async (id: string) => {
-    if (confirm('Are you sure you want to remove this suite from inventory?')) {
-      await dispatch(deleteRoom(id));
-      showToast('Suite removed from inventory.');
-    }
+  const handleDeleteRoom = (id: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      title: 'Remove Suite from Inventory',
+      description: 'Are you sure you want to remove this suite? This action cannot be undone.',
+      onConfirm: async () => {
+        setDeleteDialog((prev) => ({ ...prev, isOpen: false }));
+        await dispatch(deleteRoom(id));
+        showToast('Suite removed from inventory.', 'info');
+      },
+    });
   };
 
   // Staff handlers
@@ -199,13 +220,23 @@ export default function AdminPage() {
       );
       showToast('New staff member on-boarded.');
     }
+    dispatch(fetchStaff());
+    dispatch(fetchAllUsers());
   };
 
-  const handleDeleteStaff = async (id: string) => {
-    if (confirm('Are you sure you want to off-board this staff member?')) {
-      await dispatch(deleteStaff(id));
-      showToast('Staff member record archived.');
-    }
+  const handleDeleteStaff = (id: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      title: 'Off-board Staff Member',
+      description: 'Are you sure you want to off-board this staff member? This will archive their staff profile.',
+      onConfirm: async () => {
+        setDeleteDialog((prev) => ({ ...prev, isOpen: false }));
+        await dispatch(deleteStaff(id));
+        showToast('Staff member record archived.', 'info');
+        dispatch(fetchStaff());
+        dispatch(fetchAllUsers());
+      },
+    });
   };
 
   // KPIs
@@ -265,21 +296,29 @@ export default function AdminPage() {
       await dispatch(updateUserRole({ id: userId, role: cleanRole })).unwrap();
       showToast(`Role updated to ${cleanRole.toUpperCase()}. User permissions synced.`);
       dispatch(fetchAllUsers());
+      dispatch(fetchStaff());
     } catch (err: any) {
       showToast(typeof err === 'string' ? err : err?.message || 'Failed to update role');
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (confirm('Are you sure you want to delete this user account?')) {
-      try {
-        await dispatch(deleteUserAccount(userId)).unwrap();
-        showToast('User account removed.');
-        dispatch(fetchAllUsers());
-      } catch (err: any) {
-        showToast(typeof err === 'string' ? err : err?.message || 'Failed to delete user');
-      }
-    }
+  const handleDeleteUser = (userId: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      title: 'Delete User Account',
+      description: 'Are you sure you want to delete this user account? Their profile and associated records will be removed.',
+      onConfirm: async () => {
+        setDeleteDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await dispatch(deleteUserAccount(userId)).unwrap();
+          showToast('User account removed.', 'info');
+          dispatch(fetchAllUsers());
+          dispatch(fetchStaff());
+        } catch (err: any) {
+          showToast(typeof err === 'string' ? err : err?.message || 'Failed to delete user', 'error');
+        }
+      },
+    });
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -315,6 +354,7 @@ export default function AdminPage() {
         role: 'guest',
       });
       dispatch(fetchAllUsers());
+      dispatch(fetchStaff());
     } catch (err: any) {
       showToast(err.message || 'Failed to create user');
     } finally {
@@ -427,13 +467,18 @@ export default function AdminPage() {
         )
       }
     >
-      {/* Toast Alert */}
-      {toastMsg && (
-        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-3">
-          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
+      {/* Floating Bottom Toast Notification */}
+      <Toast message={toastMsg} type={toastType} onClose={() => setToastMsg('')} />
+
+      {/* Modern Confirmation Delete Dialog */}
+      <ConfirmDeleteModal
+        isOpen={deleteDialog.isOpen}
+        title={deleteDialog.title}
+        message={deleteDialog.description}
+        confirmText="Confirm Delete"
+        onConfirm={deleteDialog.onConfirm}
+        onClose={() => setDeleteDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
 
       {/* KPI Cards: fluidly fits small laptops up to large screens */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">

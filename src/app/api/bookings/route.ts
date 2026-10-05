@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const url = userId ? `${BACKEND_ENDPOINTS.BOOKINGS}?userId=${userId}` : BACKEND_ENDPOINTS.BOOKINGS;
     const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
     clearTimeout(timeoutId);
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const backendPayload = {
       ...body,
       kycVerified: body.kyc?.verified ?? false,
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     let response;
     if (status) {
       response = await fetch(`${BACKEND_ENDPOINTS.BOOKINGS}/${id}/status`, {
@@ -138,7 +138,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${BACKEND_ENDPOINTS.BOOKINGS}/${id}`, { method: 'DELETE', signal: controller.signal });
     clearTimeout(timeoutId);
 

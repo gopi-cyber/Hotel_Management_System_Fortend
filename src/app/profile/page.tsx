@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import PortalShell from '@/components/PortalShell';
+import { Toast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
 import StatusBadge from '@/components/ui/StatusBadge';
 
@@ -116,13 +117,8 @@ export default function ProfileConciergePage() {
         </button>
       }
     >
-      {/* Success Banner */}
-      {success && (
-        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-3">
-          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
-          <span>{success}</span>
-        </div>
-      )}
+      {/* Floating Bottom Toast Notification */}
+      <Toast message={success} type="success" onClose={() => setSuccess('')} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Guest Credentials & Active Suite */}

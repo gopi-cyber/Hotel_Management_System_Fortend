@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const url = status ? `${BACKEND_ENDPOINTS.ROOMS}?status=${status}` : BACKEND_ENDPOINTS.ROOMS;
     const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
     clearTimeout(timeoutId);
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(BACKEND_ENDPOINTS.ROOMS, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${BACKEND_ENDPOINTS.ROOMS}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -104,7 +104,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(`${BACKEND_ENDPOINTS.ROOMS}/${id}`, { method: 'DELETE', signal: controller.signal });
     clearTimeout(timeoutId);
 
