@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   UserCheck,
   UserCog,
+  UserPlus,
   KeyRound,
   PlusCircle,
   Shield,
@@ -59,6 +60,16 @@ export default function AdminPage() {
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [newRoleInput, setNewRoleInput] = useState('');
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    name: '',
+    username: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'guest',
+  });
   const [customRoles, setCustomRoles] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -271,6 +282,46 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserForm.username.trim() || !newUserForm.email.trim() || !newUserForm.password.trim()) {
+      showToast('Username, email, and password are required');
+      return;
+    }
+    const cleanPhone = newUserForm.phone.replace(/\D/g, '');
+    if (cleanPhone.length < 8) {
+      showToast('Valid phone number (at least 8 digits) is required');
+      return;
+    }
+    setIsCreatingUser(true);
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUserForm),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create user');
+      }
+      showToast(`User @${newUserForm.username} created successfully!`);
+      setIsUserModalOpen(false);
+      setNewUserForm({
+        name: '',
+        username: '',
+        email: '',
+        phone: '',
+        password: '',
+        role: 'guest',
+      });
+      dispatch(fetchAllUsers());
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create user');
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
   const navItems = [
     {
       id: 'inventory',
@@ -343,16 +394,25 @@ export default function AdminPage() {
             <Plus size={15} /> Add Staff Member
           </button>
         ) : activeTab === 'users' ? (
-          <button
-            type="button"
-            onClick={() => {
-              setNewRoleInput('');
-              setIsRoleModalOpen(true);
-            }}
-            className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
-          >
-            <Plus size={15} /> Add New Role
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsUserModalOpen(true)}
+              className="btn-gold py-2.5 px-3 sm:px-4 text-xs inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-sm"
+            >
+              <UserPlus size={15} /> Add User
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setNewRoleInput('');
+                setIsRoleModalOpen(true);
+              }}
+              className="px-3 sm:px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-xs"
+            >
+              <ShieldCheck size={15} className="text-amber-600" /> Add Role
+            </button>
+          </div>
         ) : (
           <button
             type="button"
@@ -883,13 +943,20 @@ export default function AdminPage() {
               </div>
               <button
                 type="button"
+                onClick={() => setIsUserModalOpen(true)}
+                className="btn-gold py-2 px-3 sm:px-4 text-xs inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap shadow-sm"
+              >
+                <UserPlus size={15} /> Add User
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setNewRoleInput('');
                   setIsRoleModalOpen(true);
                 }}
-                className="btn-gold py-2 px-3 sm:px-4 text-xs inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap shadow-xs"
               >
-                <Plus size={15} /> Add New Role
+                <ShieldCheck size={15} className="text-amber-600" /> Add Role
               </button>
             </div>
           </div>
@@ -1216,6 +1283,112 @@ export default function AdminPage() {
                 Save Role
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Add New User Account Modal */}
+      {isUserModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <UserPlus className="text-amber-600" size={20} />
+                Create User Account
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsUserModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateUser} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Eleanor Vance"
+                  value={newUserForm.name}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Username *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. eleanor"
+                    value={newUserForm.username}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value.toLowerCase().trim() })}
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Role *</label>
+                  <select
+                    value={newUserForm.role}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value })}
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium capitalize bg-white"
+                  >
+                    {allAvailableRoles.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. eleanor@luxestay.com"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value.trim() })}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Mobile Phone (min 8 digits) *</label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="e.g. 9876543210"
+                  value={newUserForm.phone}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Password *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Min 6 characters"
+                  value={newUserForm.password}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsUserModalOpen(false)}
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingUser}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                >
+                  {isCreatingUser ? 'Creating...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

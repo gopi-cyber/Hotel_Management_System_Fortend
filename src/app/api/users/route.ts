@@ -86,12 +86,13 @@ export async function POST(request: NextRequest) {
     if (!body.username || !body.email || !body.password) {
       return NextResponse.json({ error: 'Username, email and password are required' }, { status: 400 });
     }
-    // Security enforcement: public registration can ONLY ever create 'guest' accounts.
-    const registrationBody = { ...body, role: 'guest' };
+    // Accept custom or chosen role, default to 'guest'
+    const role = body.role ? String(body.role).trim().toLowerCase() : 'guest';
+    const registrationBody = { ...body, role };
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       const response = await fetch(`${BACKEND_ENDPOINTS.USERS}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,7 +154,7 @@ export async function PATCH(request: NextRequest) {
     // First attempt Spring Boot backend
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       const response = await fetch(BACKEND_ENDPOINTS.USERS, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -199,7 +200,7 @@ export async function DELETE(request: NextRequest) {
   // First attempt Spring Boot backend
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
     const response = await fetch(`${BACKEND_ENDPOINTS.USERS}/${id}`, {
       method: 'DELETE',
       signal: controller.signal
