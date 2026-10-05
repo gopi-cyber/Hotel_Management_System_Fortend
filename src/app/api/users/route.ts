@@ -145,10 +145,29 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and target role are required' }, { status: 400 });
     }
 
-    const validRoles = ['admin', 'receptionist', 'guest'];
-    const normalizedRole = String(role).toLowerCase();
-    if (!validRoles.includes(normalizedRole)) {
-      return NextResponse.json({ error: 'Invalid role. Must be admin, receptionist, or guest.' }, { status: 400 });
+    const normalizedRole = String(role).toLowerCase().trim();
+    if (!normalizedRole) {
+      return NextResponse.json({ error: 'Role cannot be empty' }, { status: 400 });
+    }
+
+    // First attempt Spring Boot backend
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const response = await fetch(BACKEND_ENDPOINTS.USERS, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, role: normalizedRole }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const updated = await response.json();
+        return NextResponse.json(updated);
+      }
+    } catch (_e) {
+      // Backend unavailable or timed out, fall back to local mock
     }
 
     const userIndex = fallbackData.users.findIndex((u) => String(u.id) === String(id));
@@ -175,6 +194,24 @@ export async function DELETE(request: NextRequest) {
   // Protect master admin from deletion
   if (String(id) === '1') {
     return NextResponse.json({ error: 'Cannot delete primary root administrator' }, { status: 403 });
+  }
+
+  // First attempt Spring Boot backend
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const response = await fetch(`${BACKEND_ENDPOINTS.USERS}/${id}`, {
+      method: 'DELETE',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      fallbackData.users = fallbackData.users.filter((u) => String(u.id) !== String(id));
+      return NextResponse.json({ success: true, message: 'User deleted successfully' });
+    }
+  } catch (_e) {
+    // Backend unavailable or timed out, fall back to local mock
   }
 
   const initialCount = fallbackData.users.length;

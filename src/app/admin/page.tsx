@@ -40,6 +40,7 @@ import StaffModal from '@/components/Admin/StaffModal';
 import ReportModal from '@/components/Admin/ReportModal';
 import InvoiceModal from '@/components/ui/InvoiceModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
+import { Modal } from '@/components/ui/Modal';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, updateUserProfile, User as UserAccount } from '@/lib/features/userSlice';
 import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
 
@@ -56,12 +57,29 @@ export default function AdminPage() {
   const [selectedIncidentalBooking, setSelectedIncidentalBooking] = useState<Booking | null>(null);
   const [customRoleUserId, setCustomRoleUserId] = useState<string | null>(null);
   const [customRoleInput, setCustomRoleInput] = useState('');
-  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [galleryTourRoom, setGalleryTourRoom] = useState<Room | null>(null);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [newRoleInput, setNewRoleInput] = useState('');
+  const [customRoles, setCustomRoles] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('luxestay_custom_roles');
+        if (stored) return JSON.parse(stored);
+      } catch (_e) {}
+    }
+    return ['manager', 'supervisor'];
+  });
 
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportType, setReportType] = useState<'financial' | 'growth'>('financial');
+  const saveCustomRole = (roleName: string) => {
+    const cleaned = roleName.trim().toLowerCase();
+    if (!cleaned) return;
+    setCustomRoles((prev) => {
+      const next = Array.from(new Set([...prev, cleaned]));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('luxestay_custom_roles', JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.user.user);
@@ -71,6 +89,19 @@ export default function AdminPage() {
   const bookings = useSelector((state: RootState) => state.bookings.items);
   const currency = useSelector((state: RootState) => state.settings?.currency || 'INR');
   const companyProfile = useSelector((state: RootState) => state.settings?.companyProfile || DEFAULT_COMPANY_PROFILE);
+
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [galleryTourRoom, setGalleryTourRoom] = useState<Room | null>(null);
+
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<'financial' | 'growth'>('financial');
+
+  const allAvailableRoles = useMemo(() => {
+    const baseRoles = ['guest', 'receptionist', 'staff', 'admin'];
+    const userDefinedRoles = allUsers.map((u) => (u.role || '').toLowerCase()).filter(Boolean);
+    return Array.from(new Set([...baseRoles, ...customRoles, ...userDefinedRoles]));
+  }, [allUsers, customRoles]);
 
   useEffect(() => {
     dispatch(fetchRooms());
@@ -217,14 +248,26 @@ export default function AdminPage() {
   }, [allUsers, searchQuery]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    await dispatch(updateUserRole({ id: userId, role: newRole }));
-    showToast(`Role updated to ${newRole.toUpperCase()}. User will automatically route to their authorized portal.`);
+    try {
+      const cleanRole = newRole.trim().toLowerCase();
+      saveCustomRole(cleanRole);
+      await dispatch(updateUserRole({ id: userId, role: cleanRole })).unwrap();
+      showToast(`Role updated to ${cleanRole.toUpperCase()}. User permissions synced.`);
+      dispatch(fetchAllUsers());
+    } catch (err: any) {
+      showToast(typeof err === 'string' ? err : err?.message || 'Failed to update role');
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user account?')) {
-      await dispatch(deleteUserAccount(userId));
-      showToast('User account removed.');
+      try {
+        await dispatch(deleteUserAccount(userId)).unwrap();
+        showToast('User account removed.');
+        dispatch(fetchAllUsers());
+      } catch (err: any) {
+        showToast(typeof err === 'string' ? err : err?.message || 'Failed to delete user');
+      }
     }
   };
 
@@ -299,7 +342,18 @@ export default function AdminPage() {
           >
             <Plus size={15} /> Add Staff Member
           </button>
-        ) : activeTab === 'users' ? null : (
+        ) : activeTab === 'users' ? (
+          <button
+            type="button"
+            onClick={() => {
+              setNewRoleInput('');
+              setIsRoleModalOpen(true);
+            }}
+            className="btn-gold py-2.5 px-4 text-xs inline-flex items-center gap-2 cursor-pointer"
+          >
+            <Plus size={15} /> Add New Role
+          </button>
+        ) : (
           <button
             type="button"
             onClick={() => {
@@ -816,15 +870,27 @@ export default function AdminPage() {
               </h2>
             </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search user, email, role..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white shadow-xs focus:ring-2 focus:ring-amber-500/20 outline-none"
-              />
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-72">
+                <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search user, email, role..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white shadow-xs focus:ring-2 focus:ring-amber-500/20 outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewRoleInput('');
+                  setIsRoleModalOpen(true);
+                }}
+                className="btn-gold py-2 px-3 sm:px-4 text-xs inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <Plus size={15} /> Add New Role
+              </button>
             </div>
           </div>
 
@@ -880,7 +946,9 @@ export default function AdminPage() {
                                 type="button"
                                 onClick={() => {
                                   if (customRoleInput.trim()) {
-                                    handleRoleChange(String(u.id), customRoleInput.trim().toLowerCase());
+                                    const cleanRole = customRoleInput.trim().toLowerCase();
+                                    saveCustomRole(cleanRole);
+                                    handleRoleChange(String(u.id), cleanRole);
                                   }
                                   setCustomRoleUserId(null);
                                   setCustomRoleInput('');
@@ -913,11 +981,9 @@ export default function AdminPage() {
                               }}
                               className="text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 hover:border-amber-500 focus:ring-2 focus:ring-amber-500/20 cursor-pointer transition-colors shadow-xs capitalize"
                             >
-                              <option value="guest">guest</option>
-                              <option value="staff">staff</option>
-                              {!['guest', 'staff'].includes(role) && (
-                                <option value={role}>{role}</option>
-                              )}
+                              {allAvailableRoles.map((r) => (
+                                <option key={r} value={r}>{r}</option>
+                              ))}
                               <option value="custom">+ Custom Role...</option>
                             </select>
                           )}
@@ -962,18 +1028,75 @@ export default function AdminPage() {
 
                     <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                       <span className="text-xs text-slate-500 font-medium">Role:</span>
-                      <select
-                        disabled={isRootAdmin}
-                        value={role}
-                        onChange={(e) => handleRoleChange(String(u.id), e.target.value)}
-                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 capitalize"
-                      >
-                        <option value="guest">guest</option>
-                        <option value="staff">staff</option>
-                        {!['guest', 'staff'].includes(role) && (
-                          <option value={role}>{role}</option>
+                      <div className="flex items-center gap-2">
+                        {isRootAdmin ? (
+                          <span className="text-xs text-slate-400 font-medium">Primary Account</span>
+                        ) : customRoleUserId === String(u.id) ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={customRoleInput}
+                              onChange={(e) => setCustomRoleInput(e.target.value)}
+                              placeholder="Custom role..."
+                              className="text-xs px-2 py-1 border border-slate-300 rounded-lg outline-none w-24 font-medium text-slate-800"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (customRoleInput.trim()) {
+                                  const cleanRole = customRoleInput.trim().toLowerCase();
+                                  saveCustomRole(cleanRole);
+                                  handleRoleChange(String(u.id), cleanRole);
+                                }
+                                setCustomRoleUserId(null);
+                                setCustomRoleInput('');
+                              }}
+                              className="px-2 py-1 bg-amber-600 text-white rounded-lg text-xs font-bold"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCustomRoleUserId(null);
+                                setCustomRoleInput('');
+                              }}
+                              className="px-2 py-1 bg-slate-200 text-slate-700 rounded-lg text-xs"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <select
+                            value={role}
+                            onChange={(e) => {
+                              if (e.target.value === 'custom') {
+                                setCustomRoleUserId(String(u.id));
+                                setCustomRoleInput('');
+                                return;
+                              }
+                              handleRoleChange(String(u.id), e.target.value);
+                            }}
+                            className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 capitalize"
+                          >
+                            {allAvailableRoles.map((r) => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                            <option value="custom">+ Custom Role...</option>
+                          </select>
                         )}
-                      </select>
+                        {!isRootAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUser(String(u.id))}
+                            className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                            title="Delete user"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1027,6 +1150,75 @@ export default function AdminPage() {
         onClose={() => setGalleryTourRoom(null)}
         room={galleryTourRoom}
       />
+
+      {/* Add New Custom Role Modal */}
+      {isRoleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <ShieldCheck className="text-amber-600" size={20} />
+                Create New Role
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsRoleModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-700">Role Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Concierge, Supervisor, Security"
+                value={newRoleInput}
+                onChange={(e) => setNewRoleInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newRoleInput.trim()) {
+                      saveCustomRole(newRoleInput);
+                      showToast(`Role "${newRoleInput.trim().toUpperCase()}" created and added to available roles.`);
+                      setIsRoleModalOpen(false);
+                      setNewRoleInput('');
+                    }
+                  }
+                }}
+                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                autoFocus
+              />
+              <p className="text-[11px] text-slate-500">
+                This custom role will be immediately available in all user role selectors.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsRoleModalOpen(false)}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (newRoleInput.trim()) {
+                    saveCustomRole(newRoleInput);
+                    showToast(`Role "${newRoleInput.trim().toUpperCase()}" created and added to available roles.`);
+                    setIsRoleModalOpen(false);
+                    setNewRoleInput('');
+                  }
+                }}
+                className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors"
+              >
+                Save Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PortalShell>
   );
 }

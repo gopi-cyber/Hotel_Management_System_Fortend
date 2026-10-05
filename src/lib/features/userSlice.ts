@@ -72,14 +72,22 @@ export const fetchAllUsers = createAsyncThunk('user/fetchAllUsers', async () => 
     return response.data;
 });
 
-export const updateUserRole = createAsyncThunk('user/updateUserRole', async ({ id, role }: { id: string, role: string }) => {
-    const response = await axios.patch(API_URL, { id, role });
-    return response.data;
+export const updateUserRole = createAsyncThunk('user/updateUserRole', async ({ id, role }: { id: string, role: string }, { rejectWithValue }) => {
+    try {
+        const response = await axios.patch(API_URL, { id, role });
+        return response.data;
+    } catch (err: any) {
+        return rejectWithValue(err.response?.data?.error || 'Failed to update role');
+    }
 });
 
-export const deleteUserAccount = createAsyncThunk('user/deleteUserAccount', async (id: string) => {
-    await axios.delete(`${API_URL}?id=${id}`);
-    return id;
+export const deleteUserAccount = createAsyncThunk('user/deleteUserAccount', async (id: string, { rejectWithValue }) => {
+    try {
+        await axios.delete(`${API_URL}?id=${id}`);
+        return id;
+    } catch (err: any) {
+        return rejectWithValue(err.response?.data?.error || 'Failed to delete user');
+    }
 });
 
 const userSlice = createSlice({
