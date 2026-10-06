@@ -43,6 +43,7 @@ import InvoiceModal from '@/components/ui/InvoiceModal';
 import IncidentalChargeModal from '@/components/Staff/IncidentalChargeModal';
 import { Modal } from '@/components/ui/Modal';
 import ConfirmDeleteModal from '@/components/ui/ConfirmDeleteModal';
+import ChangePasswordModal from '@/components/ui/ChangePasswordModal';
 import { Toast } from '@/components/ui/Toast';
 import { fetchAllUsers, updateUserRole, deleteUserAccount, updateUserProfile, User as UserAccount } from '@/lib/features/userSlice';
 import { formatPrice, DEFAULT_COMPANY_PROFILE } from '@/lib/features/settingsSlice';
@@ -67,50 +68,9 @@ export default function AdminPage() {
 
   // Change password modal
   const [pwTarget, setPwTarget] = useState<{ id: string; label: string } | null>(null);
-  const [pwNew, setPwNew] = useState('');
-  const [pwConfirm, setPwConfirm] = useState('');
-  const [pwError, setPwError] = useState('');
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const openPasswordModal = (u: { id: string | number; name?: string; username?: string }) => {
     setPwTarget({ id: String(u.id), label: u.name || u.username || 'user' });
-    setPwNew('');
-    setPwConfirm('');
-    setPwError('');
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pwTarget) return;
-    if (pwNew.length < 6) {
-      setPwError('Password must be at least 6 characters.');
-      return;
-    }
-    if (!/[A-Z]/.test(pwNew) || !/[a-z]/.test(pwNew) || !/[0-9]/.test(pwNew) ||
-        !/[@$!%*?&_#^~()+\-=[\]{}|;:'",.<>/?]/.test(pwNew)) {
-      setPwError('Use uppercase, lowercase, number and special character.');
-      return;
-    }
-    if (pwNew !== pwConfirm) {
-      setPwError('Passwords do not match.');
-      return;
-    }
-    setIsSavingPassword(true);
-    try {
-      const res = await fetch('/api/users', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: pwTarget.id, password: pwNew }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to change password');
-      showToast(`Password updated for @${pwTarget.label}.`);
-      setPwTarget(null);
-    } catch (err: any) {
-      setPwError(err.message || 'Failed to change password');
-    } finally {
-      setIsSavingPassword(false);
-    }
   };
 
   // Modals state
@@ -1156,14 +1116,16 @@ export default function AdminPage() {
                           )}
                         </td>
                         <td className="py-3.5 px-5 text-right">
-                          <button
-                            type="button"
-                            onClick={() => openPasswordModal(u)}
-                            className="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors cursor-pointer"
-                            title="Change password"
-                          >
-                            <KeyRound size={16} />
-                          </button>
+                          {String(u.id) === String(user?.id) && (
+                            <button
+                              type="button"
+                              onClick={() => openPasswordModal(u)}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors cursor-pointer"
+                              title="Change your own password"
+                            >
+                              <KeyRound size={16} />
+                            </button>
+                          )}
                           {!isRootAdmin && (
                             <button
                               type="button"
@@ -1261,14 +1223,16 @@ export default function AdminPage() {
                             <option value="custom">+ Custom Role...</option>
                           </select>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => openPasswordModal(u)}
-                          className="p-1 rounded text-amber-500 hover:text-amber-700 hover:bg-amber-50 transition-colors"
-                          title="Change password"
-                        >
-                          <KeyRound size={16} />
-                        </button>
+                        {String(u.id) === String(user?.id) && (
+                          <button
+                            type="button"
+                            onClick={() => openPasswordModal(u)}
+                            className="p-1 rounded text-amber-500 hover:text-amber-700 hover:bg-amber-50 transition-colors"
+                            title="Change your own password"
+                          >
+                            <KeyRound size={16} />
+                          </button>
+                        )}
                         {!isRootAdmin && (
                           <button
                             type="button"
@@ -1402,76 +1366,14 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-      {/* Change Password Modal */}
-      {pwTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <KeyRound className="text-amber-600" size={20} />
-                Change Password
-              </h3>
-              <button
-                type="button"
-                onClick={() => setPwTarget(null)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-xs text-slate-500">
-              Setting a new password for <strong className="text-slate-800">{pwTarget.label}</strong>. It is saved in the database right away.
-            </p>
-            <form onSubmit={handlePasswordSubmit} className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={pwNew}
-                  onChange={(e) => setPwNew(e.target.value)}
-                  placeholder="e.g. Admin@123"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={pwConfirm}
-                  onChange={(e) => setPwConfirm(e.target.value)}
-                  placeholder="Repeat the password"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
-                />
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Minimum 6 characters with uppercase, lowercase, number and special character.
-              </p>
-              {pwError && (
-                <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
-                  {pwError}
-                </p>
-              )}
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setPwTarget(null)}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingPassword}
-                  className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors disabled:opacity-60"
-                >
-                  {isSavingPassword ? 'Saving...' : 'Update Password'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Change Password Modal (own account only) */}
+      <ChangePasswordModal
+        isOpen={!!pwTarget}
+        onClose={() => setPwTarget(null)}
+        userId={pwTarget?.id || ''}
+        userLabel={pwTarget?.label}
+        onSaved={() => pwTarget && showToast(`Password updated for @${pwTarget.label}.`)}
+      />
       {/* Add New User Account Modal */}
       {isUserModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">

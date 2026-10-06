@@ -6,6 +6,7 @@ import { updateUserProfile } from '@/lib/features/userSlice';
 import { toggleNightAudit } from '@/lib/features/settingsSlice';
 import { syncStaffProfile, updateStaff, Staff } from '@/lib/features/staffSlice';
 import Modal from '@/components/ui/Modal';
+import ChangePasswordModal from '@/components/ui/ChangePasswordModal';
 import {
   UserCheck,
   ShieldCheck,
@@ -22,6 +23,7 @@ import {
   Sparkles,
   Award,
   IdCard,
+  KeyRound,
   Upload,
 } from 'lucide-react';
 import PhoneInput from '@/components/ui/PhoneInput';
@@ -51,6 +53,8 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
 
   const [activeTab, setActiveTab] = useState<'duty' | 'settings'>('duty');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwSaved, setPwSaved] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -323,7 +327,18 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
         )}
 
         {/* Action Bar */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+        <div className="pt-4 border-t border-slate-200 flex items-center justify-between gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setPwOpen(true)}
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-2"
+          >
+            <KeyRound size={14} />
+            Change Password
+          </button>
+
+          <div className="flex items-center gap-2">
+            {pwSaved && <span className="text-xs font-bold text-emerald-600">Password updated</span>}
           <button
             type="button"
             onClick={onClose}
@@ -340,7 +355,19 @@ export default function StaffProfileModal({ isOpen, onClose }: StaffProfileModal
             <Save size={14} />
             <span>Save</span>
           </button>
+          </div>
         </div>
+
+        <ChangePasswordModal
+          isOpen={pwOpen}
+          onClose={() => setPwOpen(false)}
+          userId={user?.id || ''}
+          userLabel={user?.name || user?.username}
+          onSaved={() => {
+            setPwSaved(true);
+            setTimeout(() => setPwSaved(false), 4000);
+          }}
+        />
       </div>
     </Modal>
   );

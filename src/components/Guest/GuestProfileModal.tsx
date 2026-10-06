@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/lib/store';
 import { updateUserProfile } from '@/lib/features/userSlice';
 import Modal from '@/components/ui/Modal';
+import ChangePasswordModal from '@/components/ui/ChangePasswordModal';
 import {
   User,
   Crown,
@@ -20,6 +21,7 @@ import {
   Mail,
   Phone,
   Compass,
+  KeyRound,
   Upload,
 } from 'lucide-react';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -51,6 +53,8 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
 
   const [activeTab, setActiveTab] = useState<'membership' | 'preferences' | 'emergency'>('membership');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwSaved, setPwSaved] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -382,8 +386,18 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
         )}
 
         {/* Action Bar */}
-        <div className="pt-4 border-t border-slate-200 flex items-center justify-end">
+        <div className="pt-4 border-t border-slate-200 flex items-center justify-between gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setPwOpen(true)}
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-2"
+          >
+            <KeyRound size={14} />
+            Change Password
+          </button>
+
           <div className="flex items-center gap-2">
+            {pwSaved && <span className="text-xs font-bold text-emerald-600">Password updated</span>}
             <button
               type="button"
               onClick={onClose}
@@ -402,6 +416,17 @@ export default function GuestProfileModal({ isOpen, onClose }: GuestProfileModal
             </button>
           </div>
         </div>
+
+        <ChangePasswordModal
+          isOpen={pwOpen}
+          onClose={() => setPwOpen(false)}
+          userId={user?.id || ''}
+          userLabel={user?.name || user?.username}
+          onSaved={() => {
+            setPwSaved(true);
+            setTimeout(() => setPwSaved(false), 4000);
+          }}
+        />
       </div>
     </Modal>
   );

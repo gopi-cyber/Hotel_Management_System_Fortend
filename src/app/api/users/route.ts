@@ -221,6 +221,15 @@ export async function PUT(request: NextRequest) {
 
     const idx = fallbackData.users.findIndex((u) => String(u.id) === String(id));
     if (idx !== -1) {
+      if (updates.password) {
+        const current = String(updates.currentPassword ?? '').trim();
+        if (!current) {
+          return NextResponse.json({ error: 'Current password is required to change password' }, { status: 400 });
+        }
+        if (fallbackData.users[idx].password !== current) {
+          return NextResponse.json({ error: 'Current password is incorrect' }, { status: 403 });
+        }
+      }
       fallbackData.users[idx] = { ...fallbackData.users[idx], ...updates };
       return NextResponse.json(publicUser(fallbackData.users[idx]));
     }
