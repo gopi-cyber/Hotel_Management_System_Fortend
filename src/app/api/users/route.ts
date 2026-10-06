@@ -183,6 +183,53 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+// ── Admin Updates User Profile / Password ──
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, ...updates } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+    if (updates.password !== undefined && !String(updates.password).trim()) {
+      return NextResponse.json({ error: 'Password cannot be empty' }, { status: 400 });
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(`${BACKEND_ENDPOINTS.USERS}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const updated = await response.json();
+        return NextResponse.json(updated);
+      }
+      const errData = await response.json().catch(() => ({}));
+      if (response.status !== 404) {
+        return NextResponse.json({ error: errData.error || errData.message || 'Update failed' }, { status: response.status });
+      }
+    } catch (_e) {
+      // Backend offline
+    }
+
+    const idx = fallbackData.users.findIndex((u) => String(u.id) === String(id));
+    if (idx !== -1) {
+      fallbackData.users[idx] = { ...fallbackData.users[idx], ...updates };
+      return NextResponse.json(publicUser(fallbackData.users[idx]));
+    }
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Update error' }, { status: 500 });
+  }
+}
+
 // ── Admin Deletes User Account ──
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
